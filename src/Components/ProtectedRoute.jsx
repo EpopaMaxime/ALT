@@ -19,7 +19,7 @@ const ProtectedRoute = ({ children }) => {
         const userData = response.data;
         setActif(userData.acf.compte_actif);
       } catch (error) {
-        console.error('Erreur de recuperation des données:', error);
+        console.error('Erreur de recuperation des données :', error);
         setActif(false); // En cas d'erreur, on considère le compte comme inactif pour renvoyer à l'authentification.
       } finally {
         setLoading(false); // Les données ont été récupérées ou une erreur s'est produite
