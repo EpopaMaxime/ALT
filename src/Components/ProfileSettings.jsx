@@ -196,31 +196,60 @@ function ProfileSettings() {
   }, []);
 
   const handleDeleteAccount = async () => {
-    if (!window.confirm('Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible.')) {
+    if (!window.confirm('Êtes-vous sûr de vouloir désactiver votre compte ? Vous pourrez le réactiver plus tard en contactant le support.')) {
         return;
     }
 
     try {
         const token = localStorage.getItem('token');
 
-        await axios.delete('https://alt.back.qilinsa.com/wp-json/wp/v2/users/me', {
+        await axios.put('https://alt.back.qilinsa.com/wp-json/wp/v2/users/me', {
+            acf: {
+                compte_actif: false, // Met à jour le champ ACF 'compte_actif' à false
+            },
+        }, {
             headers: {
                 Authorization: `Bearer ${token}`,
             },
-            params: {
-                reassign: 1,
-                force: true,
-            },
         });
 
-        alert('Compte supprimé avec succès.');
+        alert('Compte désactivé avec succès.');
         localStorage.removeItem('token');
+        localStorage.removeItem('iduser');
         window.location.href = '/';
     } catch (error) {
-        console.error('Error deleting account:', error);
-        alert('Erreur lors de la suppression du compte. Veuillez réessayer.');
+        console.error('Erreur lors de la désactivation du compte:', error);
+        alert('Erreur lors de la désactivation du compte. Veuillez réessayer.');
     }
 };
+
+
+//   const handleDeleteAccount = async () => {
+//     if (!window.confirm('Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible.')) {
+//         return;
+//     }
+
+//     try {
+//         const token = localStorage.getItem('token');
+
+//         await axios.delete('https://alt.back.qilinsa.com/wp-json/wp/v2/users/me', {
+//             headers: {
+//                 Authorization: `Bearer ${token}`,
+//             },
+//             params: {
+//                 reassign: 1,
+//                 force: true,
+//             },
+//         });
+
+//         alert('Compte supprimé avec succès.');
+//         localStorage.removeItem('token');
+//         window.location.href = '/';
+//     } catch (error) {
+//         console.error('Error deleting account:', error);
+//         alert('Erreur lors de la suppression du compte. Veuillez réessayer.');
+//     }
+// };
 
   useEffect(() => {
       setPasswordsMatch(passwordNew === passwordConfirm);
