@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import axios from 'axios';
+import anime from '../assets/anime.svg';
 
 const ProtectedRoute = ({ children }) => {
   const [actif, setActif] = useState(null); // null pour indiquer qu'on attend encore la réponse
@@ -33,9 +34,7 @@ const ProtectedRoute = ({ children }) => {
   }, [isLoggedIn]);
 
   // Pendant le chargement des données, on ne montre rien ou un spinner si besoin
-  if (loading) {
-    return <div>Loading...</div>;
-  }
+  if (loading) return <div className="flex justify-center items-center h-screen"><img src={anime} alt="Loading..." /></div>;
 
   // Redirections basées sur l'état de connexion et le statut actif du compte
   if (!isLoggedIn) {
@@ -43,7 +42,6 @@ const ProtectedRoute = ({ children }) => {
   }
 
   if (isLoggedIn && actif === false) {
-    
     return <Navigate to="/comptedesactiver" />;
     
   }

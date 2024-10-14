@@ -41,6 +41,7 @@ import Commentaires from "./Pages/Commentaires";
 import SearchResults from './Components/SearchResults';
 import Historique from "./Components/Historique";
 import LegalTextManager2 from "./Pages/LegalTextmanager2";
+import CompteDesactiver from "./Pages/CompteDesactiver";
 
 
 
@@ -55,6 +56,7 @@ const router = createBrowserRouter(
                 <Route path="conditions-generales" element={<TermsConditions/>}/>
                 <Route path="test" element={<Test2/>}/>
                 <Route path="forgot-password" element={<ForgotPassword/>}/>
+                <Route path="comptedesactiver" element={<CompteDesactiver/>}/>
 
                 {/* PLATEFORME */}
                 <Route path="fonctionnalites" element={<Fonctionnalites/>}/>
