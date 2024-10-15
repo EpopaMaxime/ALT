@@ -140,7 +140,7 @@ const LegislationDetail = () => {
               >
                 <span>Commentaires</span>
                 <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded">
-                  +{comments.length}
+                  {comments.length}
                 </span>
               </a>
             </li>
@@ -152,7 +152,7 @@ const LegislationDetail = () => {
               >
                 <span>Décisions</span>
                 <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded">
-                  +{decisions.length}
+                  {decisions.length}
                 </span>
               </a>
             </li>
@@ -203,7 +203,7 @@ const LegislationDetail = () => {
             {comments.length > 0 && (
   <div id="comments" className="mb-8">
     <h2 className="text-2xl font-bold mb-4">
-      Commentaires (+{comments.length})
+      Commentaires ({comments.length})
     </h2>
     {comments.slice(0, 3).map((comment, index) => (
       <div key={index} className="mb-4" id={`comment-${comment.id}`}>
@@ -237,7 +237,7 @@ const LegislationDetail = () => {
             {decisions.length > 0 && (
               <div id="decisions" className="mb-8">
                 <h2 className="text-2xl font-bold mb-4">
-                  Décisions (+{decisions.length})
+                  Décisions ({decisions.length})
                 </h2>
                 {decisions.slice(0, 3).map((decision, index) => (
                   <div key={index} className="mb-4" id={`decision-${decision.id}`}>
@@ -255,6 +255,7 @@ const LegislationDetail = () => {
     )}
               </div>
             )}
+<div className="w-full border-t border-gray-300 my-8"></div>
 
 
             <br/>
