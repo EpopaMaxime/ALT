@@ -39,6 +39,7 @@
     "react-scroll-to-top": "^3.0.0",
     "react-select": "^5.8.1",
     "react-slick": "^0.30.2",
+    "react-toastify": "^10.0.6",
     "react-ui-cards": "^2.0.0",
     "recharts": "^2.12.7",
     "tailwind-merge": "^2.5.2"

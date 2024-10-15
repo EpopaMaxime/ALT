@@ -61,13 +61,15 @@ const RenderDecision = () => {
   if (legislationId) {
     return (
       <div className="container mx-auto p-4">
-        <h1 className="text-2xl font-bold mb-4">+{filteredDecisions.length} Décisions liées à la législation</h1>
+        <h3 className="flex items-center pt-1 pb-1 px-8 text-lg font-semibold capitalize dark:text-white"> +{filteredDecisions.length} Décisions liées à la législation</h3>
+        <br/>
+
         {filteredDecisions.length > 0 ? (
           <ul>
             {filteredDecisions.map((decision) => (
               <li key={decision.id} className="mb-4">
                 <h2 className="text-xl font-semibold">{decision.title.rendered}</h2>
-                <p>{decision.acf.resume}</p>
+                <p className="text-sm font-medium leading-snug dark:text-gray-400 my-3">{decision.acf.resume}</p>
                 <Link 
                   to={`${decision.id}`} 
                   className="text-blue-500 hover:underline"

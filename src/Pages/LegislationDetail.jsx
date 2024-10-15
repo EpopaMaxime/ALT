@@ -130,7 +130,7 @@ const LegislationDetail = () => {
       <div className="flex-1 container mx-auto px-4 py-10 grid grid-cols-1 lg:grid-cols-4 gap-8">
         {/* Sidebar */}
         <aside className="lg:col-span-1 dark:bg-gray-700 p-4 rounded-xl shadow lg:sticky lg:top-0 lg:max-h-screen lg:overflow-y-auto">
-          <h2 className="text-xl font-bold mb-6">Auteur de la décision</h2>
+          <h2 className="text-xl font-bold mb-6">Autour de la décision</h2>
           <ul className="space-y-4">
             {/* Commentaires Link */}
             <li>
@@ -226,8 +226,10 @@ const LegislationDetail = () => {
       </div>
     )}
   </div>
-)}
 
+  
+)}
+   <div className="w-full border-t border-gray-300 my-8"></div>
 
 
 
@@ -240,7 +242,7 @@ const LegislationDetail = () => {
                 {decisions.slice(0, 3).map((decision, index) => (
                   <div key={index} className="mb-4" id={`decision-${decision.id}`}>
                     <h3 className="text-xl font-semibold mb-2">{extractLastPart(decision.title.rendered)}</h3>
-                    <div dangerouslySetInnerHTML={{ __html: decodeHTMLEntities(decision.content.rendered) }} />
+                    <div className="line-clamp-3" dangerouslySetInnerHTML={{ __html: decodeHTMLEntities(decision.content.rendered) }} />
                   </div>
                 ))}
                 {/* Afficher tout Link */}

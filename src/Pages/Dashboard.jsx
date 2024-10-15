@@ -65,7 +65,11 @@ const Dashboard = () => {
         const response = await axios.get('https://alt.back.qilinsa.com/wp-json/wp/v2/users/me', {
           headers: { Authorization: `Bearer ${token}` },
         });
+        
         const userData = response.data;
+        localStorage.setItem('iduser', userData.id);
+        const iduser = localStorage.getItem('iduser');
+        console.error('id utilisateur:', iduser);
         setTheme(userData.acf.theme);
         setImporter(userData.acf.importer);
         setIsExpert(['Avocat', 'Notaire'].includes(userData.acf.profession));
