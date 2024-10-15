@@ -61,7 +61,7 @@ const RenderDecision = () => {
   if (legislationId) {
     return (
       <div className="container mx-auto p-4">
-        <h3 className="flex items-center pt-1 pb-1 px-8 text-lg font-semibold capitalize dark:text-white"> +{filteredDecisions.length} Décisions liées à la législation</h3>
+        <h3 className="flex items-center pt-1 pb-1 px-8 text-lg font-semibold capitalize dark:text-white"> {filteredDecisions.length} Décisions liées à la législation</h3>
         <br/>
 
         {filteredDecisions.length > 0 ? (
