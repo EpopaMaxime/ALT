@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { NavLink, useLocation, useNavigate, useOutletContext } from 'react-router-dom';
+import SearchBar from '../Components/SearchBar';
 
 const categoryMapping = {
   all: { display: "Tout", type: "all" },
@@ -32,6 +33,47 @@ const SearchResults = () => {
   const [selectedLegislationSubType, setSelectedLegislationSubType] = useState('all');
   const [similarResults, setSimilarResults] = useState([]);
   const [relatedLegislations, setRelatedLegislations] = useState([]);
+  const [alertCreated, setAlertCreated] = useState(false);
+  const [buttonClicked, setButtonClicked] = useState(false);
+
+
+
+
+  const handleCreateAlert = async () => {
+    try {
+      const searchHistory = JSON.parse(localStorage.getItem('searchHistory'));
+      if (searchHistory && searchHistory.length > 0) {
+        const latestSearch = searchHistory[0];
+        const iduser = localStorage.getItem('iduser');
+        const date = new Date().toISOString().split('T')[0]; // Format the date as YYYY-MM-DD
+  
+        // Prepare the payload for the POST request
+        const payload = {
+          iduser: iduser || '22', // Use 22 as a default user ID if iduser is not found
+          recherche: latestSearch.query,
+          reponse: latestSearch.resultIds.join(','),
+          date: date,
+          diff: '0',
+        };
+        console.log('Payload sent:', payload);
+  
+        // Send the payload to the alert creation endpoint
+        const response = await axios.post('https://alt.back.qilinsa.com/wp-json/custom-api/v1/create-alert', payload);
+        console.log('Alert creation response:', response.data);
+  
+        // Change the button color and display a pop-up message on success
+        setButtonClicked(true);
+        setAlertCreated(true);
+  
+        // Reset the alert message after a few seconds
+        setTimeout(() => {
+          setAlertCreated(false);
+        }, 3000); // Hide the message after 3 seconds
+      }
+    } catch (error) {
+      console.error('Error creating alert:', error);
+    }
+  };
 
   useEffect(() => {
     setSelectedCategory(activeSearchCategory);
@@ -218,19 +260,34 @@ const SearchResults = () => {
 
   return (
     <section className="px-4 md:px-8 pt-4 bg-light-background dark:bg-dark-background text-light-text dark:text-dark-text">
-      {error && <div className="text-red-500 mb-4">{error}</div>}
-      <div className="mb-4 flex flex-wrap font-medium justify-center items-center space-x-2 md:space-x-4">
-        {Object.entries(categoryMapping).map(([key, value]) => (
-          <CategoryButton
-            key={key}
-            category={key}
-            display={value.display}
-            count={resultCounts[key === 'all' ? 'all' : `${key}s`]}
-            selectedCategory={selectedCategory}
-            onClick={key === 'all' ? handleShowAll : handleCategoryClick}
-          />
-        ))}
+    {/* Alert creation success message */}
+    <center>{alertCreated && <div className="text-green-500 mb-4">Votre alerte a été créée</div>}</center>
+
+    <div className="mb-4 flex flex-wrap font-medium justify-center items-center space-x-2 md:space-x-4">
+      {Object.entries(categoryMapping).map(([key, value]) => (
+        <CategoryButton
+          key={key}
+          category={key}
+          display={value.display}
+          count={resultCounts[key === 'all' ? 'all' : `${key}s`]}
+          selectedCategory={selectedCategory}
+          onClick={key === 'all' ? handleShowAll : handleCategoryClick}
+        />
+      ))}
+
+      <div className="flex-3 max-w-xl mx-auto">
+        <button
+          className={`font-bold py-2 px-4 rounded ${
+            buttonClicked ? 'bg-green-600 hover:bg-green-800' : 'bg-blue-500 hover:bg-blue-700'
+          } text-white`}
+          onClick={handleCreateAlert}
+        >
+          Créer une alerte
+        </button>
       </div>
+    </div>
+
+  
       
       {selectedCategory === 'legislation' && (
         <div className="mb-4 flex flex-wrap font-medium justify-center items-center space-x-2 md:space-x-4">
@@ -361,6 +418,7 @@ const RelatedLegislationCard = React.memo(({ legislation, handleResultClick, hig
     <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
       Législation associée à {legislation.relatedArticles.length} article(s)
     </p>
+    
     <div className="text-xs">
       {legislation.relatedArticles.slice(0, 2).map(article => (
         <div key={article.id} className="mb-2">
@@ -376,6 +434,7 @@ const RelatedLegislationCard = React.memo(({ legislation, handleResultClick, hig
     </div>
   </div>
 ));
+
 
 const SimilarResultCard = React.memo(({ result, handleResultClick, highlightText, createExcerpt, legislationSubTypes, articleExcerpts }) => (
   <div 

@@ -30,6 +30,36 @@ const Dashboard = () => {
   const [activeSearchCategory, setActiveSearchCategory] = useState('all');
   const sidebarRef = useRef(null);
 
+
+
+//   const handleCreateAlert = async () => {
+//     try {
+//         const searchHistory = JSON.parse(localStorage.getItem('searchHistory'));
+//         if (searchHistory && searchHistory.length > 0) {
+//             const latestSearch = searchHistory[0];
+//             const iduser = localStorage.getItem('iduser');
+//             const date = new Date().toISOString().split('T')[0]; // Format the date as YYYY-MM-DD
+
+//             // Prepare the payload for the POST request
+//             const payload = {
+//                 iduser: iduser || "22", // Use 22 as a default user ID if iduser is not found
+//                 recherche: latestSearch.query,
+//                 reponse: latestSearch.resultIds.join(','),
+//                 date: date,
+//                 diff: "0"
+//             };
+//             console.log('Payload sent:', payload);
+
+//             // Send the payload to the alert creation endpoint
+//             const response = await axios.post('https://alt.back.qilinsa.com/wp-json/custom-api/v1/create-alert', payload);
+//             console.log('Alert creation response:', response.data);
+           
+//         }
+//     } catch (error) {
+//         console.error('Error creating alert:', error);
+//     }
+// };
+
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
@@ -174,7 +204,15 @@ const Dashboard = () => {
               setActiveSearchCategory={setActiveSearchCategory}
             />
           </div>
-          
+          {/* <div className="flex-1 max-w-xl mx-auto">
+          <button
+    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+    onClick={handleCreateAlert}
+>
+    Create Alert
+</button>
+</div> */}
+
           <div className="flex items-center lg:w-1/3 justify-end space-x-9">
             <div className="hidden lg:flex items-center space-x-9">
               <NavLink to="alertes" className="flex flex-col items-center">

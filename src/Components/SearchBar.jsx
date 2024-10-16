@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const SearchBar = ({ activeSearchCategory, setActiveSearchCategory, setSearchQuery }) => {
     const [query, setQuery] = useState('');
@@ -8,19 +9,45 @@ const SearchBar = ({ activeSearchCategory, setActiveSearchCategory, setSearchQue
     const navigate = useNavigate();
     const dropdownRef = useRef(null);
 
+    
+
     useEffect(() => {
         const history = JSON.parse(localStorage.getItem('searchHistory')) || [];
         setSearchHistory(history);
     }, []);
 
-    const handleSearch = (e) => {
+    const handleSearch = async (e) => {
         e.preventDefault();
         if (query.trim()) {
-            const newHistory = [query, ...searchHistory.slice(0, 9)];
-            setSearchHistory(newHistory);
-            localStorage.setItem('searchHistory', JSON.stringify(newHistory));
-            navigate(`/dashboard/results?query=${encodeURIComponent(query)}`);
-            setIsDropdownVisible(false);
+            try {
+                // Fetch data from all endpoints
+                const endpoints = [
+                    `https://alt.back.qilinsa.com/wp-json/wp/v2/legislations?search=${query}`,
+                    `https://alt.back.qilinsa.com/wp-json/wp/v2/decisions?search=${query}`,
+                    `https://alt.back.qilinsa.com/wp-json/wp/v2/articles?search=${query}`,
+                    `https://alt.back.qilinsa.com/wp-json/wp/v2/commentaires?search=${query}`
+                ];
+    
+                const responses = await Promise.all(endpoints.map(endpoint => axios.get(endpoint)));
+                
+                // Collect all IDs from the responses
+                const resultIds = responses.flatMap(response => response.data.map(item => item.id));
+    
+                // Update the search history and store the results in localStorage
+                const newHistory = [{ query, resultIds }, ...searchHistory.slice(0, 9)];
+                setSearchHistory(newHistory);
+                localStorage.setItem('searchHistory', JSON.stringify(newHistory));
+    
+                // Redirect to the search results page
+                navigate(`/dashboard/results?query=${encodeURIComponent(query)}`);
+                setIsDropdownVisible(false);
+    
+                // Display the search term and results in the console for debugging
+                console.log('Search Query:', query);
+                console.log('Search Result IDs:', resultIds.join(','));
+            } catch (error) {
+                console.error('Error fetching search results:', error);
+            }
         }
     };
 
@@ -108,18 +135,19 @@ const SearchBar = ({ activeSearchCategory, setActiveSearchCategory, setSearchQue
                             </button>
                         </div>
                         <ul className="max-h-48 overflow-y-auto">
-                            {searchHistory.map((item, index) => (
-                                <li
-                                    key={index}
-                                    className="p-2 cursor-pointer dark:hover:bg-gray-700 hover:bg-gray-200"
-                                    onClick={() => {
-                                        setQuery(item);
-                                        handleSearch(new Event('submit'));
-                                    }}
-                                >
-                                        {item}
-                                </li>
-                            ))}
+                        {searchHistory.map((item, index) => (
+    <li
+        key={index}
+        className="p-2 cursor-pointer dark:hover:bg-gray-700 hover:bg-gray-200"
+        onClick={() => {
+            setQuery(item.query);
+            handleSearch(new Event('submit'));
+        }}
+    >
+        {item.query}
+    </li>
+))}
+
                         </ul>
                     </div>
                 )}
