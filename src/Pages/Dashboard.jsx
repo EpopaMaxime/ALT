@@ -436,6 +436,12 @@ const handleAlertClick = async (alert) => {
                       Paramètres experts
                     </NavLink>
                   )}
+                   <NavLink
+                      to="recherche/historique"
+                      className="block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
+                    >
+                      Historique de Recherche
+                    </NavLink>
                   <NavLink
                     to="aide"
                     className="block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
