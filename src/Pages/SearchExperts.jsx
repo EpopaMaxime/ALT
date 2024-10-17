@@ -70,7 +70,8 @@ export default function Component() {
 
           const validExperts = response.data.filter(expert => 
             expert.acf && expert.acf.nom && expert.acf.prenom && 
-            expert.acf.nom.trim() !== '' && expert.acf.prenom.trim() !== ''
+            expert.acf.nom.trim() !== '' && expert.acf.prenom.trim() !== '' &&
+            expert.acf.expert === true // Ensure 'expert' field is true
           );
 
           allExperts = [...allExperts, ...validExperts];
