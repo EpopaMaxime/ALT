@@ -183,9 +183,9 @@ const handleAlertClick = async (alert) => {
         diff: '0',
       };
 
-      console.log('Payload sent:', payload);
+      // console.log('Payload sent:', payload);
       const createAlertResponse = await axios.post('https://alt.back.qilinsa.com/wp-json/custom-api/v1/create-alert', payload);
-      console.log('Alert creation response:', createAlertResponse.data);
+      // console.log('Alert creation response:', createAlertResponse.data);
 
       // Navigate to search results
       navigate(`/dashboard/results?query=${encodeURIComponent(recherche)}`);

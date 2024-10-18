@@ -55,11 +55,11 @@ const SearchResults = () => {
           date: date,
           diff: '0',
         };
-        console.log('Payload sent:', payload);
+        // console.log('Payload sent:', payload);
   
         // Send the payload to the alert creation endpoint
         const response = await axios.post('https://alt.back.qilinsa.com/wp-json/custom-api/v1/create-alert', payload);
-        console.log('Alert creation response:', response.data);
+        // console.log('Alert creation response:', response.data);
   
         // Change the button color and display a pop-up message on success
         setButtonClicked(true);
