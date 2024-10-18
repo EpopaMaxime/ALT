@@ -298,8 +298,8 @@ const LegislationDetail = () => {
                       </h3>
                 </Link>
 
+                  <Link to={`/dashboard/article/${item.id}`}><div dangerouslySetInnerHTML={{ __html: decodeHTMLEntities(item.content.rendered) }} /></Link>
                   
-                  <div dangerouslySetInnerHTML={{ __html: decodeHTMLEntities(item.content.rendered) }} />
                 </div>
               ))}
             </div>
