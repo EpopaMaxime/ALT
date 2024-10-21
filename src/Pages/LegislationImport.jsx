@@ -438,17 +438,40 @@ const LegislationImport = () => {
   const fetchAvailableTexts = useCallback(async () => {
     try {
       const [articlesResponse, decisionsResponse, commentairesResponse] = await Promise.all([
-        axios.get(`${API_BASE_URL}/articles`),
-        axios.get(`${API_BASE_URL}/decisions`),
-        axios.get(`${API_BASE_URL}/commentaires`)
+        axios.get(`${API_BASE_URL}/articles?per_page=500`),
+        axios.get(`${API_BASE_URL}/decisions?per_page=500`),
+        axios.get(`${API_BASE_URL}/commentaires?per_page=500`)
       ]);
-
+  
+      const articlesWithLegislation = await Promise.all(
+        articlesResponse.data.map(async article => {
+          // Récupération de l'identifiant de la législation associé à l'article
+          const legislationId = article.acf?.Legislation_ou_titre_ou_chapitre_ou_section?.[0];
+  
+          // Initialiser le titre de la législation comme vide par défaut
+          let legislationTitle = '';
+  
+          // Si un identifiant de législation est disponible, faire une requête pour récupérer le titre
+          if (legislationId) {
+            try {
+              const legislationResponse = await axios.get(`${API_BASE_URL}/legislations/${legislationId}`);
+              legislationTitle = legislationResponse.data.title.rendered;
+            } catch (error) {
+              console.error(`Erreur lors de la récupération de la législation pour l'article ${article.id}:`, error);
+            }
+          }
+  
+          // Retourner l'article avec son titre et le titre de la législation associée
+          return {
+            value: article.id.toString(),
+            label: `${article.title.rendered} - Législation: ${legislationTitle || 'Non spécifiée'}`,
+            type: 'Article'
+          };
+        })
+      );
+  
       setAvailableTexts({
-        articles: articlesResponse.data.map(article => ({
-          value: article.id.toString(),
-          label: article.title.rendered,
-          type: 'Article'
-        })),
+        articles: articlesWithLegislation,
         decisions: decisionsResponse.data.map(decision => ({
           value: decision.id.toString(),
           label: decision.title.rendered,
@@ -465,6 +488,7 @@ const LegislationImport = () => {
       setError('Erreur lors de la récupération des textes disponibles');
     }
   }, []);
+  
 
   useEffect(() => {
     fetchAvailableTexts();
