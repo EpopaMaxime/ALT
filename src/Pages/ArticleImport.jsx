@@ -62,49 +62,50 @@ const ArticleImport = () => {
     if (!destination) return;
 
     if (source.droppableId === 'unstructured' && destination.droppableId === 'unstructured') {
-      return;
+        return;
     }
 
     if (source.droppableId === 'structure' && destination.droppableId === 'structure') {
-      if (source.index !== destination.index) {
-        const sourceList = [...legislationStructure];
-        const [removed] = sourceList.splice(source.index, 1);
-        sourceList.splice(destination.index, 0, removed);
+        if (source.index !== destination.index) {
+            const sourceList = [...legislationStructure];
+            const [removed] = sourceList.splice(source.index, 1);
+            sourceList.splice(destination.index, 0, removed);
 
-        const updatedSourceList = sourceList.map((item, index) => ({
-          ...item,
-          position: index + 1
-        }));
+            const updatedSourceList = sourceList.map((item, index) => ({
+                ...item,
+                position: index + 1
+            }));
 
-        setLegislationStructure(updatedSourceList);
-      }
-      return;
+            setLegislationStructure(updatedSourceList);
+        }
+        return;
     }
 
     const sourceList = source.droppableId === 'structure' ? [...legislationStructure] : [...unstructuredArticles];
     const destList = destination.droppableId === 'structure' ? [...legislationStructure] : [...unstructuredArticles];
 
     const [removed] = sourceList.splice(source.index, 1);
-    destList.splice(destination.index, 0, removed);
+    destList.splice(destination.index, 0, { ...removed, isDroppedToStructure: destination.droppableId === 'structure' });
 
     const updatedDestList = destList.map((item, index) => ({
-      ...item,
-      position: index + 1
+        ...item,
+        position: index + 1
     }));
 
     if (source.droppableId !== destination.droppableId) {
-      if (destination.droppableId === 'structure') {
-        setLegislationStructure(updatedDestList);
-        setUnstructuredArticles(sourceList);
-      } else {
-        setUnstructuredArticles(updatedDestList);
-        setLegislationStructure(sourceList.map((item, index) => ({
-          ...item,
-          position: index + 1
-        })));
-      }
+        if (destination.droppableId === 'structure') {
+            setLegislationStructure(updatedDestList);
+            setUnstructuredArticles(sourceList);
+        } else {
+            setUnstructuredArticles(updatedDestList);
+            setLegislationStructure(sourceList.map((item, index) => ({
+                ...item,
+                position: index + 1
+            })));
+        }
     }
-  }, [legislationStructure, unstructuredArticles]);
+}, [legislationStructure, unstructuredArticles]);
+
 
   useEffect(() => {
     if (currentStep === 3 && selectedLegislation) {
@@ -627,30 +628,33 @@ const ArticleImport = () => {
                       <div className="w-full md:w-2/3">
                         <h3 className="text-lg font-medium mb-2">Structure de la législation</h3>
                         <ul className="space-y-2 min-h-[400px] border-2 border-dashed border-gray-300 p-4 rounded-md">
-                          {legislationStructure.map((item, index) => (
-                            <li
-                              key={item.id}
-                              className="bg-gray-100 p-2 rounded flex items-center mb-2"
-                              draggable
-                              onDragStart={(e) => {
-                                e.dataTransfer.setData('text/plain', JSON.stringify({ id: item.id, index, compartment: 'structure' }));
-                              }}
-                              onDragOver={(e) => e.preventDefault()}
-                              onDrop={(e) => {
-                                e.preventDefault();
-                                const droppedItem = JSON.parse(e.dataTransfer.getData('text/plain'));
-                                onDragEnd({
-                                  source: { index: droppedItem.index, droppableId: droppedItem.compartment },
-                                  destination: { index, droppableId: 'structure' }
-                                });
-                              }}
-                            >
-                              <GripVertical className="mr-2 text-gray-500" />
-                              <span>{item.title?.rendered || item.acf?.titre || item.title || 'Sans titre'}</span>
-                              <span className="ml-auto text-sm text-gray-500">Position: {item.position}</span>
-                            </li>
-                          ))}
-                        </ul>
+  {legislationStructure.map((item, index) => (
+    <li
+      key={item.id}
+      className={`p-2 rounded flex items-center mb-2 ${
+        item.isDroppedToStructure ? 'bg-green-100' : 'bg-gray-100'
+      }`}
+      draggable
+      onDragStart={(e) => {
+        e.dataTransfer.setData('text/plain', JSON.stringify({ id: item.id, index, compartment: 'structure' }));
+      }}
+      onDragOver={(e) => e.preventDefault()}
+      onDrop={(e) => {
+        e.preventDefault();
+        const droppedItem = JSON.parse(e.dataTransfer.getData('text/plain'));
+        onDragEnd({
+          source: { index: droppedItem.index, droppableId: droppedItem.compartment },
+          destination: { index, droppableId: 'structure' }
+        });
+      }}
+    >
+      <GripVertical className="mr-2 text-gray-500" />
+      <span>{item.title?.rendered || item.acf?.titre || item.title || 'Sans titre'}</span>
+      <span className="ml-auto text-sm text-gray-500">Position: {item.position}</span>
+    </li>
+  ))}
+</ul>
+
                       </div>
                       <div className="w-full md:w-1/3">
                         <h3 className="text-lg font-medium mb-2">Articles à importer</h3>
@@ -697,51 +701,64 @@ const ArticleImport = () => {
               
               <h4 className="text-md font-medium mt-4 mb-2">Articles et leurs liaisons :</h4>
               {bulkSelection ? (
-                <div>
-                  <ul className="list-disc list-inside">
-                    {selectedArticles.map((index) => (
-                      <li key={index}>{parsedArticles[index].Title}</li>
-                    ))}
-                  </ul>
-                  <div className="mt-2">
-                    <h5 className="font-medium">Commentaires liés :</h5>
-                    <ul className="list-disc list-inside ml-4">
-                      {bulkLinkedTexts.commentaires.map((comment, i) => (
-                        <li key={i}>{comment.label}</li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div className="mt-2">
-                    <h5 className="font-medium">Décisions liées :</h5>
-                    <ul className="list-disc list-inside ml-4">
-                      {bulkLinkedTexts.decisions.map((decision, i) => (
-                        <li key={i}>{decision.label}</li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              ) : (
-                selectedArticles.map((index) => {
-                  const article = parsedArticles[index];
-                  const structureItem = legislationStructure.find(item => item.id === index.toString());
-                  return (
-                    <div key={index} className="mb-4 bg-gray-50 p-3 rounded-md">
-                      <h5 className="font-medium">{article.Title}</h5>
-                      <p className="text-sm text-gray-500">Position : {structureItem ? structureItem.position : 'Non définie'}</p>
-                      {["Commentaire", "Décision"].map(type => (
-                        <div key={type}>
-                          <h6 className="font-medium text-sm mt-2">{type}s liés :</h6>
-                          <ul className="list-disc list-inside ml-4">
-                            {selectedLinkedTexts[index]?.filter(text => text.type === type).map((text, i) => (
-                              <li key={i}>{text.label}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      ))}
-                    </div>
-                  );
-                })
-              )}
+  <div>
+    <ul className="list-disc list-inside">
+      {selectedArticles.map((index) => (
+        <li
+          key={index}
+          className={`p-2 rounded ${
+            legislationStructure.some(item => item.id === index.toString()) ? 'bg-green-100' : ''
+          }`}
+        >
+          {parsedArticles[index].Title}
+        </li>
+      ))}
+    </ul>
+    <div className="mt-2">
+      <h5 className="font-medium">Commentaires liés :</h5>
+      <ul className="list-disc list-inside ml-4">
+        {bulkLinkedTexts.commentaires.map((comment, i) => (
+          <li key={i}>{comment.label}</li>
+        ))}
+      </ul>
+    </div>
+    <div className="mt-2">
+      <h5 className="font-medium">Décisions liées :</h5>
+      <ul className="list-disc list-inside ml-4">
+        {bulkLinkedTexts.decisions.map((decision, i) => (
+          <li key={i}>{decision.label}</li>
+        ))}
+      </ul>
+    </div>
+  </div>
+) : (
+  selectedArticles.map((index) => {
+    const article = parsedArticles[index];
+    const structureItem = legislationStructure.find(item => item.id === index.toString());
+    return (
+      <div
+        key={index}
+        className={`mb-4 p-3 rounded-md ${
+          structureItem ? 'bg-green-100' : 'bg-gray-50'
+        }`}
+      >
+        <h5 className="font-medium">{article.Title}</h5>
+        <p className="text-sm text-gray-500">Position : {structureItem ? structureItem.position : 'Non définie'}</p>
+        {["Commentaire", "Décision"].map(type => (
+          <div key={type}>
+            <h6 className="font-medium text-sm mt-2">{type}s liés :</h6>
+            <ul className="list-disc list-inside ml-4">
+              {selectedLinkedTexts[index]?.filter(text => text.type === type).map((text, i) => (
+                <li key={i}>{text.label}</li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    );
+  })
+)}
+
   
               {selectedLegislation && (
                 <div className="mt-4">

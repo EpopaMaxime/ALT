@@ -112,7 +112,7 @@ const LegislationImport = () => {
             setError("Le fichier CSV est vide");
             setParsedLegislations([]);
           } else if (!validateCSVStructure(cleanedData)) {
-            setError("La structure du fichier CSV est invalide");
+            setError("Le fichier choisi n'est pas une législation.");
             setParsedLegislations([]);
           } else {
             const checkedLegislations = await checkExistingLegislations(cleanedData);
