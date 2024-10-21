@@ -68,29 +68,48 @@ export default function Widget() {
   };
 
   // Function to handle search when an alert item is clicked
-  const handleAlertClick = async (query) => {
-    if (query.trim()) {
-      try {
-        const endpoints = [
-          `https://alt.back.qilinsa.com/wp-json/wp/v2/legislations?search=${query}`,
-          `https://alt.back.qilinsa.com/wp-json/wp/v2/decisions?search=${query}`,
-          `https://alt.back.qilinsa.com/wp-json/wp/v2/articles?search=${query}`,
-          `https://alt.back.qilinsa.com/wp-json/wp/v2/commentaires?search=${query}`
-        ];
+const handleAlertClick = async (query) => {
+  if (query.trim()) {
+    try {
+      const endpoints = [
+        `https://alt.back.qilinsa.com/wp-json/wp/v2/legislations?search=${query}`,
+        `https://alt.back.qilinsa.com/wp-json/wp/v2/decisions?search=${query}`,
+        `https://alt.back.qilinsa.com/wp-json/wp/v2/articles?search=${query}`,
+        `https://alt.back.qilinsa.com/wp-json/wp/v2/commentaires?search=${query}`
+      ];
 
-        const responses = await Promise.all(endpoints.map(endpoint => axios.get(endpoint)));
-        const resultIds = responses.flatMap(response => response.data.map(item => item.id));
+      const responses = await Promise.all(endpoints.map(endpoint => axios.get(endpoint)));
+      const resultIds = responses.flatMap(response => response.data.map(item => item.id));
 
-        const searchHistory = JSON.parse(localStorage.getItem('searchHistory')) || [];
-        const newHistory = [{ query, resultIds }, ...searchHistory.slice(0, 9)];
-        localStorage.setItem('searchHistory', JSON.stringify(newHistory));
+      const searchHistory = JSON.parse(localStorage.getItem('searchHistory')) || [];
+      const newHistory = [{ query, resultIds }, ...searchHistory.slice(0, 9)];
+      localStorage.setItem('searchHistory', JSON.stringify(newHistory));
 
-        navigate(`/dashboard/results?query=${encodeURIComponent(query)}`);
-      } catch (error) {
-        console.error('Error fetching search results:', error);
-      }
+      // Make POST request to create an alert
+      const iduser = localStorage.getItem('iduser') || '22'; // Use '22' as default if no user ID
+      const date = new Date().toISOString().split('T')[0]; // Format the date as YYYY-MM-DD
+
+      const payload = {
+        iduser,
+        recherche: query,
+        reponse: resultIds.join(','), // Join the result IDs
+        date,
+        diff: '0',
+      };
+
+      console.log('Payload sent:', payload);
+      const createAlertResponse = await axios.post('https://alt.back.qilinsa.com/wp-json/custom-api/v1/create-alert', payload);
+      console.log('Alert creation response:', createAlertResponse.data);
+
+      // Navigate to search results
+      navigate(`/dashboard/results?query=${encodeURIComponent(query)}`);
+      
+    } catch (error) {
+      console.error('Error fetching search results or creating alert:', error);
     }
-  };
+  }
+};
+
 
   return (
     <div className="min-h-screen pl-8 bg-light-background dark:bg-dark-background text-light-text dark:text-dark-text">

@@ -104,6 +104,7 @@ const ArticleDetail = () => {
                   <li key={decision.id}>
                     <a onClick={() => document.getElementById(`decision-${decision.id}`).scrollIntoView({ behavior: 'smooth' })} className="cursor-pointer text-green-500 hover:underline">
                       {decision.title.rendered}
+                      
                     </a>
                   </li>
                 ))}
@@ -128,6 +129,17 @@ const ArticleDetail = () => {
         <main className="lg:col-span-3 p-6 rounded shadow">
           <div className="text-lg leading-relaxed">
             <h1 className="text-2xl font-semibold mb-4 mt-4">{article.title.rendered}</h1>
+            <h1 className="text-2xl font-semibold mb-4 mt-4">
+                  <a
+                      href={article.acf.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-500 hover:underline"
+                  >
+                      Source institutionel
+                  </a>
+              </h1>
+
             {legislationTitle && (
               <p className="mb-2">
                 Législation associée: <span className="ml-2 cursor-pointer text-green-500 hover:underline" onClick={navigateToLegislation}>{legislationTitle}</span>

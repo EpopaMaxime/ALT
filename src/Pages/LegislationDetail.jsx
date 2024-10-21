@@ -2,7 +2,25 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useParams } from 'react-router-dom';
 import anime from '../assets/anime.svg';
-import { Link } from 'react-router-dom';
+import { Link, } from 'react-router-dom';
+
+
+const checkArticleId = async (id) => {
+  try {
+    const response = await axios.get(`https://alt.back.qilinsa.com/wp-json/wp/v2/articles/${id}`);
+    return true; // If the API returns a valid article, we assume the ID is valid
+  } catch (error) {
+    if (error.response && error.response.data.message === "Invalid post ID.") {
+      // Handle invalid article ID
+      // console.log("Invalid post ID.");
+      return false;
+    } else {
+      // Handle other possible errors
+      console.error("Error checking article ID:", error);
+      return false;
+    }
+  }
+};
 
 
 const LegislationDetail = () => {
@@ -246,17 +264,16 @@ const LegislationDetail = () => {
                   </div>
                 ))}
                 {/* Afficher tout Link */}
-    {decisions.length > 3 && (
-      <div className="flex justify-end mt-4">
-        <Link to={`/dashboard/decision?legislationId=${id}`} className="text-blue-500 hover:underline">
-          Afficher tout ({decisions.length})
-        </Link>
-      </div>
-    )}
+                    {decisions.length > 3 && (
+                      <div className="flex justify-end mt-4">
+                        <Link to={`/dashboard/decision?legislationId=${id}`} className="text-blue-500 hover:underline">
+                          Afficher tout ({decisions.length})
+                        </Link>
+                      </div>
+                    )}
               </div>
             )}
-<div className="w-full border-t border-gray-300 my-8"></div>
-
+               <div className="w-full border-t border-gray-300 my-8"></div>
 
             <br/>
 
@@ -265,8 +282,24 @@ const LegislationDetail = () => {
 
               {details.map((item, index) => (
                 <div key={index} className="mb-6" id={`detail-${item.id}`}>
-                  <h3 className="text-xl font-semibold mb-2">{extractLastPart(item.title.rendered)}</h3>
-                  <div dangerouslySetInnerHTML={{ __html: decodeHTMLEntities(item.content.rendered) }} />
+                <Link 
+                      to="#"
+                      className="hover:text-green-500"
+                      onClick={async (e) => {
+                        e.preventDefault();
+                        const isValid = await checkArticleId(item.id);
+                        if (isValid) {
+                          window.location.href = `/dashboard/article/${item.id}`;
+                        }
+                      }}
+                    >
+                      <h3 className="text-xl font-semibold mb-2">
+                        {extractLastPart(item.title.rendered)}
+                      </h3>
+                </Link>
+
+                  <Link to={`/dashboard/article/${item.id}`}><div dangerouslySetInnerHTML={{ __html: decodeHTMLEntities(item.content.rendered) }} /></Link>
+                  
                 </div>
               ))}
             </div>
