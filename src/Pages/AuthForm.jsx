@@ -120,23 +120,29 @@ const AuthForm = () => {
   
     const onFormSubmitCon = (event) => {
       event.preventDefault();
-  
+    
+      // Check if the user has an internet connection
+      if (!navigator.onLine) {
+        setConState({ ...conState, conError: 'Vous n\'êtes pas connecté à internet', conLoading: false });
+        return;
+      }
+    
       const siteUrl = 'https://alt.back.qilinsa.com/';
-  
+    
       const loginData = {
         username: conState.conUsername,
         password: conState.conPassword,
       };
-  
+    
       setConState({ ...conState, conLoading: true });
-  
+    
       axios.post(`${siteUrl}/wp-json/jwt-auth/v1/token`, loginData)
         .then(res => {
           if (undefined === res.data.token) {
             setConState({ ...conState, conError: 'Identifiants invalides', conLoading: false });
             return;
           }
-          
+    
           if (conState.conRememberMe) {
             Cookies.set('token', res.data.token, { expires: 2 });
             Cookies.set('conUserName', res.data.user_nicename, { expires: 2 });
@@ -148,7 +154,7 @@ const AuthForm = () => {
             localStorage.setItem('conUserName', res.data.user_nicename);
             localStorage.setItem('conUserEmail', res.data.user_email);
           }
-  
+    
           setConState({
             ...conState,
             conLoading: false,
@@ -158,14 +164,14 @@ const AuthForm = () => {
             conLoggedIn: true,
             conError: ''
           });
-  
+    
           navigate('/dashboard');
         })
         .catch(err => {
           setConState({ ...conState, conError: 'Identifiants invalides', conLoading: false });
         });
     };
-
+    
     
   
     const handleOnChangeCon = (event) => {

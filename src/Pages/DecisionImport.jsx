@@ -89,7 +89,7 @@ const DecisionImport = () => {
             setError("Le fichier CSV est vide");
             setParsedDecisions([]);
           } else if (!validateCSVStructure(cleanedData)) {
-            setError("La structure du fichier CSV est invalide");
+            setError("Le fichier choisi n'est pas une décision.");
             setParsedDecisions([]);
           } else {
             checkExistingDecisions(cleanedData);

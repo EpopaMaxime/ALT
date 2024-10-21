@@ -88,7 +88,7 @@ const CommentaireImport = () => {
             setError("Le fichier CSV est vide");
             setParsedCommentaires([]);
           } else if (!validateCSVStructure(cleanedData)) {
-            setError("La structure du fichier CSV est invalide");
+            setError("Le fichier choisi n'est pas un commentaire.");
             setParsedCommentaires([]);
           } else {
             checkExistingCommentaires(cleanedData);
