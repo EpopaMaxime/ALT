@@ -439,8 +439,8 @@ const LegislationImport = () => {
     try {
       const [articlesResponse, decisionsResponse, commentairesResponse] = await Promise.all([
         axios.get(`${API_BASE_URL}/articles?per_page=500`),
-        axios.get(`${API_BASE_URL}/decisions?per_page=500`),
-        axios.get(`${API_BASE_URL}/commentaires?per_page=500`)
+        axios.get(`${API_BASE_URL}/decisions`),
+        axios.get(`${API_BASE_URL}/commentaires`)
       ]);
   
       const articlesWithLegislation = await Promise.all(
