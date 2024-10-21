@@ -438,9 +438,9 @@ const LegislationImport = () => {
   const fetchAvailableTexts = useCallback(async () => {
     try {
       const [articlesResponse, decisionsResponse, commentairesResponse] = await Promise.all([
-        axios.get(`${API_BASE_URL}/articles?per_page=500`),
-        axios.get(`${API_BASE_URL}/decisions?per_page=500`),
-        axios.get(`${API_BASE_URL}/commentaires?per_page=500`)
+        axios.get(`${API_BASE_URL}/articles`),
+        axios.get(`${API_BASE_URL}/decisions`),
+        axios.get(`${API_BASE_URL}/commentaires`)
       ]);
   
       const articlesWithLegislation = await Promise.all(
@@ -465,13 +465,19 @@ const LegislationImport = () => {
           return {
             value: article.id.toString(),
             label: `${article.title.rendered} - Législation: ${legislationTitle || 'Non spécifiée'}`,
-            type: 'Article'
+            type: 'Article',
+            legislationTitle
           };
         })
       );
   
+      // Filtrer pour ne garder que les articles ayant la législation "Non spécifiée"
+      const articlesWithNoLegislation = articlesWithLegislation.filter(
+        article => article.legislationTitle === ''
+      );
+  
       setAvailableTexts({
-        articles: articlesWithLegislation,
+        articles: articlesWithNoLegislation,
         decisions: decisionsResponse.data.map(decision => ({
           value: decision.id.toString(),
           label: decision.title.rendered,
@@ -488,6 +494,7 @@ const LegislationImport = () => {
       setError('Erreur lors de la récupération des textes disponibles');
     }
   }, []);
+  
   
 
   useEffect(() => {
