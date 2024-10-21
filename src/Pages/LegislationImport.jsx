@@ -112,7 +112,7 @@ const LegislationImport = () => {
             setError("Le fichier CSV est vide");
             setParsedLegislations([]);
           } else if (!validateCSVStructure(cleanedData)) {
-            setError("Le fichier choisi n'est pas une législation.");
+            setError("La structure du fichier CSV est invalide");
             setParsedLegislations([]);
           } else {
             const checkedLegislations = await checkExistingLegislations(cleanedData);
@@ -438,9 +438,9 @@ const LegislationImport = () => {
   const fetchAvailableTexts = useCallback(async () => {
     try {
       const [articlesResponse, decisionsResponse, commentairesResponse] = await Promise.all([
-        axios.get(`${API_BASE_URL}/articles?per_page=500`),
-        axios.get(`${API_BASE_URL}/decisions?per_page=500`),
-        axios.get(`${API_BASE_URL}/commentaires?per_page=500`)
+        axios.get(`${API_BASE_URL}/articles`),
+        axios.get(`${API_BASE_URL}/decisions`),
+        axios.get(`${API_BASE_URL}/commentaires`)
       ]);
   
       const articlesWithLegislation = await Promise.all(
