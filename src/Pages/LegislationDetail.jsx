@@ -49,29 +49,29 @@ const LegislationDetail = () => {
       try {
         const res = await axios.get(`https://alt.back.qilinsa.com/wp-json/wp/v2/legislations/${id}`);
         setLegislation(res.data);
-
-         // Fetch category name
-         if (res.data.categories_legislations.length > 0) {
+  
+        // Fetch category name
+        if (res.data.categories_legislations.length > 0) {
           const categoryId = res.data.categories_legislations[0];
           const categoryRes = await axios.get(`https://alt.back.qilinsa.com/wp-json/wp/v2/categories_legislations/${categoryId}`);
           setCategoryName(categoryRes.data.name);
         }
-
+  
         // Format and set entry date
         const entryDateFormatted = res.data.acf.date_entree || '';
         if (entryDateFormatted) {
           const formattedDate = `${entryDateFormatted.slice(6, 8)} ${new Date(entryDateFormatted.slice(0, 4), entryDateFormatted.slice(4, 6) - 1).toLocaleString('default', { month: 'long' })} ${entryDateFormatted.slice(0, 4)}`;
           setEntryDate(formattedDate);
         }
-        
+  
         // Fetch the "code" field
-        const code = res.data.acf.code || ''; // Adjust the path based on your actual JSON structure
-        setCode(code); // Store the code
-
+        const code = res.data.acf.code || '';
+        setCode(code);
+  
         const identifiers = res.data.acf.titre_ou_chapitre_ou_section_ou_articles || [];
         const decisionIdentifiers = res.data.acf.decision ? res.data.acf.decision : [];
         const commentIdentifiers = res.data.acf.commentaire ? res.data.acf.commentaire : [];
-
+  
         const fetchData = async (id) => {
           for (let endpoint of endpoints) {
             try {
@@ -83,7 +83,7 @@ const LegislationDetail = () => {
           }
           return null; // Return null if data not found in any endpoint
         };
-
+  
         const fetchDecisions = async (id) => {
           try {
             const res = await axios.get(`https://alt.back.qilinsa.com/wp-json/wp/v2/decisions/${id}`);
@@ -92,7 +92,7 @@ const LegislationDetail = () => {
             return null; // Return null if decision not found
           }
         };
-
+  
         const fetchComments = async (id) => {
           try {
             const res = await axios.get(`https://alt.back.qilinsa.com/wp-json/wp/v2/commentaires/${id}`);
@@ -101,12 +101,31 @@ const LegislationDetail = () => {
             return null; // Return null if comment not found
           }
         };
-
+  
         const detailsData = await Promise.all(identifiers.map(fetchData));
         const decisionsData = await Promise.all(decisionIdentifiers.map(fetchDecisions));
         const commentsData = await Promise.all(commentIdentifiers.map(fetchComments));
-
-        setDetails(detailsData.filter(Boolean));
+  
+        // Remove redundant articles based on title and keep only the article with the latest date_entree
+        const uniqueArticles = detailsData
+          .filter(Boolean)
+          .reduce((acc, article) => {
+            const existingArticle = acc.find(a => a.title.rendered === article.title.rendered);
+            if (existingArticle) {
+              const existingDate = existingArticle.acf.date_entree;
+              const newDate = article.acf.date_entree;
+              if (newDate > existingDate) {
+                // Replace with the article that has the latest date_entree
+                acc = acc.filter(a => a.title.rendered !== article.title.rendered);
+                acc.push(article);
+              }
+            } else {
+              acc.push(article);
+            }
+            return acc;
+          }, []);
+  
+        setDetails(uniqueArticles);
         setDecisions(decisionsData.filter(Boolean));
         setComments(commentsData.filter(Boolean));
       } catch (err) {
@@ -115,9 +134,10 @@ const LegislationDetail = () => {
         setLoading(false);
       }
     };
-
+  
     fetchLegislation();
   }, [id]);
+  
 
   const scrollToSection = (id) => {
     const element = document.getElementById(id);
@@ -246,7 +266,7 @@ const LegislationDetail = () => {
   </div>
 
   
-)}
+    )}
    <div className="w-full border-t border-gray-300 my-8"></div>
 
 

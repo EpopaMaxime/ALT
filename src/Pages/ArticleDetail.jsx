@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import parse from 'html-react-parser';
 import anime from '../assets/anime.svg';
+import ArticleTimeline from './ArticleTimeline';
 
 const ArticleDetail = () => {
   const { id } = useParams();
@@ -129,6 +130,8 @@ const ArticleDetail = () => {
         <main className="lg:col-span-3 p-6 rounded shadow">
           <div className="text-lg leading-relaxed">
             <h1 className="text-2xl font-semibold mb-4 mt-4">{article.title.rendered}</h1>
+            <br/>
+            <ArticleTimeline />
             <h1 className="text-2xl font-semibold mb-4 mt-4">
                   <a
                       href={article.acf.url}

@@ -43,8 +43,8 @@ const SearchBar = ({ activeSearchCategory, setActiveSearchCategory, setSearchQue
                 setIsDropdownVisible(false);
     
                 // Display the search term and results in the console for debugging
-                console.log('Search Query:', query);
-                console.log('Search Result IDs:', resultIds.join(','));
+                // console.log('Search Query:', query);
+                // console.log('Search Result IDs:', resultIds.join(','));
             } catch (error) {
                 console.error('Error fetching search results:', error);
             }

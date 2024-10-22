@@ -166,7 +166,7 @@ const ArticleImport = () => {
             setError("Le fichier CSV est vide");
             setParsedArticles([]);
           } else if (!validateCSVStructure(cleanedData)) {
-            setError("La structure du fichier CSV est invalide");
+            setError("Le fichier choisi n'est pas un article.");
             setParsedArticles([]);
           } else {
             setParsedArticles(cleanedData);
