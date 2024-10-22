@@ -63,6 +63,7 @@ const Dashboard = () => {
         setTheme(userData.acf.theme);
         setImporter(userData.acf.importer);
         setIsExpert(['Avocat', 'Notaire'].includes(userData.acf.profession));
+        // console.log(iduser);
 
         if (userData.acf.avatar) {
           setAvatarId(userData.acf.avatar);
