@@ -108,22 +108,45 @@ const LegislationDetail = () => {
   
         // Remove redundant articles based on title and keep only the article with the latest date_entree
         const uniqueArticles = detailsData
-          .filter(Boolean)
-          .reduce((acc, article) => {
-            const existingArticle = acc.find(a => a.title.rendered === article.title.rendered);
-            if (existingArticle) {
-              const existingDate = existingArticle.acf.date_entree;
-              const newDate = article.acf.date_entree;
+        .filter(Boolean)
+        .reduce((acc, currentArticle) => {
+          // Normalize the current article title by removing extra spaces
+          const normalizedCurrentTitle = currentArticle.title.rendered
+            .replace(/\s+/g, ' ')  // Replace multiple spaces with single space
+            .trim();               // Remove leading/trailing spaces
+          
+          // Find if an article with the same normalized title exists
+          const existingArticle = acc.find(article => {
+            const normalizedExistingTitle = article.title.rendered
+              .replace(/\s+/g, ' ')
+              .trim();
+            return normalizedCurrentTitle === normalizedExistingTitle;
+          });
+      
+          if (existingArticle) {
+            // Convert date strings to numbers for proper comparison
+            // date_entree format is "YYYYMMDD"
+            const existingDate = parseInt(existingArticle.acf.date_entree, 10);
+            const newDate = parseInt(currentArticle.acf.date_entree, 10);
+      
+            if (!isNaN(newDate) && !isNaN(existingDate)) {
               if (newDate > existingDate) {
-                // Replace with the article that has the latest date_entree
-                acc = acc.filter(a => a.title.rendered !== article.title.rendered);
-                acc.push(article);
+                // Remove the existing article and add the new one
+                return [
+                  ...acc.filter(article => 
+                    article.title.rendered.replace(/\s+/g, ' ').trim() !== normalizedCurrentTitle
+                  ),
+                  currentArticle
+                ];
               }
-            } else {
-              acc.push(article);
             }
+            // If dates are invalid or new date is not greater, keep existing articles
             return acc;
-          }, []);
+          }
+          
+          // If no existing article found, add the new one
+          return [...acc, currentArticle];
+        }, []);
   
         setDetails(uniqueArticles);
         setDecisions(decisionsData.filter(Boolean));
