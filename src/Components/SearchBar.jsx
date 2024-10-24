@@ -135,20 +135,20 @@ const SearchBar = ({ activeSearchCategory, setActiveSearchCategory, setSearchQue
                             </button>
                         </div>
                         <ul className="max-h-48 overflow-y-auto">
-                        {searchHistory.map((item, index) => (
-    <li
-        key={index}
-        className="p-2 cursor-pointer dark:hover:bg-gray-700 hover:bg-gray-200"
-        onClick={() => {
-            setQuery(item.query);
-            handleSearch(new Event('submit'));
-        }}
-    >
-        {item.query}
-    </li>
-))}
+    {searchHistory.map((item, index) => (
+        <li
+            key={index}
+            className="p-2 cursor-pointer dark:hover:bg-gray-700 hover:bg-gray-200"
+            onClick={() => {
+                setQuery(item.query);
+                handleSearch(new Event('submit'));
+            }}
+        >
+            {item.query}
+        </li>
+    ))}
+</ul>
 
-                        </ul>
                     </div>
                 )}
             </div>
