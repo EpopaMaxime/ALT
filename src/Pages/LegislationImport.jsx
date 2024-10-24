@@ -337,7 +337,6 @@ const LegislationImport = () => {
     }
   };
   
-  
 
   const exportModifiedCSV = useCallback(() => {
     if (selectedLegislationIndex !== null) {
@@ -345,7 +344,7 @@ const LegislationImport = () => {
       let currentTitle = '';
       let currentChapter = '';
       let currentSection = '';
-  
+      
       const escapeValue = (value, forceNoQuotes = false) => {
         if (forceNoQuotes) return value;
         if (value.includes(',') || value.includes('"') || value.includes('\n')) {
@@ -353,67 +352,65 @@ const LegislationImport = () => {
         }
         return value;
       };
-  
-      // En-tête du CSV
+
       const headerRow = 'Titre_legislation,Date_entree,Code_visee,Titre,Chapitre,Section,Article,Categorie';
-  
-      // Ligne d'informations de la législation (sans ID de catégorie)
-      const legislationInfoRow = `${selectedLegislation.Titre_legislation},${selectedLegislation["Date d'entrée en vigueur"]},${selectedLegislation["Code visé"]},,,,,${selectedCategoryId || ''}`;
-  
-      // Données d'exportation
+      
+      const legislationInfoRow = `${selectedLegislation.Titre_legislation},${selectedLegislation["Date d'entrée en vigueur"]},${selectedLegislation["Code visé"]},,,,,${selectedCategoryName || ''}`;
+      
       const exportData = selectedLegislation.structure.map((item) => {
         const baseInfo = [
           selectedLegislation.Titre_legislation,
           selectedLegislation["Date d'entrée en vigueur"],
           selectedLegislation["Code visé"],
-          '',  // Titre
-          '',  // Chapitre
-          '',  // Section
-          '',  // Article
-          selectedCategoryId || '',  // ID de la catégorie
+          '',
+          '',
+          '',
+          '',
+          selectedCategoryName || '',  // Nom de la catégorie
         ];
-  
+
         switch (item.type) {
           case 'Titre':
             currentTitle = item.content;
-            baseInfo[3] = item.content; // Remplace le champ titre
+            currentChapter = '';
+            currentSection = '';
+            baseInfo[3] = item.content;
             break;
           case 'Chapitre':
             currentChapter = item.content;
-            baseInfo[4] = item.content; // Remplace le champ chapitre
+            currentSection = '';
+            baseInfo[4] = item.content;
             break;
           case 'Section':
             currentSection = item.content;
-            baseInfo[5] = item.content; // Remplace le champ section
+            baseInfo[5] = item.content;
             break;
           case 'Article':
-            baseInfo[6] = item.linkedTextId ? `${item.linkedTextId}` : item.content; // Remplace le champ article
+            baseInfo[6] = item.linkedTextId ? `${item.linkedTextId}` : item.content;
             break;
         }
-  
-        // Récupère les valeurs courantes
-        baseInfo[3] = currentTitle;  // Met à jour le titre
-        baseInfo[4] = currentChapter; // Met à jour le chapitre
-        baseInfo[5] = currentSection; // Met à jour la section
-  
+
+        baseInfo[3] = currentTitle;
+        baseInfo[4] = currentChapter;
+        baseInfo[5] = currentSection;
+
         return baseInfo.map((value, index) => escapeValue(value, index < 3)).join(',');
       });
-  
+
+      const isFirstRowLegislationInfo = exportData.length > 0 &&
+        exportData[0].split(',').slice(3).every(val => val === '');
+
       const allRows = [
         headerRow,
-        legislationInfoRow,
+        ...(isFirstRowLegislationInfo ? [] : [legislationInfoRow]),
         ...exportData
       ].join('\r\n');
-  
+
       const blob = new Blob(["\uFEFF" + allRows], { type: 'text/csv;charset=utf-8;' });
       return { csv: allRows, blob };
     }
     return null;
   }, [legislationStructures, selectedLegislationIndex, selectedCategoryId]);
-  
-  
-  
-  
   
   const handleExportClick = () => {
     const result = exportModifiedCSV();
@@ -477,17 +474,40 @@ const LegislationImport = () => {
     try {
       const [articlesResponse, decisionsResponse, commentairesResponse] = await Promise.all([
         axios.get(`${API_BASE_URL}/articles`),
-        axios.get(`${API_BASE_URL}/decisions`),
-        axios.get(`${API_BASE_URL}/commentaires`)
+        /*axios.get(`${API_BASE_URL}/decisions`),
+        axios.get(`${API_BASE_URL}/commentaires`)*/
       ]);
-
+  
+      const articlesWithLegislation = await Promise.all(
+        articlesResponse.data.map(async article => {
+          // Récupération de l'identifiant de la législation associé à l'article
+          const legislationId = article.acf?.Legislation_ou_titre_ou_chapitre_ou_section?.[0];
+  
+          // Initialiser le titre de la législation comme vide par défaut
+          let legislationTitle = '';
+  
+          // Si un identifiant de législation est disponible, faire une requête pour récupérer le titre
+          if (legislationId) {
+            try {
+              const legislationResponse = await axios.get(`${API_BASE_URL}/legislations/${legislationId}`);
+              legislationTitle = legislationResponse.data.title.rendered;
+            } catch (error) {
+              console.error(`Erreur lors de la récupération de la législation pour l'article ${article.id}:`, error);
+            }
+          }
+  
+          // Retourner l'article avec son titre et le titre de la législation associée
+          return {
+            value: article.id.toString(),
+            label: `${article.title.rendered} - Législation: ${legislationTitle || 'Non spécifiée'}`,
+            type: 'Article'
+          };
+        })
+      );
+  
       setAvailableTexts({
-        articles: articlesResponse.data.map(article => ({
-          value: article.id.toString(),
-          label: article.title.rendered,
-          type: 'Article'
-        })),
-        decisions: decisionsResponse.data.map(decision => ({
+        articles: articlesWithLegislation,
+        /*decisions: decisionsResponse.data.map(decision => ({
           value: decision.id.toString(),
           label: decision.title.rendered,
           type: 'Décision'
@@ -496,19 +516,18 @@ const LegislationImport = () => {
           value: commentaire.id.toString(),
           label: commentaire.title.rendered,
           type: 'Commentaire'
-        }))
+        }))*/
       });
     } catch (error) {
       console.error('Erreur lors de la récupération des textes:', error);
       setError('Erreur lors de la récupération des textes disponibles');
     }
   }, []);
+  
 
   useEffect(() => {
     fetchAvailableTexts();
   }, [fetchAvailableTexts]);
-
-  
 
   const handleLinkedTextSelection = useCallback((selectedOptions) => {
     setSelectedLinkedTexts(selectedOptions);
@@ -581,7 +600,8 @@ const LegislationImport = () => {
             <div className="bg-white p-4 rounded-md shadow">
               <Select
                 isMulti
-                options={[...availableTexts.articles, ...availableTexts.decisions, ...availableTexts.commentaires]}
+                //options={[...availableTexts.articles, ...availableTexts.decisions, ...availableTexts.commentaires]}
+                options={[...availableTexts.articles]}
                 value={selectedLinkedTexts}
                 onChange={handleLinkedTextSelection}
                 placeholder="Sélectionnez les textes à lier"
@@ -603,10 +623,10 @@ const LegislationImport = () => {
           <div className="space-y-4">
             <h2 className="text-xl font-semibold text-green-500">Structurer la législation</h2>
             <div className="mt-4">
-            <label htmlFor="categorie" className="block mb-2 text-sm font-medium text-gray-700">Catégorie</label>
+            <label htmlFor="categorie" className="block mb-2 text-xl font-bold text-gray-700">Catégorie</label>
             <select
               id="categorie"
-              className="border border-gray-300 rounded p-2"
+              className="border border-green-500 rounded p-2"
               value={selectedCategoryId || ''}
               //onChange={(e) => setSelectedCategoryId(e.target.value)}
               onChange={handleCategoryChange}
@@ -867,7 +887,7 @@ default:
           ) : (
             <button
             onClick={() => setCurrentStep(prev => Math.min(steps.length - 1, prev + 1))}
-            disabled={error !== null || (currentStep === 1 && selectedLegislationIndex === null)}
+            disabled={error !== null || (currentStep === 1 && selectedLegislationIndex === null) || (currentStep === 3 && selectedCategoryId === null) }
             className="px-4 py-2 bg-green-500 text-white rounded-md disabled:opacity-50"
           >
             Suivant <ArrowRight className="ml-2 h-4 w-4 inline" />
