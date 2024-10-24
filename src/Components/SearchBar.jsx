@@ -120,7 +120,7 @@ const SearchBar = ({ activeSearchCategory, setActiveSearchCategory, setSearchQue
                 {isDropdownVisible && searchHistory.length > 0 && (
                     <div
                         ref={dropdownRef}
-                        className="absolute z-50 mt-2 w-full max-w-[450px] border border-gray-200 rounded-lg shadow-lg dark:bg-dark-background bg-white"
+                        className="absolute z-[9999] mt-2 w-full max-w-[450px] border border-gray-200 rounded-lg shadow-lg dark:bg-dark-background bg-white"
                     >
                         <div className="flex justify-between items-center p-2">
                             <span className="font-semibold text-gray-600">Recherches récentes</span>

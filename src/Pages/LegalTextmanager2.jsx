@@ -1,5 +1,4 @@
 import React, { useState } from 'react'
-import Select from 'react-select'
 import ArticleImport from './ArticleImport'
 import LegislationImport from './LegislationImport'
 import DecisionImport from './DecisionImport'
@@ -13,14 +12,14 @@ const textTypes = [
 ]
 
 const LegalTextImporter = () => {
-  const [selectedType, setSelectedType] = useState(null)
+  const [selectedType, setSelectedType] = useState("")
 
-  const handleTypeSelection = (selected) => {
-    setSelectedType(selected)
+  const handleTypeSelection = (event) => {
+    setSelectedType(event.target.value)
   }
 
   const renderImporter = () => {
-    switch (selectedType?.value) {
+    switch (selectedType) {
       case "Article":
         return <ArticleImport />
       case "Législation":
@@ -39,12 +38,18 @@ const LegalTextImporter = () => {
       <h1 className="text-2xl font-bold mb-4">Importer de textes juridiques</h1>
       <div className="mb-4">
         <label className="block text-sm font-medium mb-1">Choisissez le type de texte à importer :</label>
-        <Select
-          options={textTypes}
+        <select
+          className="w-full border border-gray-300 p-2 rounded"
           value={selectedType}
           onChange={handleTypeSelection}
-          className="w-full"
-        />
+        >
+          <option value="" disabled>-- Sélectionnez un type de texte --</option>
+          {textTypes.map((type) => (
+            <option key={type.value} value={type.value}>
+              {type.label}
+            </option>
+          ))}
+        </select>
       </div>
       {renderImporter()}
     </div>
