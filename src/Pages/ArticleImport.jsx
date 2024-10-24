@@ -451,6 +451,140 @@ const ArticleImport = () => {
     }
   };
 
+  const isStepValid = useCallback(() => {
+    // Add debug logging
+    const logValidation = (step, result) => {
+      console.log(`Step ${step} validation:`, result);
+      return result;
+    };
+  
+    switch (currentStep) {
+      case 0:
+        return logValidation(0, 
+          Array.isArray(parsedArticles) && 
+          parsedArticles.length > 0 && 
+          error === null
+        );
+        
+      case 1: {
+        // Make sure we have both arrays and they're not empty
+        if (!Array.isArray(selectedArticles) || !Array.isArray(parsedArticles)) {
+          return logValidation(1, false);
+        }
+        
+        // If we only have one article, check if it's marked as existing
+        if (parsedArticles.length === 1) {
+          const singleArticle = parsedArticles[0];
+          // If the article exists (has the "Existant" badge), return false to disable the button
+          if (singleArticle && singleArticle.exists) {
+            return logValidation(1, false);
+          }
+        }
+        
+        // Check if we have any valid selected articles
+        const hasValidSelection = selectedArticles.length > 0 && 
+          selectedArticles.some(index => {
+            const article = parsedArticles[index];
+            return article && !article.exists;
+          });
+          
+        return logValidation(1, hasValidSelection);
+      }
+        
+      case 2: {
+        // Ensure we have a legislation selected
+        if (!selectedLegislation) {
+          return logValidation(2, false);
+        }
+  
+        // if (bulkSelection) {
+        //   // For bulk selection, verify we have at least one selection
+        //   const hasBulkLinks = (
+        //     bulkLinkedTexts.commentaires.length > 0 || 
+        //     bulkLinkedTexts.decisions.length > 0
+        //   );
+        //   return logValidation(2, hasBulkLinks);
+        // } else {
+        //   // For individual selection, verify each selected article has links
+        //   const hasIndividualLinks = selectedArticles.every(index => 
+        //     selectedLinkedTexts[index]?.length > 0
+        //   );
+        //   return logValidation(2, hasIndividualLinks);
+        // }
+        return logValidation(2, true);  //Uncomment the one up and remove this line of code to use the other condition up
+      }
+        
+      case 3: {
+        // Check if legislation is selected
+        const hasLegislation = Boolean(selectedLegislation?.value);
+        
+        // Check if unstructured articles list is empty
+        const isUnstructuredEmpty = Array.isArray(unstructuredArticles) && 
+          unstructuredArticles.length === 0;
+        
+        // Button should only be enabled if we have legislation selected AND
+        // the unstructured articles list is empty
+        return logValidation(3, hasLegislation && isUnstructuredEmpty);
+      }
+        
+      case 4:
+        return logValidation(4, true);
+        
+      default:
+        return logValidation('default', false);
+    }
+  }, [
+    currentStep,
+    parsedArticles,
+    selectedArticles,
+    error,
+    selectedLegislation,
+    // bulkSelection,
+    // bulkLinkedTexts,
+    // selectedLinkedTexts,
+    unstructuredArticles, // Added new dependency
+  ]);
+  
+  const buttonSection = (
+    <div className="flex justify-between">
+      <button
+        onClick={() => setCurrentStep(prev => Math.max(0, prev - 1))}
+        disabled={currentStep === 0}
+        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md disabled:opacity-50"
+      >
+        <ArrowLeft className="mr-2 h-4 w-4 inline" /> Précédent
+      </button>
+      
+      {currentStep === steps.length - 1 ? (
+        <button
+          onClick={handleImportConfirmation}
+          disabled={importStatus === 'pending' || !parsedArticles.length}
+          className="px-4 py-2 bg-green-500 text-white rounded-md disabled:opacity-50 flex items-center"
+        >
+          {importStatus === 'pending' ? (
+            'Importation en cours...'
+          ) : (
+            <>
+              <FileText className="mr-2 h-4 w-4" /> Confirmer l'importation
+            </>
+          )}
+        </button>
+      ) : (
+        <button
+          onClick={() => setCurrentStep(prev => Math.min(steps.length - 1, prev + 1))}
+          disabled={!isStepValid()}
+          className={`px-4 py-2 rounded-md transition-colors duration-200 flex items-center ${
+            isStepValid() 
+              ? 'bg-green-500 text-white hover:bg-green-600' 
+              : 'px-4 py-2 bg-green-500 text-white rounded-md disabled:opacity-50'
+          }`}
+        >
+          Suivant <ArrowRight className="ml-2 h-4 w-4" />
+        </button>
+      )}
+    </div>
+  );
+
   const renderStepContent = () => {
     switch (currentStep) {
       case 0:
@@ -479,6 +613,7 @@ const ArticleImport = () => {
             )}
           </div>
         );
+        
       case 1:
         return (
           <div className="space-y-4">
@@ -859,40 +994,7 @@ const ArticleImport = () => {
         )}
       </AnimatePresence>
 
-      {!isImportComplete && (
-        <div className="flex justify-between">
-          <button
-            onClick={() => setCurrentStep(prev => Math.max(0, prev - 1))}
-            disabled={currentStep === 0}
-            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md disabled:opacity-50"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4 inline" /> Précédent
-          </button>
-          {currentStep === steps.length - 1 ? (
-            <button
-              onClick={handleImportConfirmation}
-              disabled={importStatus === 'pending' || !parsedArticles.length}
-              className="px-4 py-2 bg-green-500 text-white rounded-md disabled:opacity-50"
-            >
-              {importStatus === 'pending' ? (
-                'Importation en cours...'
-              ) : (
-                <>
-                  <FileText className="mr-2 h-4 w-4 inline" /> Confirmer l'importation
-                </>
-              )}
-            </button>
-          ) : (
-            <button
-              onClick={() => setCurrentStep(prev => Math.min(steps.length - 1, prev + 1))}
-              disabled={error !== null}
-              className="px-4 py-2 bg-green-500 text-white rounded-md disabled:opacity-50"
-            >
-              Suivant <ArrowRight className="ml-2 h-4 w-4 inline" />
-            </button>
-          )}
-        </div>
-      )}
+      {!isImportComplete && buttonSection}
 
       {importStatus === 'error' && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
