@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import parse from 'html-react-parser';
 import anime from '../assets/anime.svg';
@@ -154,8 +154,8 @@ const ArticleDetail = () => {
                 <h2 className='text-xl font-bold my-4'>Décisions associées</h2>
                 {decisions.map(decision => (
                   <div key={decision.id} className="mb-6" id={`decision-${decision.id}`}>
-                    <h3 className="text-xl font-semibold mb-2">{decision.title.rendered}</h3>
-                    <div dangerouslySetInnerHTML={{ __html: decision.content.rendered }} />
+                    <Link className="hover:text-green-500" to={`/dashboard/decision/${decision.id}`}><h3 className="text-xl font-semibold mb-2">{decision.title.rendered}</h3></Link>
+                    <Link to={`/dashboard/decision/${decision.id}`}><div dangerouslySetInnerHTML={{ __html: decision.content.rendered }} /></Link>
                   </div>
                 ))}
               </div>
@@ -165,8 +165,8 @@ const ArticleDetail = () => {
                 <h2 className='text-xl font-bold my-4'>Commentaires associés</h2>
                 {commentaires.map(commentaire => (
                   <div key={commentaire.id} className="mb-6" id={`commentaire-${commentaire.id}`}>
-                    <h3 className="text-xl font-semibold mb-2">{commentaire.title.rendered}</h3>
-                    <div dangerouslySetInnerHTML={{ __html: commentaire.content.rendered }} />
+                    <Link className="hover:text-green-500" to={`/dashboard/commentaire/${commentaire.id}`}><h3 className="text-xl font-semibold mb-2">{commentaire.title.rendered}</h3></Link>
+                    <Link to={`/dashboard/commentaire/${commentaire.id}`}><div dangerouslySetInnerHTML={{ __html: commentaire.content.rendered }} /> </Link>
                   </div>
                 ))}
               </div>
