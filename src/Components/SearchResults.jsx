@@ -15,7 +15,9 @@ const legislationSubTypes = {
   all: "Toutes les législations",
   general: "Général",
   loi: "Loi",
-  documentParlementaire: "Document Parlementaire"
+  documentParlementaire: "Document Parlementaire",
+  reglements: "Reglements",
+  decrets: "Decrets"
 };
 
 const SearchResults = () => {
@@ -159,15 +161,19 @@ const SearchResults = () => {
           endpoints.map(fetchData)
         );
 
-        const legislations = allLegislations.filter(leg => !leg.categories_legislations.includes(11) && !leg.categories_legislations.includes(14));
+        const legislations = allLegislations.filter(leg => !leg.categories_legislations.includes(11) && !leg.categories_legislations.includes(14) && !leg.categories_legislations.includes(13) && !leg.categories_legislations.includes(12));
         const lois = allLegislations.filter(leg => leg.categories_legislations.includes(14));
         const documentsParlementaires = allLegislations.filter(leg => leg.categories_legislations.includes(11));
+        const reglements = allLegislations.filter(leg => leg.categories_legislations.includes(13));
+        const decrets = allLegislations.filter(leg => leg.categories_legislations.includes(12));
 
         const combinedResults = [
           ...decisions.map(item => ({ ...item, type: 'decision' })),
           ...legislations.map(item => ({ ...item, type: 'legislation', subType: 'general' })),
           ...lois.map(item => ({ ...item, type: 'legislation', subType: 'loi' })),
           ...documentsParlementaires.map(item => ({ ...item, type: 'legislation', subType: 'documentParlementaire' })),
+          ...reglements.map(item => ({ ...item, type: 'legislation', subType: 'reglements' })),
+          ...decrets.map(item => ({ ...item, type: 'legislation', subType: 'decrets' })),
           ...commentaires.map(item => ({ ...item, type: 'commentaire' })),
           ...articles.map(item => ({ ...item, type: 'article' })),
         ];
@@ -175,7 +181,7 @@ const SearchResults = () => {
         setResults(combinedResults);
         setResultCounts({
           decisions: decisions.length,
-          legislations: legislations.length + lois.length + documentsParlementaires.length,
+          legislations: legislations.length + lois.length + documentsParlementaires.length + reglements.length + decrets.length,
           commentaires: commentaires.length,
           articles: articles.length,
           all: combinedResults.length,
@@ -214,6 +220,8 @@ const SearchResults = () => {
           ...legislations,
           ...lois,
           ...documentsParlementaires,
+          ...reglements,
+          ...decrets,
           ...Object.values(relatedLegislationsMap)
         ].filter(result => 
           result.title.rendered.toLowerCase().includes(query.toLowerCase()) ||
