@@ -115,6 +115,12 @@ const router = createBrowserRouter(
                     <Route index element={<RenderLegislation />} />
                         <Route path=":id" element={<LegislationDetail1 />} />
                 </Route>
+
+
+                <Route path="post" element={<Detailslayout/>}>
+                    
+                    <Route path=":id" element={<SinglePost/>} />
+                </Route>
                 
             
                 {/* EXPERTS */}

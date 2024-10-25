@@ -40,7 +40,7 @@ const ManualCarousel = ({ items }) => {
                   />
                 )}
                 <h3 className="text-lg font-semibold mb-2">
-                  <Link to={`/post/${item.id}`} className="hover:text-green-500 transition duration-300">
+                  <Link to={`/dashboard/post/${item.id}`} className="hover:text-green-500 transition duration-300">
                     {item.title.rendered}
                   </Link>
                 </h3>
