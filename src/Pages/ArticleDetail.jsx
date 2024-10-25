@@ -4,6 +4,7 @@ import axios from 'axios';
 import parse from 'html-react-parser';
 import anime from '../assets/anime.svg';
 import ArticleTimeline from './ArticleTimeline';
+import { FaArrowLeft, FaArrowRight } from 'react-icons/fa';
 
 const ArticleDetail = () => {
   const { id } = useParams();
@@ -15,6 +16,34 @@ const ArticleDetail = () => {
   const [decisions, setDecisions] = useState([]);
   const [commentaires, setCommentaires] = useState([]);
   const legislationDataRef = useRef(null);
+
+
+  // Inside ArticleDetail component
+  const [previousArticleId, setPreviousArticleId] = useState(null);
+  const [nextArticleId, setNextArticleId] = useState(null);
+
+
+  useEffect(() => {
+    const fetchArticleNavigation = async () => {
+      try {
+        const altUrl = 'https://alt.back.qilinsa.com';
+  
+        // Fetch the current article list or adjacent articles if possible
+        const response = await axios.get(`${altUrl}/wp-json/wp/v2/articles`);
+        const articleList = response.data;
+        
+        const currentIndex = articleList.findIndex(article => article.id === parseInt(id));
+        if (currentIndex !== -1) {
+          setPreviousArticleId(currentIndex > 0 ? articleList[currentIndex - 1].id : null);
+          setNextArticleId(currentIndex < articleList.length - 1 ? articleList[currentIndex + 1].id : null);
+        }
+      } catch (error) {
+        console.error('Failed to fetch article navigation data:', error);
+      }
+    };
+  
+    fetchArticleNavigation();
+  }, [id]);
 
   useEffect(() => {
     const fetchArticleAndRelatedData = async () => {
@@ -128,6 +157,26 @@ const ArticleDetail = () => {
           )}
         </aside>
         <main className="lg:col-span-3 p-6 rounded shadow">
+
+        <div className="flex justify-end items-center mb-4">
+
+          {/* display the navigation bar */}
+            <div className="flex justify-end items-center mb-4">
+            {previousArticleId && (
+              <Link to={`/dashboard/article/${previousArticleId}`} className="flex items-center text-blue-500 hover:underline mr-4">
+                <FaArrowLeft className="mr-1" />
+                Article précédent
+              </Link>
+            )}
+            {nextArticleId && (
+              <Link to={`/dashboard/article/${nextArticleId}`} className="flex items-center text-blue-500 hover:underline">
+                Article suivant
+                <FaArrowRight className="ml-1" />
+              </Link>
+            )}
+          </div>
+
+            </div>
           <div className="text-lg leading-relaxed">
             <h1 className="text-2xl font-semibold mb-4 mt-4">{article.title.rendered}</h1>
             <br/>
