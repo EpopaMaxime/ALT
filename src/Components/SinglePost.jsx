@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import parse from 'html-react-parser';
 import Nav from '../Components/Nav';
+import anime from '../assets/anime.svg'
 
 const SinglePost = () => {
   const { id } = useParams();
@@ -13,6 +14,8 @@ const SinglePost = () => {
     error: ''
   });
 
+
+  
   useEffect(() => {
     const altUrl = 'https://alt.back.qilinsa.com';
     
@@ -38,7 +41,23 @@ const SinglePost = () => {
 
   const { post, featuredMedia, loading, error } = state;
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) {
+    return (
+      // <div className="flex justify-center items-center h-screen">
+      //   <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full text-blue-500" role="status">
+      //     <span className="visually-hidden">Loading...</span>
+      //   </div>
+      // </div>
+      <div className="flex justify-center items-center h-screen">
+      
+        <img src={anime}></img>
+      
+    </div>
+    );
+  }
+
+
+
   if (error) return <div>{error}</div>;
   if (!post) return <div>No post found</div>;
 

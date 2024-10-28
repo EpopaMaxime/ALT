@@ -72,7 +72,11 @@ const router = createBrowserRouter(
                 <Route path="mini-series" element={<MiniSeries/>}/>
                 <Route path="webinaires" element={<Webinaires/>}/>
                 <Route path="blog" element={<Blog/>}/>
-                <Route path="faqs" element={<Faqs/>}/>   
+                <Route path="faqs" element={<Faqs/>}/> 
+
+                <Route path="post" element={<Detailslayout/>}>
+                    <Route path=":id" element={<SinglePost/>} />
+                </Route>  
             </Route>
 
 
@@ -118,7 +122,6 @@ const router = createBrowserRouter(
 
 
                 <Route path="post" element={<Detailslayout/>}>
-                    
                     <Route path=":id" element={<SinglePost/>} />
                 </Route>
                 
