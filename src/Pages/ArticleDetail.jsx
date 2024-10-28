@@ -17,32 +17,61 @@ const ArticleDetail = () => {
   const [commentaires, setCommentaires] = useState([]);
   const legislationDataRef = useRef(null);
 
-
-  // Inside ArticleDetail component
   const [previousArticle, setPreviousArticle] = useState(null);
   const [nextArticle, setNextArticle] = useState(null);
-
 
   useEffect(() => {
     const fetchArticleNavigation = async () => {
       try {
         const altUrl = 'https://alt.back.qilinsa.com';
   
-        // Fetch the current article list or adjacent articles if possible
-        const response = await axios.get(`${altUrl}/wp-json/wp/v2/articles`);
-        const articleList = response.data;
+        // Fetch the current article list
+        const response = await axios.get(`${altUrl}/wp-json/wp/v2/articles`, {
+          params: {
+            orderby: 'id',
+            order: 'asc',
+            per_page: 100 // Adjust based on your needs
+          }
+        });
         
-        const currentIndex = articleList.findIndex(article => article.id === parseInt(id));
+        // Filter out duplicate titles and sort by ID
+        const uniqueArticles = response.data.reduce((acc, current) => {
+          const titleExists = acc.find(item => 
+            item.title.rendered.toLowerCase() === current.title.rendered.toLowerCase()
+          );
+          if (!titleExists) {
+            acc.push(current);
+          }
+          return acc;
+        }, []);
+
+        // Sort by ID to maintain proper order
+        uniqueArticles.sort((a, b) => a.id - b.id);
+        
+        const currentIndex = uniqueArticles.findIndex(article => article.id === parseInt(id));
+        
         if (currentIndex !== -1) {
-          setPreviousArticle(currentIndex > 0 ? {
-            id: articleList[currentIndex - 1].id,
-            title: articleList[currentIndex - 1].title.rendered
-          } : null);
+          // Set previous article
+          if (currentIndex > 0) {
+            const prevArticle = uniqueArticles[currentIndex - 1];
+            setPreviousArticle({
+              id: prevArticle.id,
+              title: prevArticle.title.rendered
+            });
+          } else {
+            setPreviousArticle(null);
+          }
           
-          setNextArticle(currentIndex < articleList.length - 1 ? {
-            id: articleList[currentIndex + 1].id,
-            title: articleList[currentIndex + 1].title.rendered
-          } : null);
+          // Set next article
+          if (currentIndex < uniqueArticles.length - 1) {
+            const nextArticle = uniqueArticles[currentIndex + 1];
+            setNextArticle({
+              id: nextArticle.id,
+              title: nextArticle.title.rendered
+            });
+          } else {
+            setNextArticle(null);
+          }
         }
       } catch (error) {
         console.error('Failed to fetch article navigation data:', error);
@@ -141,7 +170,6 @@ const ArticleDetail = () => {
                   <li key={decision.id}>
                     <a onClick={() => document.getElementById(`decision-${decision.id}`).scrollIntoView({ behavior: 'smooth' })} className="cursor-pointer text-green-500 hover:underline">
                       {decision.title.rendered}
-                      
                     </a>
                   </li>
                 ))}
@@ -164,43 +192,41 @@ const ArticleDetail = () => {
           )}
         </aside>
         <main className="lg:col-span-3 p-6 rounded shadow">
+        <div className="flex justify-end items-center mb-4 space-x-6">
+  {previousArticle && (
+    <Link 
+      to={`/dashboard/article/${previousArticle.id}`} 
+      className="flex items-center text-blue-500 hover:underline"
+    >
+      <FaArrowLeft className="mr-2" />
+      <span className="max-w-xs truncate">{previousArticle.title}</span>
+    </Link>
+  )}
+  {nextArticle && (
+    <Link 
+      to={`/dashboard/article/${nextArticle.id}`} 
+      className="flex items-center text-blue-500 hover:underline"
+    >
+      <span className="max-w-xs truncate">{nextArticle.title}</span>
+      <FaArrowRight className="ml-2" />
+    </Link>
+  )}
+</div>
 
-        <div className="flex justify-end items-center mb-4">
-
-          {/* display the navigation bar */}
-          {previousArticle && (
-              <Link 
-                to={`/dashboard/article/${previousArticle.id}`} 
-                className="flex items-center text-blue-500 hover:underline mr-4"
-              >
-                <FaArrowLeft className="mr-2" />
-                <span className="max-w-xs truncate">{previousArticle.title}</span>
-              </Link>
-            )}
-            {nextArticle && (
-              <Link 
-                to={`/dashboard/article/${nextArticle.id}`} 
-                className="flex items-center text-blue-500 hover:underline"
-              >
-                <span className="max-w-xs truncate">{nextArticle.title}</span>
-                <FaArrowRight className="ml-2" />
-              </Link>
-            )}
-          </div>
           <div className="text-lg leading-relaxed">
             <h1 className="text-2xl font-semibold mb-4 mt-4">{article.title.rendered}</h1>
             <br/>
             <ArticleTimeline />
             <h1 className="text-2xl font-semibold mb-4 mt-4">
-                  <a
-                      href={article.acf.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-500 hover:underline"
-                  >
-                      Source institutionel
-                  </a>
-              </h1>
+              <a
+                href={article.acf.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-500 hover:underline"
+              >
+                Source institutionel
+              </a>
+            </h1>
 
             {legislationTitle && (
               <p className="mb-2">
@@ -213,8 +239,12 @@ const ArticleDetail = () => {
                 <h2 className='text-xl font-bold my-4'>Décisions associées</h2>
                 {decisions.map(decision => (
                   <div key={decision.id} className="mb-6" id={`decision-${decision.id}`}>
-                    <Link className="hover:text-green-500" to={`/dashboard/decision/${decision.id}`}><h3 className="text-xl font-semibold mb-2">{decision.title.rendered}</h3></Link>
-                    <Link to={`/dashboard/decision/${decision.id}`}><div dangerouslySetInnerHTML={{ __html: decision.content.rendered }} /></Link>
+                    <Link className="hover:text-green-500" to={`/dashboard/decision/${decision.id}`}>
+                      <h3 className="text-xl font-semibold mb-2">{decision.title.rendered}</h3>
+                    </Link>
+                    <Link to={`/dashboard/decision/${decision.id}`}>
+                      <div dangerouslySetInnerHTML={{ __html: decision.content.rendered }} />
+                    </Link>
                   </div>
                 ))}
               </div>
@@ -224,8 +254,12 @@ const ArticleDetail = () => {
                 <h2 className='text-xl font-bold my-4'>Commentaires associés</h2>
                 {commentaires.map(commentaire => (
                   <div key={commentaire.id} className="mb-6" id={`commentaire-${commentaire.id}`}>
-                    <Link className="hover:text-green-500" to={`/dashboard/commentaire/${commentaire.id}`}><h3 className="text-xl font-semibold mb-2">{commentaire.title.rendered}</h3></Link>
-                    <Link to={`/dashboard/commentaire/${commentaire.id}`}><div dangerouslySetInnerHTML={{ __html: commentaire.content.rendered }} /> </Link>
+                    <Link className="hover:text-green-500" to={`/dashboard/commentaire/${commentaire.id}`}>
+                      <h3 className="text-xl font-semibold mb-2">{commentaire.title.rendered}</h3>
+                    </Link>
+                    <Link to={`/dashboard/commentaire/${commentaire.id}`}>
+                      <div dangerouslySetInnerHTML={{ __html: commentaire.content.rendered }} />
+                    </Link>
                   </div>
                 ))}
               </div>
