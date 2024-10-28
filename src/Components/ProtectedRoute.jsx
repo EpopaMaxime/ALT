@@ -7,7 +7,7 @@ const ProtectedRoute = ({ children }) => {
   const [actif, setActif] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const [isApiReachable, setIsApiReachable] = useState(true); // Gestion de l’accessibilité de l’API
+  const [isApiReachable, setIsApiReachable] = useState(true);
 
   const isLoggedIn = !!localStorage.getItem('token');
 
@@ -16,13 +16,15 @@ const ProtectedRoute = ({ children }) => {
       try {
         await axios.options('https://alt.back.qilinsa.com/wp-json/wp/v2/users/me');
         setIsApiReachable(true);
+        return true;
       } catch (error) {
         if (!retry) {
-          // En cas d'échec initial, on réessaie une fois
-          await checkApiConnectivity(true);
+          // Réessayer une fois en cas d'échec initial
+          return checkApiConnectivity(true);
         } else {
           console.error('API non accessible après deux tentatives :', error);
           setIsApiReachable(false);
+          return false;
         }
       }
     };
@@ -45,11 +47,11 @@ const ProtectedRoute = ({ children }) => {
 
     const initDataFetch = async () => {
       if (isLoggedIn && isOnline) {
-        await checkApiConnectivity();
-        if (isApiReachable) {
+        const apiConnected = await checkApiConnectivity();
+        if (apiConnected) {
           fetchUserData();
         } else {
-          setLoading(false); // Ne continue pas si l'API n'est pas accessible
+          setLoading(false);
         }
       } else {
         setLoading(false);
@@ -68,7 +70,7 @@ const ProtectedRoute = ({ children }) => {
       window.removeEventListener('online', handleOnlineStatus);
       window.removeEventListener('offline', handleOfflineStatus);
     };
-  }, [isLoggedIn, isOnline, isApiReachable]);
+  }, [isLoggedIn, isOnline]);
 
   if (loading) {
     return (
