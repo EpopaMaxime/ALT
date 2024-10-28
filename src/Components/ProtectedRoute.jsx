@@ -98,7 +98,7 @@ const ProtectedRoute = ({ children }) => {
     return <Navigate to="/authform" />;
   }
 
-  if (isLoggedIn && actif === false) {
+  if (actif === false) {
     return <Navigate to="/comptedesactiver" />;
   }
 
