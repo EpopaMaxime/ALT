@@ -19,8 +19,8 @@ const ArticleDetail = () => {
 
 
   // Inside ArticleDetail component
-  const [previousArticleId, setPreviousArticleId] = useState(null);
-  const [nextArticleId, setNextArticleId] = useState(null);
+  const [previousArticle, setPreviousArticle] = useState(null);
+  const [nextArticle, setNextArticle] = useState(null);
 
 
   useEffect(() => {
@@ -34,8 +34,15 @@ const ArticleDetail = () => {
         
         const currentIndex = articleList.findIndex(article => article.id === parseInt(id));
         if (currentIndex !== -1) {
-          setPreviousArticleId(currentIndex > 0 ? articleList[currentIndex - 1].id : null);
-          setNextArticleId(currentIndex < articleList.length - 1 ? articleList[currentIndex + 1].id : null);
+          setPreviousArticle(currentIndex > 0 ? {
+            id: articleList[currentIndex - 1].id,
+            title: articleList[currentIndex - 1].title.rendered
+          } : null);
+          
+          setNextArticle(currentIndex < articleList.length - 1 ? {
+            id: articleList[currentIndex + 1].id,
+            title: articleList[currentIndex + 1].title.rendered
+          } : null);
         }
       } catch (error) {
         console.error('Failed to fetch article navigation data:', error);
@@ -161,22 +168,25 @@ const ArticleDetail = () => {
         <div className="flex justify-end items-center mb-4">
 
           {/* display the navigation bar */}
-            <div className="flex justify-end items-center mb-4">
-            {previousArticleId && (
-              <Link to={`/dashboard/article/${previousArticleId}`} className="flex items-center text-blue-500 hover:underline mr-4">
-                <FaArrowLeft className="mr-1" />
-                Article précédent
+          {previousArticle && (
+              <Link 
+                to={`/dashboard/article/${previousArticle.id}`} 
+                className="flex items-center text-blue-500 hover:underline mr-4"
+              >
+                <FaArrowLeft className="mr-2" />
+                <span className="max-w-xs truncate">{previousArticle.title}</span>
               </Link>
             )}
-            {nextArticleId && (
-              <Link to={`/dashboard/article/${nextArticleId}`} className="flex items-center text-blue-500 hover:underline">
-                Article suivant
-                <FaArrowRight className="ml-1" />
+            {nextArticle && (
+              <Link 
+                to={`/dashboard/article/${nextArticle.id}`} 
+                className="flex items-center text-blue-500 hover:underline"
+              >
+                <span className="max-w-xs truncate">{nextArticle.title}</span>
+                <FaArrowRight className="ml-2" />
               </Link>
             )}
           </div>
-
-            </div>
           <div className="text-lg leading-relaxed">
             <h1 className="text-2xl font-semibold mb-4 mt-4">{article.title.rendered}</h1>
             <br/>

@@ -295,7 +295,7 @@ const handleAlertClick = async (alert) => {
                     <div className="absolute left-full top-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg z-20 alert-dropdown">
                       <div className="p-4">
                         <h3 className="text-lg font-semibold text-gray-700 dark:text-white">Alertes récentes</h3>
-                        <ul className="mt-2">
+                        <ul className="mt-2 relative -z-4">
                           {alerts.slice(0, 5).map(alert => (
                             <li 
                               key={alert.id} 
