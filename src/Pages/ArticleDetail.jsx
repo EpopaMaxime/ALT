@@ -28,26 +28,59 @@ const ArticleDetail = () => {
         // Fetch the current article list
         const response = await axios.get(`${altUrl}/wp-json/wp/v2/articles`, {
           params: {
-            orderby: 'id',
+            orderby: 'title',
             order: 'asc',
-            per_page: 100 // Adjust based on your needs
+            per_page: 100
           }
         });
-        
-        // Filter out duplicate titles and sort by ID
-        const uniqueArticles = response.data.reduce((acc, current) => {
-          const titleExists = acc.find(item => 
-            item.title.rendered.toLowerCase() === current.title.rendered.toLowerCase()
-          );
-          if (!titleExists) {
-            acc.push(current);
-          }
-          return acc;
-        }, []);
-
-        // Sort by ID to maintain proper order
-        uniqueArticles.sort((a, b) => a.id - b.id);
-        
+  
+        // Function to extract and parse article number from title
+        const getArticleNumber = (title) => {
+          const match = title.match(/Article\s+(\d+(?:-\d+)?)/i);
+          if (!match) return null;
+          
+          const num = match[1];
+          // Split on hyphen if it exists
+          const parts = num.split('-');
+          
+          // Convert to comparable number format
+          // For example: "87" becomes [87, 0], "87-1" becomes [87, 1]
+          return [
+            parseInt(parts[0]),
+            parts.length > 1 ? parseInt(parts[1]) : 0
+          ];
+        };
+  
+        // Filter and sort articles
+        const uniqueArticles = response.data
+          .filter(article => {
+            // Only include articles with valid article numbers
+            const articleNum = getArticleNumber(article.title.rendered);
+            return articleNum !== null;
+          })
+          .reduce((acc, current) => {
+            // Remove duplicates based on exact title match
+            const titleExists = acc.find(item => 
+              item.title.rendered.toLowerCase() === current.title.rendered.toLowerCase()
+            );
+            if (!titleExists) {
+              acc.push(current);
+            }
+            return acc;
+          }, [])
+          .sort((a, b) => {
+            // Custom sorting based on article numbers
+            const aNum = getArticleNumber(a.title.rendered);
+            const bNum = getArticleNumber(b.title.rendered);
+            
+            // Compare main numbers first
+            if (aNum[0] !== bNum[0]) {
+              return aNum[0] - bNum[0];
+            }
+            // If main numbers are same, compare sub-numbers
+            return aNum[1] - bNum[1];
+          });
+  
         const currentIndex = uniqueArticles.findIndex(article => article.id === parseInt(id));
         
         if (currentIndex !== -1) {
