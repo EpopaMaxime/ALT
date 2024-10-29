@@ -193,25 +193,25 @@ const ArticleDetail = () => {
         </aside>
         <main className="lg:col-span-3 p-6 rounded shadow">
         <div className="flex justify-end items-center mb-4 space-x-6">
-  {previousArticle && (
-    <Link 
-      to={`/dashboard/article/${previousArticle.id}`} 
-      className="flex items-center text-blue-500 hover:underline"
-    >
-      <FaArrowLeft className="mr-2" />
-      <span className="max-w-xs truncate">{previousArticle.title}</span>
-    </Link>
-  )}
-  {nextArticle && (
-    <Link 
-      to={`/dashboard/article/${nextArticle.id}`} 
-      className="flex items-center text-blue-500 hover:underline"
-    >
-      <span className="max-w-xs truncate">{nextArticle.title}</span>
-      <FaArrowRight className="ml-2" />
-    </Link>
-  )}
-</div>
+            {previousArticle && (
+              <Link 
+                to={`/dashboard/article/${previousArticle.id}`} 
+                className="flex items-center text-blue-500 hover:underline"
+              >
+                <FaArrowLeft className="mr-2" />
+                <span className="max-w-xs truncate">{previousArticle.title}</span>
+              </Link>
+            )}
+            {nextArticle && (
+              <Link 
+                to={`/dashboard/article/${nextArticle.id}`} 
+                className="flex items-center text-blue-500 hover:underline"
+              >
+                <span className="max-w-xs truncate">{nextArticle.title}</span>
+                <FaArrowRight className="ml-2" />
+              </Link>
+            )}
+            </div>
 
           <div className="text-lg leading-relaxed">
             <h1 className="text-2xl font-semibold mb-4 mt-4">{article.title.rendered}</h1>
