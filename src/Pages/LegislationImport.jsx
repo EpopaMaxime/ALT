@@ -10,7 +10,7 @@ const API_BASE_URL = "https://alt.back.qilinsa.com/wp-json/wp/v2";
 const steps = [
   "Charger le fichier",
   "Prévisualisation",
-  "Lier les textes",
+  // "Lier les textes",
   "Structurer la législation",
   "Confirmation"
 ];
@@ -507,16 +507,6 @@ const LegislationImport = () => {
   
       setAvailableTexts({
         articles: articlesWithLegislation,
-        /*decisions: decisionsResponse.data.map(decision => ({
-          value: decision.id.toString(),
-          label: decision.title.rendered,
-          type: 'Décision'
-        })),
-        commentaires: commentairesResponse.data.map(commentaire => ({
-          value: commentaire.id.toString(),
-          label: commentaire.title.rendered,
-          type: 'Commentaire'
-        }))*/
       });
     } catch (error) {
       console.error('Erreur lors de la récupération des textes:', error);
@@ -596,34 +586,11 @@ const LegislationImport = () => {
       case 2:
         return (
           <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-green-500">Lier les textes</h2>
-            <div className="bg-white p-4 rounded-md shadow">
-              <Select
-                isMulti
-                //options={[...availableTexts.articles, ...availableTexts.decisions, ...availableTexts.commentaires]}
-                options={[...availableTexts.articles]}
-                value={selectedLinkedTexts}
-                onChange={handleLinkedTextSelection}
-                placeholder="Sélectionnez les textes à lier"
-                className="mb-4"
-              />
-              <div className="mt-4">
-                <h3 className="text-lg font-medium mb-2">Textes sélectionnés :</h3>
-                <ul className="list-disc list-inside">
-                  {selectedLinkedTexts.map((text) => (
-                    <li key={text.value}>{text.label} ({text.type})</li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </div>
-        );
-      case 3:
-        return (
-          <div className="space-y-4">
             <h2 className="text-xl font-semibold text-green-500">Structurer la législation</h2>
             <div className="mt-4">
-            <label htmlFor="categorie" className="block mb-2 text-xl font-bold text-gray-700">Catégorie</label>
+            <label htmlFor="categorie" className="block mb-2 text-xl font-bold text-gray-700">
+            Catégorie <span className="text-red-500">*</span>
+          </label>
             <select
               id="categorie"
               className="border border-green-500 rounded p-2"
@@ -638,6 +605,7 @@ const LegislationImport = () => {
                 </option>
               ))}
             </select>
+            
           </div>
             {selectedLegislationIndex !== null && (
               <div className="flex space-x-4">
@@ -674,21 +642,6 @@ const LegislationImport = () => {
                       </div>
                     ))}
                   </Reorder.Group>
-                </div>
-                <div className="w-1/3 border p-4 rounded">
-                  <h4 className="font-medium mb-2">Textes liés</h4>
-                  {selectedLinkedTexts.map((text) => (
-                    <div
-                      key={text.value}
-                      className="mb-2 p-2 border rounded cursor-move"
-                      draggable
-                      onDragStart={(e) => {
-                        e.dataTransfer.setData('text/plain', JSON.stringify(text));
-                      }}
-                    >
-                      {text.label} ({text.type})
-                    </div>
-                  ))}
                 </div>
               </div>
             )}
@@ -753,7 +706,7 @@ const LegislationImport = () => {
             )}
           </div>
         );
-        case 4:
+        case 3:
           if (!legislationStructures.length || selectedLegislationIndex === null) return null;
           return (
             <div className="space-y-4">
@@ -792,8 +745,8 @@ const LegislationImport = () => {
             </div>
           );
         
-default:
-  return null;
+          default:
+            return null;
 
     }
   };
@@ -885,14 +838,17 @@ default:
               )}
             </button>
           ) : (
-            <button
-            onClick={() => setCurrentStep(prev => Math.min(steps.length - 1, prev + 1))}
-            disabled={error !== null || (currentStep === 1 && selectedLegislationIndex === null) || (currentStep === 3 && selectedCategoryId === null) }
-            className="px-4 py-2 bg-green-500 text-white rounded-md disabled:opacity-50"
-          >
-            Suivant <ArrowRight className="ml-2 h-4 w-4 inline" />
-          </button>
-          
+<button
+  onClick={() => setCurrentStep(prev => Math.min(steps.length - 1, prev + 1))}
+  disabled={
+    (currentStep === 0 && (!file || error)) ||               // Step 0: Disable if no file or if there's an error
+    (currentStep === 1 && selectedLegislationIndex === null) || // Step 1: Check if legislation is selected
+    (currentStep === 2 && (!selectedCategoryId || selectedCategoryId === ""))       // Step 2: Check if category is selected
+  }
+  className="px-4 py-2 bg-green-500 text-white rounded-md disabled:opacity-50"
+>
+  Suivant <ArrowRight className="ml-2 h-4 w-4 inline" />
+</button>
 
           )}
         </div>
