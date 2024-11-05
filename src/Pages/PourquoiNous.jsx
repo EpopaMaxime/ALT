@@ -100,7 +100,7 @@ const PourquoiNous = () => {
               
               <h2 className="mt-16 text-2xl font-bold tracking-tight text-gray-900"><p className="text-base font-semibold leading-7 text-green-500">Une équipe d'experts dédiés</p>Bénéficiez de l'expertise d'une équipe passionnée</h2>
               <p className="mt-6">
-              ALT a été conçue comme une plateforme modulaire et évolutive, capable de s'adapter aux changements dans votre pratique. Au fil du temps, nous enrichirons continuellement nos fonctionnalités pour répondre à vos nouveaux défis. Choisir ALT, c'est opter pour un partenaire de long terme à même d'accompagner la croissance de votre activité.Derrière ALT se cache une équipe de juristes, d'ingénieurs et d'experts en intelligence artificielle entièrement dévoués à la conception d'outils juridiques toujours plus performants. En choisissant notre plateforme, vous profitez de leur savoir-faire de pointe et de leur engagement à vous offrir un service d'exception au quotidien.</p>
+              Derrière ALT se cache une équipe de juristes, d'ingénieurs et d'experts en intelligence artificielle entièrement dévoués à la conception d'outils juridiques toujours plus performants. En choisissant notre plateforme, vous profitez de leur savoir-faire de pointe et de leur engagement à vous offrir un service d'exception au quotidien.</p>
 
               
               <h2 className="mt-16 text-2xl font-bold tracking-tight text-gray-900"><p className="text-base font-semibold leading-7 text-green-500">Pourquoi Nous ?</p>Une plateforme évolutive</h2>

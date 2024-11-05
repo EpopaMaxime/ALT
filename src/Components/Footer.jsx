@@ -145,8 +145,8 @@ export default function App() {
               >African Legal TV</Link>
             </p>
             <p>
-              <a className="text-white dark:text-neutral-200 cursor-pointer"
-              >Envoyer une décision</a>
+              {/* <a className="text-white dark:text-neutral-200 cursor-pointer"
+              >Envoyer une décision</a> */}
             </p>
           </div>
           {/* <!-- Liens Importants links section --> */}

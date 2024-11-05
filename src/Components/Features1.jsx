@@ -38,31 +38,42 @@ const features = [
 const TypewriterEffect = ({ text, speed = 10 }) => {
   const [displayedText, setDisplayedText] = useState('');
   const [showCursor, setShowCursor] = useState(true);
+  const [isComplete, setIsComplete] = useState(false);
   const index = useRef(0);
 
   useEffect(() => {
     setDisplayedText('');
+    setIsComplete(false);
     index.current = 0;
   }, [text]);
 
   useEffect(() => {
+    if (!text) return; // Guard against undefined text
+    
     if (index.current < text.length) {
       const timeoutId = setTimeout(() => {
-        setDisplayedText((prev) => prev + text[index.current]);
+        setDisplayedText(text.substring(0, index.current + 1));
         index.current += 1;
       }, speed);
+      
       return () => clearTimeout(timeoutId);
     } else {
+      setIsComplete(true);
       setShowCursor(false);
     }
   }, [text, displayedText, speed]);
 
   useEffect(() => {
+    if (isComplete) return;
+    
     const cursorInterval = setInterval(() => {
       setShowCursor((prev) => !prev);
     }, 500);
+    
     return () => clearInterval(cursorInterval);
-  }, []);
+  }, [isComplete]);
+
+  if (!text) return null; // Guard against undefined text
 
   return (
     <span>

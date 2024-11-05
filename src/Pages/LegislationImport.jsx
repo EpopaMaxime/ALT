@@ -10,7 +10,7 @@ const API_BASE_URL = "https://alt.back.qilinsa.com/wp-json/wp/v2";
 const steps = [
   "Charger le fichier",
   "Prévisualisation",
-  // "Lier les textes",
+  "Lier les textes",
   "Structurer la législation",
   "Confirmation"
 ];
@@ -56,6 +56,49 @@ const LegislationImport = () => {
   const [importError, setImportError] = useState(null);
   const [availableTexts, setAvailableTexts] = useState({});
   const [selectedLinkedTexts, setSelectedLinkedTexts] = useState([]);
+
+  const [commentsOptions, setCommentsOptions] = useState([]);
+  const [decisionsOptions, setDecisionsOptions] = useState([]);
+  const [bulkLinkedTexts, setBulkLinkedTexts] = useState({
+    commentaires: [],
+    decisions: [],
+  });
+
+  // Fetch comments and decisions when the component mounts
+  useEffect(() => {
+    // Fetch comments
+    axios.get('https://alt.back.qilinsa.com/wp-json/wp/v2/commentaires/')
+      .then((response) => {
+        const comments = response.data.map((comment) => ({
+          value: comment.id,
+          label: comment.title.rendered, // Adjust according to how you want to display the comment
+        }));
+        setCommentsOptions(comments);
+      })
+      .catch((error) => {
+        console.error('Error fetching comments:', error);
+      });
+
+    // Fetch decisions
+    axios.get('https://alt.back.qilinsa.com/wp-json/wp/v2/decisions/')
+      .then((response) => {
+        const decisions = response.data.map((decision) => ({
+          value: decision.id,
+          label: decision.title.rendered, // Adjust according to how you want to display the decision
+        }));
+        setDecisionsOptions(decisions);
+      })
+      .catch((error) => {
+        console.error('Error fetching decisions:', error);
+      });
+  }, []);
+
+  const handleBulkLinkedText = (selected, type) => {
+    setBulkLinkedTexts((prev) => ({
+      ...prev,
+      [type]: selected,
+    }));
+  };
 
   const generateFileName = () => {
     const now = new Date();
@@ -338,79 +381,95 @@ const LegislationImport = () => {
   };
   
 
-  const exportModifiedCSV = useCallback(() => {
-    if (selectedLegislationIndex !== null) {
-      const selectedLegislation = legislationStructures[selectedLegislationIndex];
-      let currentTitle = '';
-      let currentChapter = '';
-      let currentSection = '';
-      
-      const escapeValue = (value, forceNoQuotes = false) => {
-        if (forceNoQuotes) return value;
-        if (value.includes(',') || value.includes('"') || value.includes('\n')) {
-          return `"${value.replace(/"/g, '""')}"`;
-        }
-        return value;
-      };
+const exportModifiedCSV = useCallback(() => {
+  if (selectedLegislationIndex !== null) {
+    const selectedLegislation = legislationStructures[selectedLegislationIndex];
+    let currentTitle = '';
+    let currentChapter = '';
+    let currentSection = '';
 
-      const headerRow = 'Titre_legislation,Date_entree,Code_visee,Titre,Chapitre,Section,Article,Categorie';
-      
-      const legislationInfoRow = `${selectedLegislation.Titre_legislation},${selectedLegislation["Date d'entrée en vigueur"]},${selectedLegislation["Code visé"]},,,,,${selectedCategoryName || ''}`;
-      
-      const exportData = selectedLegislation.structure.map((item) => {
-        const baseInfo = [
-          selectedLegislation.Titre_legislation,
-          selectedLegislation["Date d'entrée en vigueur"],
-          selectedLegislation["Code visé"],
-          '',
-          '',
-          '',
-          '',
-          selectedCategoryName || '',  // Nom de la catégorie
-        ];
+    const escapeValue = (value, forceNoQuotes = false) => {
+      if (forceNoQuotes) return value;
+      if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+        return `"${value.replace(/"/g, '""')}"`;
+      }
+      return value;
+    };
 
-        switch (item.type) {
-          case 'Titre':
-            currentTitle = item.content;
-            currentChapter = '';
-            currentSection = '';
-            baseInfo[3] = item.content;
-            break;
-          case 'Chapitre':
-            currentChapter = item.content;
-            currentSection = '';
-            baseInfo[4] = item.content;
-            break;
-          case 'Section':
-            currentSection = item.content;
-            baseInfo[5] = item.content;
-            break;
-          case 'Article':
-            baseInfo[6] = item.linkedTextId ? `${item.linkedTextId}` : item.content;
-            break;
-        }
+    // Update the CSV header row to include Decisions and Comments columns
+    const headerRow = 'Titre_legislation,Date_entree,Code_visee,Titre,Chapitre,Section,Article,Categorie,Decision_IDs,Commentaire_IDs';
 
-        baseInfo[3] = currentTitle;
-        baseInfo[4] = currentChapter;
-        baseInfo[5] = currentSection;
+    // Gather all linked decision and comment IDs from bulkLinkedTexts
+    const decisionIds = bulkLinkedTexts.decisions?.map(decision => decision.value).join(',') || '';
+    const commentaireIds = bulkLinkedTexts.commentaires?.map(comment => comment.value).join(',') || '';
 
-        return baseInfo.map((value, index) => escapeValue(value, index < 3)).join(',');
-      });
+    // Format the legislationInfoRow to ensure consistent alignment
+    const legislationInfoRow = [
+      selectedLegislation.Titre_legislation,
+      selectedLegislation["Date d'entrée en vigueur"],
+      selectedLegislation["Code visé"],
+      '', '', '', '', 
+      selectedCategoryName || '', // Nom de la catégorie
+      decisionIds,                 // Decision IDs
+      commentaireIds               // Commentaire IDs
+    ].map(value => escapeValue(value)).join(',');
 
-      const isFirstRowLegislationInfo = exportData.length > 0 &&
-        exportData[0].split(',').slice(3).every(val => val === '');
+    const exportData = selectedLegislation.structure.map((item) => {
+      const baseInfo = [
+        selectedLegislation.Titre_legislation,
+        selectedLegislation["Date d'entrée en vigueur"],
+        selectedLegislation["Code visé"],
+        '',
+        '',
+        '',
+        '',
+        selectedCategoryName || '',  // Nom de la catégorie
+        decisionIds,                 // Decision IDs
+        commentaireIds               // Commentaire IDs
+      ];
 
-      const allRows = [
-        headerRow,
-        ...(isFirstRowLegislationInfo ? [] : [legislationInfoRow]),
-        ...exportData
-      ].join('\r\n');
+      switch (item.type) {
+        case 'Titre':
+          currentTitle = item.content;
+          currentChapter = '';
+          currentSection = '';
+          baseInfo[3] = item.content;
+          break;
+        case 'Chapitre':
+          currentChapter = item.content;
+          currentSection = '';
+          baseInfo[4] = item.content;
+          break;
+        case 'Section':
+          currentSection = item.content;
+          baseInfo[5] = item.content;
+          break;
+        case 'Article':
+          baseInfo[6] = item.linkedTextId ? item.linkedTextId : item.content;
+          break;
+      }
 
-      const blob = new Blob(["\uFEFF" + allRows], { type: 'text/csv;charset=utf-8;' });
-      return { csv: allRows, blob };
-    }
-    return null;
-  }, [legislationStructures, selectedLegislationIndex, selectedCategoryId]);
+      // Update title, chapter, and section in the baseInfo array
+      baseInfo[3] = currentTitle;
+      baseInfo[4] = currentChapter;
+      baseInfo[5] = currentSection;
+
+      return baseInfo.map((value, index) => escapeValue(value, index < 3)).join(',');
+    });
+
+    // Ensure the first row aligns with the header if legislationInfoRow is included as the first row
+    const allRows = [
+      headerRow,
+      legislationInfoRow,
+      ...exportData
+    ].join('\r\n');
+
+    const blob = new Blob(["\uFEFF" + allRows], { type: 'text/csv;charset=utf-8;' });
+    return { csv: allRows, blob };
+  }
+  return null;
+}, [legislationStructures, selectedLegislationIndex, selectedCategoryName, bulkLinkedTexts]);
+
   
   const handleExportClick = () => {
     const result = exportModifiedCSV();
@@ -583,7 +642,38 @@ const LegislationImport = () => {
             </div>
           </div>
         );
-      case 2:
+
+        case 2:
+          return (
+            <div className="space-y-4">
+      <h2 className="text-xl font-semibold text-green-500">Lier les textes</h2>
+      <div className="bg-white p-4 rounded-md shadow">
+        <div className="space-y-4">
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Lier les commentaires :</label>
+            <Select
+              options={commentsOptions}
+              value={bulkLinkedTexts.commentaires}
+              onChange={(selected) => handleBulkLinkedText(selected, 'commentaires')}
+              isMulti
+              className="w-full"
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Lier les décisions :</label>
+            <Select
+              options={decisionsOptions}
+              value={bulkLinkedTexts.decisions}
+              onChange={(selected) => handleBulkLinkedText(selected, 'decisions')}
+              isMulti
+              className="w-full"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+      case 3:
         return (
           <div className="space-y-4">
             <h2 className="text-xl font-semibold text-green-500">Structurer la législation</h2>
@@ -645,6 +735,7 @@ const LegislationImport = () => {
                 </div>
               </div>
             )}
+
             <div className="mt-4 flex justify-between items-center">
               <button
                 onClick={() => {
@@ -706,7 +797,7 @@ const LegislationImport = () => {
             )}
           </div>
         );
-        case 3:
+        case 4:
           if (!legislationStructures.length || selectedLegislationIndex === null) return null;
           return (
             <div className="space-y-4">
@@ -730,6 +821,28 @@ const LegislationImport = () => {
                     </div>
                   ))}
                 </div>
+                {/* Display linked comments and decisions */}
+        <h4 className="text-md font-medium mt-4 mb-2">Commentaires liés :</h4>
+        <ul className="list-disc ml-6">
+          {bulkLinkedTexts.commentaires && bulkLinkedTexts.commentaires.length > 0 ? (
+            bulkLinkedTexts.commentaires.map((comment) => (
+              <li key={comment.value} className="text-gray-700">{comment.label}</li>
+            ))
+          ) : (
+            <li className="text-gray-500">Aucun commentaire lié</li>
+          )}
+        </ul>
+
+        <h4 className="text-md font-medium mt-4 mb-2">Décisions liées :</h4>
+        <ul className="list-disc ml-6">
+          {bulkLinkedTexts.decisions && bulkLinkedTexts.decisions.length > 0 ? (
+            bulkLinkedTexts.decisions.map((decision) => (
+              <li key={decision.value} className="text-gray-700">{decision.label}</li>
+            ))
+          ) : (
+            <li className="text-gray-500">Aucune décision liée</li>
+          )}
+        </ul>
               </div>
               
               <div className="flex justify-between items-center">
@@ -843,7 +956,7 @@ const LegislationImport = () => {
   disabled={
     (currentStep === 0 && (!file || error)) ||               // Step 0: Disable if no file or if there's an error
     (currentStep === 1 && selectedLegislationIndex === null) || // Step 1: Check if legislation is selected
-    (currentStep === 2 && (!selectedCategoryId || selectedCategoryId === ""))       // Step 2: Check if category is selected
+    (currentStep === 3 && (!selectedCategoryId || selectedCategoryId === ""))       // Step 2: Check if category is selected
   }
   className="px-4 py-2 bg-green-500 text-white rounded-md disabled:opacity-50"
 >

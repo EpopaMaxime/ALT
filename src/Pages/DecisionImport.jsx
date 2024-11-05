@@ -34,6 +34,25 @@ const DecisionImport = () => {
   const [importStatus, setImportStatus] = useState(null);
   const [importError, setImportError] = useState(null);
 
+
+  const isStepValid = () => {
+    switch (currentStep) {
+      case 0:
+        // Ensure a file is selected and there is no error
+        return file !== null && error === null;
+      case 1:
+        // Ensure at least one decision is selected
+        return selectedDecisions.length > 0;
+      case 2:
+      case 3:
+        // Enable the button without any condition for steps 2 and 3
+        return true;
+      default:
+        return false;
+    }
+  };
+  
+
   const generateFileName = () => {
     const now = new Date();
     const date = `${now.getDate()}_${now.getMonth() + 1}_${now.getFullYear()}`;
@@ -491,7 +510,7 @@ const DecisionImport = () => {
                 selectedDecisions.map((index) => {
                   const decision = parsedDecisions[index];
                   return (
-                    <div key={index} className="mb-4 bg-gray-50 p-3 rounded-md">
+                    <div key={index} className="mb-4 bg-green-100 p-3 rounded-md">
                       <h5 className="font-medium">{decision.Title}</h5>
                       <p className="text-sm text-gray-500">Résumé : {decision.Resume}</p>
                       <p className="text-sm text-gray-500">Information : {decision.Information}</p>
@@ -615,13 +634,14 @@ const DecisionImport = () => {
               )}
             </button>
           ) : (
-            <button
-              onClick={() => setCurrentStep(prev => Math.min(steps.length - 1, prev + 1))}
-              disabled={error !== null}
-              className="px-4 py-2 bg-green-500 text-white rounded-md disabled:opacity-50"
-            >
-              Suivant <ArrowRight className="ml-2 h-4 w-4 inline" />
-            </button>
+        <button
+          onClick={() => setCurrentStep(prev => Math.min(steps.length - 1, prev + 1))}
+          disabled={!isStepValid()}
+          className="px-4 py-2 bg-green-500 text-white rounded-md disabled:opacity-50"
+        >
+          Suivant <ArrowRight className="ml-2 h-4 w-4 inline" />
+        </button>
+
           )}
         </div>
       )}

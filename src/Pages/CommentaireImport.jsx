@@ -34,6 +34,24 @@ const CommentaireImport = () => {
   const [importStatus, setImportStatus] = useState(null);
   const [importError, setImportError] = useState(null);
 
+
+  const isStepValid = () => {
+    switch (currentStep) {
+      case 0:
+        // Check if a file has been selected without error
+        return file !== null && error === null;
+      case 1:
+        // Check if at least one commentaire is selected
+        return selectedCommentaires.length > 0;
+      case 2:
+      case 3:
+        // Always enable the button for steps 2 and 3
+        return true;
+      default:
+        return false;
+    }
+  };
+  
   const generateFileName = () => {
     const now = new Date();
     const date = `${now.getDate()}_${now.getMonth() + 1}_${now.getFullYear()}`;
@@ -487,7 +505,7 @@ const CommentaireImport = () => {
                 selectedCommentaires.map((index) => {
                   const commentaire = parsedCommentaires[index];
                   return (
-                    <div key={index} className="mb-4 bg-gray-50 p-3 rounded-md">
+                    <div key={index} className="mb-4 bg-green-100 p-3 rounded-md">
                       <h5 className="font-medium">{commentaire.Title}</h5>
                       {["Décision", "Article"].map(type => (
                         <div key={type}>
@@ -610,12 +628,13 @@ const CommentaireImport = () => {
             </button>
           ) : (
             <button
-              onClick={() => setCurrentStep(prev => Math.min(steps.length - 1, prev + 1))}
-              disabled={error !== null}
-              className="px-4 py-2 bg-green-500 text-white rounded-md disabled:opacity-50"
-            >
-              Suivant <ArrowRight className="ml-2 h-4 w-4 inline" />
-            </button>
+            onClick={() => setCurrentStep(prev => Math.min(steps.length - 1, prev + 1))}
+            disabled={!isStepValid()} // Disable based on validation
+            className="px-4 py-2 bg-green-500 text-white rounded-md disabled:opacity-50"
+          >
+            Suivant <ArrowRight className="ml-2 h-4 w-4 inline" />
+          </button>
+          
           )}
         </div>
       )}
