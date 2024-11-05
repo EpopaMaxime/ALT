@@ -264,37 +264,69 @@ const ArticleImport = () => {
     }
   }, [bulkSelection, selectedArticles]);
 
+
+
   const exportModifiedCSV = useCallback(() => {
     const exportData = selectedArticles.map(index => {
       const article = parsedArticles[index];
       const exportRow = { ...article };
-      
+
       const linkedTexts = selectedLinkedTexts[index] || [];
       const decisions = linkedTexts.filter(t => t.type === "Décision").map(t => t.value);
       const commentaires = linkedTexts.filter(t => t.type === "Commentaire").map(t => t.value);
-      
+
       exportRow.ID_decision = decisions.join(',');
       exportRow.ID_commentaire = commentaires.join(',');
-      
+
       if (selectedLegislation) {
         exportRow.ID_legislation = selectedLegislation.value;
       }
-  
+
       const structureItem = legislationStructure.find(item => item.id === index.toString());
       if (structureItem) {
         exportRow.Position_legislation = structureItem.position;
+
+        // Ajout de l'ID hiérarchique
+        const hierarchyId = findHierarchyId(structureItem.position);
+        exportRow.Hierarchy_ID = hierarchyId || null; // Récupérer l'ID hiérarchique
       }
-  
+
       return exportRow;
     });
-  
+
     const csv = Papa.unparse(exportData, {
       encoding: 'UTF-8'
     });
     const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csv], { type: 'text/csv;charset=utf-8;' });
     return { csv, blob };
   }, [selectedArticles, parsedArticles, selectedLinkedTexts, selectedLegislation, legislationStructure]);
-  
+
+  const findHierarchyId = (position) => {
+    const hierarchyIds = [];
+
+    for (let pos = position - 1; pos >= 0; pos--) {
+        const section = legislationStructure.find(item => item.position === pos && item.endpoint === 'sections');
+        const chapter = legislationStructure.find(item => item.position === pos && item.endpoint === 'chapitres');
+        const title = legislationStructure.find(item => item.position === pos && item.endpoint === 'titres');
+
+        if (section) {
+            // Ajouter l'ID de la section et continuer pour trouver le chapitre et titre
+            hierarchyIds.unshift(section.id);
+            continue;
+        } else if (chapter) {
+            // Ajouter l'ID du chapitre et continuer pour trouver le titre
+            hierarchyIds.unshift(chapter.id);
+            continue;
+        } else if (title) {
+            // Ajouter l'ID du titre et retourner le tableau
+            hierarchyIds.unshift(title.id);
+            break;
+        }
+    }
+
+    return hierarchyIds.length > 0 ? hierarchyIds : null;
+};
+
 
   const fetchAvailableTexts = useCallback(async () => {
     const textTypes = ["Législation", "Décision", "Commentaire"];
