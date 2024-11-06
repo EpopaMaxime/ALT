@@ -264,36 +264,29 @@ const ArticleImport = () => {
     }
   }, [bulkSelection, selectedArticles]);
 
-
-
   const exportModifiedCSV = useCallback(() => {
     const exportData = selectedArticles.map(index => {
       const article = parsedArticles[index];
       const exportRow = { ...article };
-
       const linkedTexts = selectedLinkedTexts[index] || [];
       const decisions = linkedTexts.filter(t => t.type === "Décision").map(t => t.value);
       const commentaires = linkedTexts.filter(t => t.type === "Commentaire").map(t => t.value);
-
       exportRow.ID_decision = decisions.join(',');
       exportRow.ID_commentaire = commentaires.join(',');
-
       if (selectedLegislation) {
         exportRow.ID_legislation = selectedLegislation.value;
       }
-
       const structureItem = legislationStructure.find(item => item.id === index.toString());
       if (structureItem) {
         exportRow.Position_legislation = structureItem.position;
-
         // Ajout de l'ID hiérarchique
         const hierarchyId = findHierarchyId(structureItem.position);
         exportRow.Hierarchy_ID = hierarchyId || null; // Récupérer l'ID hiérarchique
       }
-
+      // Add the user ID to the exportRow
+      exportRow.UserId = localStorage.getItem('iduser');
       return exportRow;
     });
-
     const csv = Papa.unparse(exportData, {
       encoding: 'UTF-8'
     });

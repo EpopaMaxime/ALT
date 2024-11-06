@@ -173,17 +173,20 @@ const CommentaireImport = () => {
     const exportData = selectedCommentaires.map(index => {
       const commentaire = parsedCommentaires[index];
       const exportRow = { ...commentaire };
-      
+  
       const linkedTexts = selectedLinkedTexts[index] || [];
       const decisions = linkedTexts.filter(t => t.type === "Décision").map(t => t.value);
       const articles = linkedTexts.filter(t => t.type === "Article").map(t => t.value);
-      
+  
       exportRow.ID_decisions = decisions.join(',');
       exportRow.ID_articles = articles.join(',');
-      
+  
       if (selectedLegislation) {
         exportRow.ID_legislation = selectedLegislation.value;
       }
+  
+      // Add the user ID to the exportRow
+      exportRow.UserId = localStorage.getItem('iduser');
   
       return exportRow;
     });
