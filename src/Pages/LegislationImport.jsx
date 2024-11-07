@@ -4,6 +4,8 @@ import { ArrowLeft, ArrowRight, Upload, FileText, Check, AlertTriangle, Download
 import Papa from 'papaparse';
 import axios from 'axios';
 import Select from 'react-select';
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 
 const API_BASE_URL = "https://alt.back.qilinsa.com/wp-json/wp/v2";
 
@@ -56,6 +58,12 @@ const LegislationImport = () => {
   const [importError, setImportError] = useState(null);
   const [availableTexts, setAvailableTexts] = useState({});
   const [selectedLinkedTexts, setSelectedLinkedTexts] = useState([]);
+  const [isEditingExisting, setIsEditingExisting] = useState(false);
+  const [legislationStructure, setLegislationStructure] = useState([]);
+  const [selectedLegislation, setSelectedLegislation] = useState(null);
+  const [unstructuredArticles, setUnstructuredArticles] = useState([]);
+  const [parsedArticles, setParsedArticles] = useState([]);
+  const [selectedArticles, setSelectedArticles] = useState([]);
 
   const [commentsOptions, setCommentsOptions] = useState([]);
   const [decisionsOptions, setDecisionsOptions] = useState([]);
@@ -379,7 +387,8 @@ const LegislationImport = () => {
       setSelectedCategoryName('');
     }
   };
-  
+
+ 
 
 const exportModifiedCSV = useCallback(() => {
   if (selectedLegislationIndex !== null) {
@@ -495,7 +504,7 @@ const exportModifiedCSV = useCallback(() => {
   
       const result = exportModifiedCSV();
       if (!result) {
-        throw new Error('Aucune législation sélectionnée pour l\'exportation');
+        throw new Error("Aucune législation sélectionnée pour l'exportation");
       }
   
       const { csv } = result;
@@ -504,12 +513,16 @@ const exportModifiedCSV = useCallback(() => {
       formData.append('file', blob, generateFileName());
   
       const token = localStorage.getItem('token');
-  
       if (!token) {
-        throw new Error('Token d\'authentification non trouvé');
+        throw new Error("Token d'authentification non trouvé");
       }
   
-      const response = await axios.post('https://alt.back.qilinsa.com/wp-json/wp/v2/importlegislations', formData, {
+      // Choisir le bon endpoint en fonction de isEditingExisting
+      const endpoint = isEditingExisting 
+        ? 'https://alt.back.qilinsa.com/wp-json/wp/v2/editimportlegisations'
+        : 'https://alt.back.qilinsa.com/wp-json/wp/v2/importlegislations';
+  
+      const response = await axios.post(endpoint, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
           'Authorization': `Bearer ${token}`
@@ -523,64 +536,94 @@ const exportModifiedCSV = useCallback(() => {
         throw new Error('Réponse inattendue du serveur');
       }
     } catch (error) {
-      console.error('Erreur lors de l\'importation:', error);
+      console.error("Erreur lors de l'importation:", error);
       setImportStatus('error');
-      setImportError(error.message || 'Une erreur est survenue lors de l\'importation');
+      setImportError(error.message || "Une erreur est survenue lors de l'importation");
     }
   };
-
-  const fetchAvailableTexts = useCallback(async () => {
-    try {
-      const [articlesResponse, decisionsResponse, commentairesResponse] = await Promise.all([
-        axios.get(`${API_BASE_URL}/articles`),
-        /*axios.get(`${API_BASE_URL}/decisions`),
-        axios.get(`${API_BASE_URL}/commentaires`)*/
-      ]);
-  
-      const articlesWithLegislation = await Promise.all(
-        articlesResponse.data.map(async article => {
-          // Récupération de l'identifiant de la législation associé à l'article
-          const legislationId = article.acf?.Legislation_ou_titre_ou_chapitre_ou_section?.[0];
-  
-          // Initialiser le titre de la législation comme vide par défaut
-          let legislationTitle = '';
-  
-          // Si un identifiant de législation est disponible, faire une requête pour récupérer le titre
-          if (legislationId) {
-            try {
-              const legislationResponse = await axios.get(`${API_BASE_URL}/legislations/${legislationId}`);
-              legislationTitle = legislationResponse.data.title.rendered;
-            } catch (error) {
-              console.error(`Erreur lors de la récupération de la législation pour l'article ${article.id}:`, error);
-            }
-          }
-  
-          // Retourner l'article avec son titre et le titre de la législation associée
-          return {
-            value: article.id.toString(),
-            label: `${article.title.rendered} - Législation: ${legislationTitle || 'Non spécifiée'}`,
-            type: 'Article'
-          };
-        })
-      );
-  
-      setAvailableTexts({
-        articles: articlesWithLegislation,
-      });
-    } catch (error) {
-      console.error('Erreur lors de la récupération des textes:', error);
-      setError('Erreur lors de la récupération des textes disponibles');
-    }
-  }, []);
   
 
-  useEffect(() => {
-    fetchAvailableTexts();
-  }, [fetchAvailableTexts]);
+ 
 
   const handleLinkedTextSelection = useCallback((selectedOptions) => {
     setSelectedLinkedTexts(selectedOptions);
   }, []);
+
+  const handleEditExistingLegislation = async (index) => {
+    setIsEditingExisting(true);
+    setSelectedLegislationIndex(index);
+
+    // Récupère l'ID de la législation
+    const legislationId = legislationStructures[index]?.id;
+    setSelectedLegislation(legislationId);
+
+    // Vérifie que l'ID est défini avant de faire la requête
+    if (legislationId) {
+        try {
+            const response = await fetch(`https://alt.back.qilinsa.com/wp-json/wp/v2/legislations/${legislationId}`);
+            if (!response.ok) {
+                throw new Error(`Erreur lors de la récupération de la législation: ${response.statusText}`);
+            }
+
+            const legislationData = await response.json();
+            // Récupère la catégorie de la législation
+            const categoryId = legislationData.categories_legislations?.[0];
+
+            // Met à jour la catégorie sélectionnée
+            setSelectedCategoryId(categoryId);
+            console.log('Selected category ID:', categoryId);
+        } catch (error) {
+            console.error('Erreur lors de la récupération des données de législation:', error);
+        }
+    } else {
+        console.error('ID de législation non valide');
+    }
+};
+
+
+useEffect(() => {
+  if (currentStep === 3 && selectedLegislation) {
+    setLoading(true);
+    const fetchLegislationStructure = async () => {
+      try {
+        const endpoints = ['titres', 'chapitres', 'sections', 'articles'];
+        const res = await axios.get(`${API_BASE_URL}/legislations/${selectedLegislation}`);
+        const identifiers = res.data.acf.titre_ou_chapitre_ou_section_ou_articles || [];
+
+        const fetchData = async (id) => {
+          for (let endpoint of endpoints) {
+            try {
+              const res = await axios.get(`${API_BASE_URL}/${endpoint}/${id}`);
+              if (res.data) return { ...res.data, endpoint, id };
+            } catch (err) {
+              // Continue to the next endpoint if not found
+            }
+          }
+          return null;
+        };
+
+        const detailsData = await Promise.all(identifiers.map(fetchData));
+        const successfulItems = detailsData.filter(item => item !== null);
+        setLegislationStructure(successfulItems.map((item, index) => ({ ...item, position: index + 1 })));
+      } catch (err) {
+        setError('Échec de la récupération de la structure de la législation');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLegislationStructure();
+  }
+}, [currentStep, selectedLegislation]);
+
+const onDragEnd = ({ source, destination }) => {
+  if (destination && source.index !== destination.index) {
+    // Add logic to handle the drop and update selectedLegislation if needed
+    setSelectedLegislation({ value: legislationStructures[destination.index].id });  // Example of setting new legislation
+  }
+};
+
+
 
   const renderStepContent = () => {
     switch (currentStep) {
@@ -631,7 +674,15 @@ const exportModifiedCSV = useCallback(() => {
                       </label>
                     </div>
                     {legislation.exists && (
-                      <span className="bg-red-500 text-white text-xs font-medium mr-2 px-2.5 py-0.5 rounded">Existant</span>
+                      <>
+                        <span className="bg-red-500 text-white text-xs font-medium mr-2 px-2.5 py-0.5 rounded">Existant</span>
+                        <button
+                          onClick={() => handleEditExistingLegislation(index)}
+                          className="bg-blue-500 text-white text-xs font-medium px-2 py-1 rounded hover:bg-blue-600 transition"
+                        >
+                          Modifier l'existant
+                        </button>
+                      </>
                     )}
                   </div>
                   <p className="mt-1 text-xs text-blue-500">Date d'entrée : {legislation["Date d'entrée en vigueur"]}</p>
@@ -645,6 +696,7 @@ const exportModifiedCSV = useCallback(() => {
 
         case 2:
           return (
+            
             <div className="space-y-4">
       <h2 className="text-xl font-semibold text-green-500">Lier les textes</h2>
       <div className="bg-white p-4 rounded-md shadow">
@@ -673,130 +725,232 @@ const exportModifiedCSV = useCallback(() => {
       </div>
     </div>
   );
-      case 3:
-        return (
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-green-500">Structurer la législation</h2>
-            <div className="mt-4">
-            <label htmlFor="categorie" className="block mb-2 text-xl font-bold text-gray-700">
+  case 3:
+    return isEditingExisting ? (
+      <div className="space-y-4">
+        <h2 className="text-xl font-semibold text-green-500">Structurer la législation</h2>
+        
+        {selectedLegislationIndex !== null && (
+          <div className="flex space-x-4">
+            {/* Existing Structure de la législation and Textes liés code */}
+            <div className="w-2/3 border p-4 rounded">
+              <h4 className="font-medium mb-2">Structure de la législation</h4>
+              <Reorder.Group
+                axis="y"
+                onReorder={(newOrder) => {
+                  setLegislationStructures(prevStructures => {
+                    const newStructures = [...prevStructures];
+                    newStructures[selectedLegislationIndex] = {
+                      ...newStructures[selectedLegislationIndex],
+                      structure: newOrder
+                    };
+                    return newStructures;
+                  });
+                }}
+                values={legislationStructures[selectedLegislationIndex]?.structure || []}
+              >
+                {legislationStructures[selectedLegislationIndex]?.structure.map((node, index) => (
+                  <div
+                    key={node.id}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => handleDrop(e, index)}
+                  >
+                    <LegislationNode
+                      node={node}
+                      onEdit={handleEdit}
+                      onDelete={handleDelete}
+                      canEdit={canEditStructure}
+                      onDragEnd={() => {/* Optional: Add logic if needed */}}
+                    />
+                  </div>
+                ))}
+              </Reorder.Group>
+            </div>
+          </div>
+        )}
+  
+        <div className="mt-4 flex justify-between items-center">
+          <button
+            onClick={() => {
+              if (!canEditStructure) {
+                setShowWarning(true);
+              } else {
+                setCanEditStructure(false);
+              }
+            }}
+            className={`px-4 py-2 rounded-md ${
+              canEditStructure
+                ? 'bg-red-500 text-white'
+                : 'bg-green-500 text-white'
+            }`}
+          >
+            {canEditStructure ? 'Désactiver la modification' : 'Modifier la structure'}
+          </button>
+          <button
+            onClick={handleExportClick}
+            className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600"
+          >
+            <Download className="h-4 w-4 inline mr-2" />
+            Exporter le CSV modifié
+          </button>
+        </div>
+  
+        {/* **Add the error message display here** */}
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+            <AlertTriangle className="w-5 h-5 inline mr-2" />
+            {error}
+          </div>
+        )}
+  
+        {showWarning && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+            <div className="bg-white p-6 rounded-lg">
+              <h4 className="text-lg font-bold mb-4">Attention</h4>
+              <p>Modifier la structure d'un texte juridique est une action conséquente. Êtes-vous sûr de vouloir continuer ?</p>
+              <div className="mt-4 flex justify-end space-x-4">
+                <button
+                  onClick={() => setShowWarning(false)}
+                  className="px-4 py-2 bg-gray-300 rounded-md"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={() => {
+                    setCanEditStructure(true);
+                    setShowWarning(false);
+                  }}
+                  className="px-4 py-2 bg-green-500 text-white rounded-md"
+                >
+                  Confirmer
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    ) : (
+      <div className="space-y-4">
+        <h2 className="text-xl font-semibold text-green-500">Structurer la législation</h2>
+        <div className="mt-4">
+          <label htmlFor="categorie" className="block mb-2 text-xl font-bold text-gray-700">
             Catégorie <span className="text-red-500">*</span>
           </label>
-            <select
-              id="categorie"
-              className="border border-green-500 rounded p-2"
-              value={selectedCategoryId || ''}
-              //onChange={(e) => setSelectedCategoryId(e.target.value)}
-              onChange={handleCategoryChange}
-            >
-              <option value="">Sélectionner une catégorie</option>
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-            
-          </div>
-            {selectedLegislationIndex !== null && (
-              <div className="flex space-x-4">
-                {/* Existing Structure de la législation and Textes liés code */}
-                <div className="w-2/3 border p-4 rounded">
-                  <h4 className="font-medium mb-2">Structure de la législation</h4>
-                  <Reorder.Group
-                    axis="y"
-                    onReorder={(newOrder) => {
-                      setLegislationStructures(prevStructures => {
-                        const newStructures = [...prevStructures];
-                        newStructures[selectedLegislationIndex] = {
-                          ...newStructures[selectedLegislationIndex],
-                          structure: newOrder
-                        };
-                        return newStructures;
-                      });
-                    }}
-                    values={legislationStructures[selectedLegislationIndex]?.structure || []}
-                  >
-                    {legislationStructures[selectedLegislationIndex]?.structure.map((node, index) => (
-                      <div
-                        key={node.id}
-                        onDragOver={(e) => e.preventDefault()}
-                        onDrop={(e) => handleDrop(e, index)}
-                      >
-                        <LegislationNode
-                          node={node}
-                          onEdit={handleEdit}
-                          onDelete={handleDelete}
-                          canEdit={canEditStructure}
-                          onDragEnd={() => {/* Optional: Add logic if needed */}}
-                        />
-                      </div>
-                    ))}
-                  </Reorder.Group>
-                </div>
-              </div>
-            )}
-
-            <div className="mt-4 flex justify-between items-center">
-              <button
-                onClick={() => {
-                  if (!canEditStructure) {
-                    setShowWarning(true);
-                  } else {
-                    setCanEditStructure(false);
-                  }
+          <select
+            id="categorie"
+            className="border border-green-500 rounded p-2"
+            value={selectedCategoryId || ''}
+            onChange={handleCategoryChange}
+          >
+            <option value="">Sélectionner une catégorie</option>
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        {selectedLegislationIndex !== null && (
+          <div className="flex space-x-4">
+            {/* Existing Structure de la législation and Textes liés code */}
+            <div className="w-2/3 border p-4 rounded">
+              <h4 className="font-medium mb-2">Structure de la législation</h4>
+              <Reorder.Group
+                axis="y"
+                onReorder={(newOrder) => {
+                  setLegislationStructures(prevStructures => {
+                    const newStructures = [...prevStructures];
+                    newStructures[selectedLegislationIndex] = {
+                      ...newStructures[selectedLegislationIndex],
+                      structure: newOrder
+                    };
+                    return newStructures;
+                  });
                 }}
-                className={`px-4 py-2 rounded-md ${
-                  canEditStructure
-                    ? 'bg-red-500 text-white'
-                    : 'bg-green-500 text-white'
-                }`}
+                values={legislationStructures[selectedLegislationIndex]?.structure || []}
               >
-                {canEditStructure ? 'Désactiver la modification' : 'Modifier la structure'}
-              </button>
-              <button
-                onClick={handleExportClick}
-                className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600"
-              >
-                <Download className="h-4 w-4 inline mr-2" />
-                Exporter le CSV modifié
-              </button>
-            </div>
-            
-            {/* **Add the error message display here** */}
-            {error && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-                <AlertTriangle className="w-5 h-5 inline mr-2" />
-                {error}
-              </div>
-            )}
-      
-            {showWarning && (
-              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                <div className="bg-white p-6 rounded-lg">
-                  <h4 className="text-lg font-bold mb-4">Attention</h4>
-                  <p>Modifier la structure d'un texte juridique est une action conséquente. Êtes-vous sûr de vouloir continuer ?</p>
-                  <div className="mt-4 flex justify-end space-x-4">
-                    <button
-                      onClick={() => setShowWarning(false)}
-                      className="px-4 py-2 bg-gray-300 rounded-md"
-                    >
-                      Annuler
-                    </button>
-                    <button
-                      onClick={() => {
-                        setCanEditStructure(true);
-                        setShowWarning(false);
-                      }}
-                      className="px-4 py-2 bg-green-500 text-white rounded-md"
-                    >
-                      Confirmer
-                    </button>
+                {legislationStructures[selectedLegislationIndex]?.structure.map((node, index) => (
+                  <div
+                    key={node.id}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => handleDrop(e, index)}
+                  >
+                    <LegislationNode
+                      node={node}
+                      onEdit={handleEdit}
+                      onDelete={handleDelete}
+                      canEdit={canEditStructure}
+                      onDragEnd={() => {/* Optional: Add logic if needed */}}
+                    />
                   </div>
-                </div>
-              </div>
-            )}
+                ))}
+              </Reorder.Group>
+            </div>
           </div>
-        );
+        )}
+  
+        <div className="mt-4 flex justify-between items-center">
+          <button
+            onClick={() => {
+              if (!canEditStructure) {
+                setShowWarning(true);
+              } else {
+                setCanEditStructure(false);
+              }
+            }}
+            className={`px-4 py-2 rounded-md ${
+              canEditStructure
+                ? 'bg-red-500 text-white'
+                : 'bg-green-500 text-white'
+            }`}
+          >
+            {canEditStructure ? 'Désactiver la modification' : 'Modifier la structure'}
+          </button>
+          <button
+            onClick={handleExportClick}
+            className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600"
+          >
+            <Download className="h-4 w-4 inline mr-2" />
+            Exporter le CSV modifié
+          </button>
+        </div>
+  
+        {/* **Add the error message display here** */}
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+            <AlertTriangle className="w-5 h-5 inline mr-2" />
+            {error}
+          </div>
+        )}
+  
+        {showWarning && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+            <div className="bg-white p-6 rounded-lg">
+              <h4 className="text-lg font-bold mb-4">Attention</h4>
+              <p>Modifier la structure d'un texte juridique est une action conséquente. Êtes-vous sûr de vouloir continuer ?</p>
+              <div className="mt-4 flex justify-end space-x-4">
+                <button
+                  onClick={() => setShowWarning(false)}
+                  className="px-4 py-2 bg-gray-300 rounded-md"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={() => {
+                    setCanEditStructure(true);
+                    setShowWarning(false);
+                  }}
+                  className="px-4 py-2 bg-green-500 text-white rounded-md"
+                >
+                  Confirmer
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  
         case 4:
           if (!legislationStructures.length || selectedLegislationIndex === null) return null;
           return (
