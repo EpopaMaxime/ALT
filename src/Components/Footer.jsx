@@ -121,7 +121,7 @@ export default function App() {
               
             </h6>
             <p>
-            ALT centralise et analyse les textes juridiques majeurs au Cameroun. Vous pouvez donc bénéficier d'informations à jour pour une expertise accrue et simplifier votre veille juridique avec notre plateforme innovante.
+            Centralisez, analysez et maîtrisez l'ensemble du droit camerounais
             </p>
           </div>
           {/* <!-- SERVICES section --> */}
