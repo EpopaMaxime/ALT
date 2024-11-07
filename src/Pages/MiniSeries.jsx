@@ -25,7 +25,7 @@ const MiniSeries = () => {
     <div class="py-8 px-4 mx-auto max-w-screen-xl sm:py-16 lg:px-6">
         <div class="max-w-screen-md">
             <h2 class="mb-4 text-4xl tracking-tight font-extrabold text-gray-900 dark:text-white">Choisissez votre parcours d'apprentissage</h2>
-            <p class="mb-8 font-light text-gray-500 sm:text-xl dark:text-gray-400">Listing des différentes thématiques abordées (droit des contrats, droit de la concurrence, droit des sociétés, etc.) avec pour chacune un bref descriptif, les vidéos/épisodes qui la composent et un bouton "Commencer cette série".</p>
+            <p class="mb-8 font-light text-gray-500 sm:text-xl dark:text-gray-400">Explorez nos mini séries thématiques en droit : chaque sujet propose des épisodes enrichissants et un descriptif concis. Cliquez sur 'Commencer cette série' pour approfondir vos connaissances.</p>
             <div className=' mb-10 flex items-center justify-center gap-[100px]'>
     </div>
 
@@ -46,7 +46,7 @@ const MiniSeries = () => {
           <div class="px-4 mx-auto max-w-screen-xl text-center lg:px-6">
             <div class="mx-auto max-w-screen-sm">
                 <h2 class="mb-5 text-4xl tracking-tight font-extrabold text-gray-900 dark:text-white">Un concept vidéo adapté aux professionnels</h2>
-                    <p class="mb-16 font-light text-gray-500 sm:text-xl dark:text-gray-400">Décrivez le format court et dense des vidéos (10-15 minutes), l'approche pédagogique avec des cas pratiques, des visuels, etc. Mettez en avant les avantages de ce format (compatible avec les emplois du temps chargés, visionnable n'importe où, etc.)</p>
+                    <p class="mb-16 font-light text-gray-500 sm:text-xl dark:text-gray-400">Nos vidéos, d’une durée de 10-15 minutes, offrent un contenu dense et pratique. Grâce à des cas concrets et des visuels, ce format est idéal pour les emplois du temps chargés et est accessible partout, à tout moment.</p>
             </div>
           </div>
 
@@ -112,7 +112,7 @@ const MiniSeries = () => {
      <div className="px-4 mx-auto max-w-screen-xl text-center lg:py-16 lg:px-6">
             <div className="mx-auto max-w-screen-sm">
                 <h2 className="mb-5 text-4xl tracking-tight font-extrabold text-gray-900 dark:text-white">Intervenants</h2>
-                    <p className=" sm:text-xl dark:text-gray-400"><strong>Des experts de renom à la caméra </strong><br />Mettez en avant 2-3 intervenants phares (avocats, universitaires, etc.) avec une photo, une brève bio et un extrait vidéo illustrant leur qualité pédagogique.</p>
+                    <p className=" sm:text-xl dark:text-gray-400"><strong>Des experts de renom à la caméra </strong><br />Rencontrez nos experts : avocats et universitaires reconnus, illustrés par des extraits vidéos qui mettent en lumière leur pédagogie. Découvrez leur parcours et leur approche unique.</p>
             </div>
 
           </div>

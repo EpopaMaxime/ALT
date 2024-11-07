@@ -36,7 +36,7 @@ const Webinaires = () => {
             <div class="mx-auto max-w-screen-sm">
                 <h2 class=" mb-6 text-4xl tracking-tight font-extrabold text-gray-900 dark:text-white">Webinaires à venir</h2>
                     <h3 class="pb-[15px] font-light text-gray-500 sm:text-xl dark:text-gray-400">Prochains rendez-vous</h3>
-                    <p className='pb-[45px] sm:text-xl'>Listing des prochains webinaires avec pour chacun un bref descriptif, les dates/horaires, les intervenants et un lien pour s'inscrire.</p>
+                    <p className='pb-[45px] sm:text-xl'>Découvrez nos prochains webinaires ! Chaque session offre un aperçu précis avec descriptif, date, heure, intervenants et un lien direct pour vous inscrire. Rejoignez-nous pour rester informé des évolutions juridiques.</p>
 
 <div class="grid grid-flow-col grid-rows-2 grid-cols-3 gap-8">
   <div>
@@ -61,7 +61,7 @@ const Webinaires = () => {
           <div class="px-4 mx-auto max-w-screen-xl text-center lg:px-6">
             <div class="mx-auto max-w-screen-sm">
                 <h2 class="mb-5 text-4xl tracking-tight font-extrabold text-gray-900 dark:text-white">Webinaires récents </h2>
-                    <p class="mb-[40px] font-light text-gray-500 sm:text-xl dark:text-gray-400">Ressources à consulter: Accédez aux replays des derniers webinaires classés par thématique (droit des affaires, droit social, droit pénal, etc.) Chaque replay est accompagné d'un résumé, des PDFs des supports de présentation à télécharger et d'un lien pour visionner.</p>
+                    <p class="mb-[40px] font-light text-gray-500 sm:text-xl dark:text-gray-400">Accédez aux replays de nos webinaires, classés par thématique. Chaque vidéo inclut un résumé, des supports PDF à télécharger, et un lien direct pour visionner.</p>
             </div>
           </div>
 
@@ -127,7 +127,7 @@ const Webinaires = () => {
      <div className="px-4 mx-auto max-w-screen-xl text-center lg:py-16 lg:px-6">
             <div className="mx-auto max-w-screen-sm">
                 <h2 className="mb-5 text-4xl tracking-tight font-extrabold text-gray-900 dark:text-white">Intervenants</h2>
-                    <p className=" sm:text-xl dark:text-gray-400">Ils ont animé nos webinaires <br/>Mettez en avant quelques intervenants de renom (professeurs d'université, avocats réputés, magistrats, etc.) avec une brève bio, une photo et un lien vers leurs webinaires.</p>
+                    <p className=" sm:text-xl dark:text-gray-400">Rencontrez nos intervenants de renom ! Professeurs, avocats et magistrats partagent leurs expertises. Découvrez leur parcours, consultez leurs webinaires et enrichissez vos connaissances.</p>
             </div>
 
           </div>

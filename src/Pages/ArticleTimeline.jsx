@@ -13,16 +13,16 @@ const ArticleTimeline = () => {
     const fetchCurrentArticleAndVersions = async () => {
       try {
         const altUrl = 'https://alt.back.qilinsa.com';
-        
+    
         // Fetch the current article
         const currentArticleResponse = await axios.get(`${altUrl}/wp-json/wp/v2/articles/${id}`);
         const currentArticleData = currentArticleResponse.data;
         setCurrentArticle(currentArticleData);
-
+    
         // Fetch all articles
         const allArticlesResponse = await axios.get(`${altUrl}/wp-json/wp/v2/articles?per_page=100`);
         const allArticles = allArticlesResponse.data;
-        
+    
         // Function to normalize titles
         const normalizeTitle = (title) => {
           return title
@@ -30,22 +30,27 @@ const ArticleTimeline = () => {
             .trim()
             .replace(/\s+/g, ' '); // Replace multiple spaces with a single space
         };
-
+    
         // Normalized current article title
         const currentTitleNormalized = normalizeTitle(currentArticleData.title.rendered);
-
-        // Filter articles with the same normalized title
-        const sameTitle = allArticles.filter(article => 
-          normalizeTitle(article.title.rendered) === currentTitleNormalized
-        );
-
+    
+        // Filter articles with the same normalized title and Hierarchy_ID
+        const sameTitle = allArticles.filter(article => {
+          const articleHierarchyIds = article.acf.hierachie;
+          const currentHierarchyId = currentArticleData.acf.hierachie[0];
+          return (
+            normalizeTitle(article.title.rendered) === currentTitleNormalized &&
+            articleHierarchyIds.includes(currentHierarchyId)
+          );
+        });
+    
         // Sort by date_entree
         const sortedVersions = sameTitle.sort((a, b) => {
           const dateA = a.acf.date_entree;
           const dateB = b.acf.date_entree;
           return dateA.localeCompare(dateB);
         });
-
+    
         setVersions(sortedVersions);
         setLoading(false);
       } catch (error) {
@@ -53,7 +58,7 @@ const ArticleTimeline = () => {
         setLoading(false);
       }
     };
-
+    
     if (id) {
       fetchCurrentArticleAndVersions();
     }
