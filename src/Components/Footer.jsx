@@ -121,9 +121,7 @@ export default function App() {
               
             </h6>
             <p>
-              Avec ALT votre Lorem ipsum dolor sit,
-              amet consectetur adipisicing elit. 
-              vero quisquam pariatur! 
+            ALT centralise et analyse les textes juridiques majeurs au Cameroun. Vous pouvez donc bénéficier d'informations à jour pour une expertise accrue et simplifier votre veille juridique avec notre plateforme innovante.
             </p>
           </div>
           {/* <!-- SERVICES section --> */}

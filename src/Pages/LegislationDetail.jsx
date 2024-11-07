@@ -106,7 +106,6 @@ const LegislationDetail = () => {
         const decisionsData = await Promise.all(decisionIdentifiers.map(fetchDecisions));
         const commentsData = await Promise.all(commentIdentifiers.map(fetchComments));
   
-        // Remove redundant articles based on title and keep only the article with the latest date_entree
         const uniqueArticles = detailsData
         .filter(Boolean)
         .reduce((acc, currentArticle) => {
@@ -114,41 +113,46 @@ const LegislationDetail = () => {
           const normalizedCurrentTitle = currentArticle.title.rendered
             .replace(/\s+/g, ' ')  // Replace multiple spaces with single space
             .trim();               // Remove leading/trailing spaces
-          
-          // Find if an article with the same normalized title exists
+      
+          // Get the title ID from the first item in the `acf.hierachie` array
+          const currentTitleId = currentArticle.acf.hierachie?.[0];
+      
+          // Find if an article with the same normalized title and title ID exists
           const existingArticle = acc.find(article => {
             const normalizedExistingTitle = article.title.rendered
               .replace(/\s+/g, ' ')
               .trim();
-            return normalizedCurrentTitle === normalizedExistingTitle;
+            const existingTitleId = article.acf.hierachie?.[0];
+            return normalizedCurrentTitle === normalizedExistingTitle && currentTitleId === existingTitleId;
           });
       
           if (existingArticle) {
             // Convert date strings to numbers for proper comparison
-            // date_entree format is "YYYYMMDD"
             const existingDate = parseInt(existingArticle.acf.date_entree, 10);
             const newDate = parseInt(currentArticle.acf.date_entree, 10);
       
             if (!isNaN(newDate) && !isNaN(existingDate)) {
               if (newDate > existingDate) {
-                // Remove the existing article and add the new one
+                // Replace the existing article with the current one if the date is newer
                 return [
                   ...acc.filter(article => 
-                    article.title.rendered.replace(/\s+/g, ' ').trim() !== normalizedCurrentTitle
+                    !(article.title.rendered.replace(/\s+/g, ' ').trim() === normalizedCurrentTitle && 
+                      article.acf.hierachie?.[0] === currentTitleId)
                   ),
                   currentArticle
                 ];
               }
             }
-            // If dates are invalid or new date is not greater, keep existing articles
+            // If dates are invalid or the new date is not greater, keep the existing article
             return acc;
           }
-          
-          // If no existing article found, add the new one
+      
+          // If no existing article found, add the current article to the list
           return [...acc, currentArticle];
         }, []);
-  
-        setDetails(uniqueArticles);
+      
+      setDetails(uniqueArticles);
+      
         setDecisions(decisionsData.filter(Boolean));
         setComments(commentsData.filter(Boolean));
       } catch (err) {
