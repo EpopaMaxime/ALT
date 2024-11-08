@@ -390,95 +390,97 @@ const LegislationImport = () => {
 
  
 
-const exportModifiedCSV = useCallback(() => {
-  if (selectedLegislationIndex !== null) {
-    const selectedLegislation = legislationStructures[selectedLegislationIndex];
-    let currentTitle = '';
-    let currentChapter = '';
-    let currentSection = '';
-
-    const escapeValue = (value, forceNoQuotes = false) => {
-      if (forceNoQuotes) return value;
-      if (value.includes(',') || value.includes('"') || value.includes('\n')) {
-        return `"${value.replace(/"/g, '""')}"`;
-      }
-      return value;
-    };
-
-    // Update the CSV header row to include Decisions and Comments columns
-    const headerRow = 'Titre_legislation,Date_entree,Code_visee,Titre,Chapitre,Section,Article,Categorie,Decision_IDs,Commentaire_IDs';
-
-    // Gather all linked decision and comment IDs from bulkLinkedTexts
-    const decisionIds = bulkLinkedTexts.decisions?.map(decision => decision.value).join(',') || '';
-    const commentaireIds = bulkLinkedTexts.commentaires?.map(comment => comment.value).join(',') || '';
-
-    // Format the legislationInfoRow to ensure consistent alignment
-    const legislationInfoRow = [
-      selectedLegislation.Titre_legislation,
-      selectedLegislation["Date d'entrée en vigueur"],
-      selectedLegislation["Code visé"],
-      '', '', '', '', 
-      selectedCategoryName || '', // Nom de la catégorie
-      decisionIds,                 // Decision IDs
-      commentaireIds               // Commentaire IDs
-    ].map(value => escapeValue(value)).join(',');
-
-    const exportData = selectedLegislation.structure.map((item) => {
-      const baseInfo = [
+  const exportModifiedCSV = useCallback(() => {
+    if (selectedLegislationIndex !== null) {
+      const selectedLegislation = legislationStructures[selectedLegislationIndex];
+      const userId = localStorage.getItem('iduser'); // Get the user ID from localStorage
+      let currentTitle = '';
+      let currentChapter = '';
+      let currentSection = '';
+  
+      const escapeValue = (value, forceNoQuotes = false) => {
+        if (forceNoQuotes) return value;
+        if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+          return `"${value.replace(/"/g, '""')}"`;
+        }
+        return value;
+      };
+  
+      // Update the CSV header row to include User ID, Decisions and Comments columns
+      const headerRow = 'Titre_legislation,Date_entree,Code_visee,Titre,Chapitre,Section,Article,Categorie,Decision_IDs,Commentaire_IDs,UserId';
+  
+      // Gather all linked decision and comment IDs from bulkLinkedTexts
+      const decisionIds = bulkLinkedTexts.decisions?.map(decision => decision.value).join(',') || '';
+      const commentaireIds = bulkLinkedTexts.commentaires?.map(comment => comment.value).join(',') || '';
+  
+      // Format the legislationInfoRow to ensure consistent alignment
+      const legislationInfoRow = [
         selectedLegislation.Titre_legislation,
         selectedLegislation["Date d'entrée en vigueur"],
         selectedLegislation["Code visé"],
-        '',
-        '',
-        '',
-        '',
-        selectedCategoryName || '',  // Nom de la catégorie
+        '', '', '', '', 
+        selectedCategoryName || '', // Nom de la catégorie
         decisionIds,                 // Decision IDs
-        commentaireIds               // Commentaire IDs
-      ];
-
-      switch (item.type) {
-        case 'Titre':
-          currentTitle = item.content;
-          currentChapter = '';
-          currentSection = '';
-          baseInfo[3] = item.content;
-          break;
-        case 'Chapitre':
-          currentChapter = item.content;
-          currentSection = '';
-          baseInfo[4] = item.content;
-          break;
-        case 'Section':
-          currentSection = item.content;
-          baseInfo[5] = item.content;
-          break;
-        case 'Article':
-          baseInfo[6] = item.linkedTextId ? item.linkedTextId : item.content;
-          break;
-      }
-
-      // Update title, chapter, and section in the baseInfo array
-      baseInfo[3] = currentTitle;
-      baseInfo[4] = currentChapter;
-      baseInfo[5] = currentSection;
-
-      return baseInfo.map((value, index) => escapeValue(value, index < 3)).join(',');
-    });
-
-    // Ensure the first row aligns with the header if legislationInfoRow is included as the first row
-    const allRows = [
-      headerRow,
-      legislationInfoRow,
-      ...exportData
-    ].join('\r\n');
-
-    const blob = new Blob(["\uFEFF" + allRows], { type: 'text/csv;charset=utf-8;' });
-    return { csv: allRows, blob };
-  }
-  return null;
-}, [legislationStructures, selectedLegislationIndex, selectedCategoryName, bulkLinkedTexts]);
-
+        commentaireIds,               // Commentaire IDs
+        userId
+      ].map(value => escapeValue(value)).join(',');
+  
+      const exportData = selectedLegislation.structure.map((item) => {
+        const baseInfo = [
+          selectedLegislation.Titre_legislation,
+          selectedLegislation["Date d'entrée en vigueur"],
+          selectedLegislation["Code visé"],
+          '',
+          '',
+          '',
+          '',
+          selectedCategoryName || '',  // Nom de la catégorie
+          decisionIds,                 // Decision IDs
+          commentaireIds,               // Commentaire IDs
+          userId
+        ];
+  
+        switch (item.type) {
+          case 'Titre':
+            currentTitle = item.content;
+            currentChapter = '';
+            currentSection = '';
+            baseInfo[3] = item.content;
+            break;
+          case 'Chapitre':
+            currentChapter = item.content;
+            currentSection = '';
+            baseInfo[4] = item.content;
+            break;
+          case 'Section':
+            currentSection = item.content;
+            baseInfo[5] = item.content;
+            break;
+          case 'Article':
+            baseInfo[6] = item.linkedTextId ? item.linkedTextId : item.content;
+            break;
+        }
+  
+        // Update title, chapter, and section in the baseInfo array
+        baseInfo[3] = currentTitle;
+        baseInfo[4] = currentChapter;
+        baseInfo[5] = currentSection;
+  
+        return baseInfo.map((value, index) => escapeValue(value, index < 4)).join(',');
+      });
+  
+      // Ensure the first row aligns with the header if legislationInfoRow is included as the first row
+      const allRows = [
+        headerRow,
+        legislationInfoRow,
+        ...exportData
+      ].join('\r\n');
+  
+      const blob = new Blob(["\uFEFF" + allRows], { type: 'text/csv;charset=utf-8;' });
+      return { csv: allRows, blob };
+    }
+    return null;
+  }, [legislationStructures, selectedLegislationIndex, selectedCategoryName, bulkLinkedTexts]);
   
   const handleExportClick = () => {
     const result = exportModifiedCSV();

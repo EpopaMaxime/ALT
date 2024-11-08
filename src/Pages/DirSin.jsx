@@ -141,7 +141,7 @@ const DirSin = () => {
               <p class="text-2xl font-medium text-gray-900 dark:text-white">"Grâce aux outils d'ALT, nous avons pu revoir en profondeur nos processus de gestion des sinistres pour les rendre pleinement conformes aux dernières jurisprudences, tout en gagnant considérablement en productivité."</p>
           </blockquote>
           <figcaption class="flex items-center justify-center mt-6 space-x-3">
-              <img class="w-6 h-6 rounded-full" src="https://flowbite.s3.amazonaws.com/blocks/marketing-ui/avatars/michael-gouch.png" alt="profile picture"/>
+              <img class="w-6 h-6 rounded-full" src="src/images/portrait-happy-casual-man-modern-office_231208-2276.jpg" alt="profile picture"/>
               <div class="flex items-center divide-x-2 divide-gray-500 dark:divide-gray-700">
                   <div class="pr-3 font-medium text-gray-900 dark:text-white">M. Ngako</div>
                   <div class="pl-3 text-sm font-light text-gray-500 dark:text-gray-400">Responsable juridique sinistres chez CamAssur</div>

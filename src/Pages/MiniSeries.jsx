@@ -126,7 +126,7 @@ const MiniSeries = () => {
               <p class="text-2xl font-medium text-gray-900 dark:text-white">"Les mini-séries d'ALT sont un excellent moyen d'approfondir ses connaissances de façon très pragmatique. Les vidéos sont claires, denses et abordent des cas concrets, ce qui les rend particulièrement précieuses."</p>
           </blockquote>
           <figcaption class="flex items-center justify-center mt-6 space-x-3">
-              <img class="w-6 h-6 rounded-full" src="https://flowbite.s3.amazonaws.com/blocks/marketing-ui/avatars/michael-gouch.png" alt="profile picture"/>
+              <img class="w-6 h-6 rounded-full" src="src/images/front-view-smiley-woman-taking-notes_23-2149442272.jpg" alt="profile picture"/>
               <div class="flex items-center divide-x-2 divide-gray-500 dark:divide-gray-700">
                   <div class="pr-3 font-medium text-gray-900 dark:text-white"> Mme Kamwa</div>
                   <div class="pl-3 text-sm font-light text-gray-500 dark:text-gray-400">juriste en entreprise</div>

@@ -141,7 +141,7 @@ const Webinaires = () => {
               <p class="text-2xl font-medium text-gray-900 dark:text-white">"Les webinaires d'ALT sont devenus pour moi un véritable rendez-vous incontournable pour me tenir informé des dernières évolutions juridiques dans une ambiance propice aux échanges."</p>
           </blockquote>
           <figcaption class="flex items-center justify-center mt-6 space-x-3">
-              <img class="w-6 h-6 rounded-full" src="https://flowbite.s3.amazonaws.com/blocks/marketing-ui/avatars/michael-gouch.png" alt="profile picture"/>
+              <img class="w-6 h-6 rounded-full" src="src/images/close-up-labor-union-member_23-2150969910.jpg" alt="profile picture"/>
               <div class="flex items-center divide-x-2 divide-gray-500 dark:divide-gray-700">
                   <div class="pr-3 font-medium text-gray-900 dark:text-white">M. Olinga</div>
                   <div class="pl-3 text-sm font-light text-gray-500 dark:text-gray-400">Avocat associé</div>

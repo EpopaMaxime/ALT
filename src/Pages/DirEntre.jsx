@@ -45,9 +45,10 @@ const DirEntre = () => {
             </svg>
             <img
               className="object-cover w-full h-56 rounded shadow-lg lg:rounded-none lg:shadow-none md:h-96 lg:h-full"
-              src="https://images.pexels.com/photos/3184291/pexels-photo-3184291.jpeg?auto=compress&amp;cs=tinysrgb&amp;dpr=2&amp;h=750&amp;w=1260"
-              alt=""
+              src="src/images/business-people-meeting-office-discuss-ways-overcome-economic-crisis-caused-by-coronavirus_236854-32897-S3jb_RE-M-transformed 2.jpeg"  // Path relative to the public folder
+              alt="Local Photo"
             />
+
           </div>
           <div className="relative flex flex-col items-start w-full max-w-xl px-4 mx-auto md:px-0 lg:px-8 lg:max-w-screen-xl">
             <div className="mb-16 lg:my-40 lg:max-w-lg lg:pr-5">
@@ -134,7 +135,7 @@ const DirEntre = () => {
               <p class="text-2xl font-medium text-gray-900 dark:text-white">"ALT nous a permis de considérablement renforcer notre sécurité juridique tout en fluidifiant les processus de validation réglementaire au sein de nos différents départements."</p>
           </blockquote>
           <figcaption class="flex items-center justify-center mt-6 space-x-3">
-              <img class="w-6 h-6 rounded-full" src="https://flowbite.s3.amazonaws.com/blocks/marketing-ui/avatars/michael-gouch.png" alt="profile picture"/>
+              <img class="w-6 h-6 rounded-full" src="src/images/front-view-woman-working-as-economist_23-2150251725.jpg" alt="profile picture"/>
               <div class="flex items-center divide-x-2 divide-gray-500 dark:divide-gray-700">
                   <div class="pr-3 font-medium text-gray-900 dark:text-white">Mme Kamga</div>
                   <div class="pl-3 text-sm font-light text-gray-500 dark:text-gray-400">Directrice juridique chez CamCorp</div>
