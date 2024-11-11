@@ -327,7 +327,7 @@ const ArticleImport = () => {
     const texts = {};
     for (const type of textTypes) {
       try {
-        const response = await axios.get(`${API_BASE_URL}/${removeAccentsAndLowerCase(type)}s`);
+        const response = await axios.get(`${API_BASE_URL}/${removeAccentsAndLowerCase(type)}s?per_page=100`);
         texts[type] = response.data.map(item => ({
           value: item.id.toString(),
           label: item.title?.rendered || item.acf?.titre || 'Sans titre',
