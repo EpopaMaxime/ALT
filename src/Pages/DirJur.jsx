@@ -5,6 +5,7 @@ import { CloudArrowUpIcon, LockClosedIcon, ServerIcon } from '@heroicons/react/2
 import citation from '../assets/Citation.png'
 import about from '../assets/about.png'
 import Footer from '../Components/Footer'
+import { Link, NavLink } from 'react-router-dom';
 
 
 const features = [
@@ -96,6 +97,13 @@ const DirJur = () => {
               <h2 className="text-[60px] font-bold tracking-tight text-white sm:text-4xl">
               Vous etes prets ?
               </h2>
+              <br/>
+              <NavLink to="/authform?tab=register" className='bg-gradient-to-br from-slate-800 to-slate-900 text-white py-2 px-4 transition-all duration-300 rounded hover:bg-white hover:text-cyan-200'>
+                    
+                    <strong>
+                    Inscrivez-vous</strong>
+                    
+                  </NavLink>
               <p className="mt-6 text-l leading-8 text-gray-300">
               Centralisez, analysez et maîtrisez l'ensemble du droit camerounais.
               </p>

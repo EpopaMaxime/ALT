@@ -57,12 +57,26 @@ const LegislationDetail = () => {
           setCategoryName(categoryRes.data.name);
         }
   
-        // Format and set entry date
-        const entryDateFormatted = res.data.acf.date_entree || '';
-        if (entryDateFormatted) {
-          const formattedDate = `${entryDateFormatted.slice(6, 8)} ${new Date(entryDateFormatted.slice(0, 4), entryDateFormatted.slice(4, 6) - 1).toLocaleString('default', { month: 'long' })} ${entryDateFormatted.slice(0, 4)}`;
-          setEntryDate(formattedDate);
-        }
+            // Format and set entry date
+            const entryDateRaw = res.data.acf.date_entree || '';
+            let formattedDate = '';
+
+            if (entryDateRaw) {
+              if (entryDateRaw.includes('/')) {
+                // Handle "DD/MM/YYYY" format
+                const [day, month, year] = entryDateRaw.split('/');
+                formattedDate = `${parseInt(day, 10)} ${new Date(year, month - 1).toLocaleString('default', { month: 'long' })} ${year}`;
+              } else {
+                // Handle "YYYYMMDD" format
+                const year = entryDateRaw.slice(0, 4);
+                const month = entryDateRaw.slice(4, 6);
+                const day = entryDateRaw.slice(6, 8);
+                formattedDate = `${parseInt(day, 10)} ${new Date(year, month - 1).toLocaleString('default', { month: 'long' })} ${year}`;
+              }
+              
+              setEntryDate(formattedDate);
+            }
+
   
         // Fetch the "code" field
         const code = res.data.acf.code || '';

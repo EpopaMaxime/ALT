@@ -7,6 +7,7 @@ import Select from 'react-select';
 import { DndProvider } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
 
+
 const API_BASE_URL = "https://alt.back.qilinsa.com/wp-json/wp/v2";
 
 const steps = [
@@ -788,32 +789,32 @@ const ArticleImport = () => {
                       <div className="w-full md:w-2/3">
                         <h3 className="text-lg font-medium mb-2">Structure de la législation</h3>
                         <ul className="space-y-2 min-h-[400px] border-2 border-dashed border-gray-300 p-4 rounded-md">
-  {legislationStructure.map((item, index) => (
-    <li
-      key={item.id}
-      className={`p-2 rounded flex items-center mb-2 ${
-        item.isDroppedToStructure ? 'bg-green-100' : 'bg-gray-100'
-      }`}
-      draggable
-      onDragStart={(e) => {
-        e.dataTransfer.setData('text/plain', JSON.stringify({ id: item.id, index, compartment: 'structure' }));
-      }}
-      onDragOver={(e) => e.preventDefault()}
-      onDrop={(e) => {
-        e.preventDefault();
-        const droppedItem = JSON.parse(e.dataTransfer.getData('text/plain'));
-        onDragEnd({
-          source: { index: droppedItem.index, droppableId: droppedItem.compartment },
-          destination: { index, droppableId: 'structure' }
-        });
-      }}
-    >
-      <GripVertical className="mr-2 text-gray-500" />
-      <span>{item.title?.rendered || item.acf?.titre || item.title || 'Sans titre'}</span>
-      <span className="ml-auto text-sm text-gray-500">Position: {item.position}</span>
-    </li>
-  ))}
-</ul>
+                        {legislationStructure.map((item, index) => (
+                          <li
+                            key={item.id}
+                            className={`p-2 rounded flex items-center mb-2 ${
+                              item.isDroppedToStructure ? 'bg-green-100' : 'bg-gray-100'
+                            }`}
+                            draggable
+                            onDragStart={(e) => {
+                              e.dataTransfer.setData('text/plain', JSON.stringify({ id: item.id, index, compartment: 'structure' }));
+                            }}
+                            onDragOver={(e) => e.preventDefault()}
+                            onDrop={(e) => {
+                              e.preventDefault();
+                              const droppedItem = JSON.parse(e.dataTransfer.getData('text/plain'));
+                              onDragEnd({
+                                source: { index: droppedItem.index, droppableId: droppedItem.compartment },
+                                destination: { index, droppableId: 'structure' }
+                              });
+                            }}
+                          >
+                            <GripVertical className="mr-2 text-gray-500" />
+                            <span>{item.title?.rendered || item.acf?.titre || item.title || 'Sans titre'}</span>
+                            <span className="ml-auto text-sm text-gray-500">Position: {item.position}</span>
+                          </li>
+                        ))}
+                      </ul>
 
                       </div>
                       <div className="w-full md:w-1/3">

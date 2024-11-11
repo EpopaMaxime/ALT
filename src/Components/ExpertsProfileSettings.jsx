@@ -359,7 +359,7 @@ const ExpertsProfileSettings = () => {
           <h5 className="text-orange-500 font-semibold text-lg">Avertissement</h5>
         </div>
         <p className="text-orange-700">
-          Pour être affiché dans l'annuaire des experts de la plateforme, vous devez remplir tous les champs du formulaire. Assurez-vous de fournir des informations complètes et précises pour optimiser votre visibilité.
+        Pour être affiché dans l'annuaire des experts de la plateforme, vous devez remplir tous les champs obligatoires du formulaire. Assurez-vous de fournir des informations complètes et précises pour optimiser votre visibilité.
         </p>
       </div>
     </div>
@@ -540,9 +540,11 @@ const ExpertsProfileSettings = () => {
                 <input
                   className="flex h-10 w-full rounded-md border px-3 py-2 text-sm ring-offset-background file:border-0  file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 border-gray-500 focus:border-gray-500 focus:ring-gray-500 bg-light-background dark:bg-dark-background text-light-text dark:text-dark-text"
                   id="name"
+                  type="text"
                   placeholder="votre nom"
                   value={nom}
                   onChange={(e) => setNom(e.target.value)}
+                  required
                 />
               </div>
               <div className="grid gap-2">
@@ -558,6 +560,8 @@ const ExpertsProfileSettings = () => {
                   placeholder="Votre titre"
                   value={titre}
                   onChange={(e) => setTitre(e.target.value)}
+                  type="text"
+                  required
                 />
               </div>
               <div className="grid gap-2">
@@ -590,6 +594,7 @@ const ExpertsProfileSettings = () => {
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
+                  required
                 />
               </div>
               <div className="col-span-1 md:col-span-2 flex flex-col gap-4">
@@ -787,6 +792,7 @@ const ExpertsProfileSettings = () => {
                   placeholder="Californie"
                   value={lieubarreau}
                   onChange={(e) => setLieuBarreau(e.target.value)}
+                  required
                 />
               </div>
               <div>
@@ -803,6 +809,7 @@ const ExpertsProfileSettings = () => {
                   type="date"
                   value={datebarreau}
                   onChange={(e) => setDateBarreau(e.target.value)}
+                  required
                 />
               </div>
               
@@ -831,6 +838,7 @@ const ExpertsProfileSettings = () => {
               onChange={handleCityChange}
               className="mt-1 block w-full py-2 px-3 border border-gray-300 dark:bg-gray-800 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
               disabled={!selectedRegion}
+              required
             >
               <option value="">Sélectionner une ville</option>
               {selectedRegion &&
@@ -850,6 +858,7 @@ const ExpertsProfileSettings = () => {
             value={summary}
             readOnly
             className="mt-1 block w-full py-2 px-3 border border-gray-300 dark:bg-gray-800 rounded-md shadow-sm sm:text-sm"
+            required
           />
         </div>
 
