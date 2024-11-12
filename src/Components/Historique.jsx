@@ -18,9 +18,11 @@ const Historique = () => {
     }, []);
 
     const handleClearAll = () => {
-        localStorage.removeItem('searchHistory');
+        // Set an empty array to the searchHistory key in localStorage
+        localStorage.setItem('searchHistory', JSON.stringify([]));
         setSearchHistory([]);
     };
+    
 
     const handleClearOne = (index) => {
         const newHistory = searchHistory.filter((item, i) => i !== index);
