@@ -405,9 +405,12 @@ const LegislationImport = () => {
         }
         return value;
       };
+
+        // Get the current date in 'YYYY-MM-DD' format
+       const modificationDate = new Date().toISOString().split('T')[0];
   
       // Update the CSV header row to include User ID, Decisions and Comments columns
-      const headerRow = 'Titre_legislation,Date_entree,Code_visee,Titre,Chapitre,Section,Article,Categorie,Decision_IDs,Commentaire_IDs,UserId';
+      const headerRow = 'Titre_legislation,Date_entree,Code_visee,Titre,Chapitre,Section,Article,Categorie,Decision_IDs,Commentaire_IDs,UserId,Modification_date';
   
       // Gather all linked decision and comment IDs from bulkLinkedTexts
       const decisionIds = bulkLinkedTexts.decisions?.map(decision => decision.value).join(',') || '';
@@ -422,7 +425,8 @@ const LegislationImport = () => {
         selectedCategoryName || '', // Nom de la catégorie
         decisionIds,                 // Decision IDs
         commentaireIds,               // Commentaire IDs
-        userId
+        userId,
+        modificationDate              // Add modification date
       ].map(value => escapeValue(value)).join(',');
   
       const exportData = selectedLegislation.structure.map((item) => {
@@ -437,7 +441,8 @@ const LegislationImport = () => {
           selectedCategoryName || '',  // Nom de la catégorie
           decisionIds,                 // Decision IDs
           commentaireIds,               // Commentaire IDs
-          userId
+          userId,
+          modificationDate              // Add modification date
         ];
   
         switch (item.type) {
