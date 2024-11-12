@@ -97,7 +97,7 @@ const CabinetsAvocats = () => {
               Vous etes prets ?
               </h2>
              <br/>
-              <NavLink to="/authform?tab=register" className='bg-gradient-to-br from-slate-800 to-slate-900 text-white py-2 px-4 transition-all duration-300 rounded hover:bg-white hover:text-cyan-200'>
+              <NavLink to="/authform?tab=register" className='bg-gradient-to-br from-green-600 to-green-700 text-white py-2 px-4 transition-all duration-300 rounded hover:bg-white hover:text-cyan-200'>
                     
                     <strong>
                     Inscrivez-vous</strong>
