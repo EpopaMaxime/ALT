@@ -173,7 +173,7 @@ export default function App() {
             </p>
             <p className="mb-4">
               <Link to='/fonctionnalites' className="text-white dark:text-neutral-200 cursor-pointer"
-              >Foctionnalités</Link>
+              >Fonctionnalités</Link>
             </p>
             <p>
               <Link to='/tarifs' className="text-white dark:text-neutral-200 cursor-pointer"
