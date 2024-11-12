@@ -5,6 +5,7 @@ import dirent from '../assets/dirent.png'
 import Footer from '../Components/Footer'
 import { Link, NavLink } from 'react-router-dom';
 import business from '../images/business-people-meeting-office-discuss-ways-overcome-economic-crisis-caused-by-coronavirus_236854-32897-S3jb_RE-M-transformed 2.jpeg'
+import business2 from '../images/front-view-woman-working-as-economist_23-2150251725.jpg'
 
 const features = [
   {
@@ -145,7 +146,7 @@ const DirEntre = () => {
               <p class="text-2xl font-medium text-gray-900 dark:text-white">"ALT nous a permis de considérablement renforcer notre sécurité juridique tout en fluidifiant les processus de validation réglementaire au sein de nos différents départements."</p>
           </blockquote>
           <figcaption class="flex items-center justify-center mt-6 space-x-3">
-              <img class="w-6 h-6 rounded-full" src="src/images/front-view-woman-working-as-economist_23-2150251725.jpg" alt="profile picture"/>
+              <img class="w-6 h-6 rounded-full" src={business2}></img>
               <div class="flex items-center divide-x-2 divide-gray-500 dark:divide-gray-700">
                   <div class="pr-3 font-medium text-gray-900 dark:text-white">Mme Kamga</div>
                   <div class="pl-3 text-sm font-light text-gray-500 dark:text-gray-400">Directrice juridique chez CamCorp</div>

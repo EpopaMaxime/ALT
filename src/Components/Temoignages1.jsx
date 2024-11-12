@@ -1,4 +1,5 @@
 import React from 'react'
+import business from '../images/smiling-ethnic-businesswoman-working-table_1098-22005.jpg'
 
 const Temoignages1 = () => {
   return (
@@ -13,7 +14,7 @@ const Temoignages1 = () => {
               <p class="text-2xl font-medium ">"Grâce aux fonctionnalités d'analyse juridique par IA d'ALT, nous avons pu revoir en profondeur nos processus pour les rendre conformes aux dernières évolutions réglementaires, tout en gagnant un temps considérable."</p>
           </blockquote>
           <figcaption class="flex items-center justify-center mt-6 space-x-3">
-              <img class="w-6 h-6 rounded-full" src="src/images/smiling-ethnic-businesswoman-working-table_1098-22005.jpg" alt="profile picture"/>
+              <img class="w-6 h-6 rounded-full" src={business}/>
               <div class="flex items-center divide-x-2 divide-gray-500 dark:divide-gray-700">
                   <div class="pr-3 font-medium ">Micheal Gough</div>
                   <div class="pl-3 text-sm font-light text-gray-500 dark:text-gray-400"></div>

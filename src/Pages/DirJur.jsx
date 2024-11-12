@@ -6,6 +6,7 @@ import citation from '../assets/Citation.png'
 import about from '../assets/about.png'
 import Footer from '../Components/Footer'
 import { Link, NavLink } from 'react-router-dom';
+import business from '../images/portrait-doctor-sitting-desk-office_562859-2792-transformed.jpeg'
 
 
 const features = [
@@ -145,7 +146,7 @@ const DirJur = () => {
               <p class="text-2xl font-medium text-gray-900 dark:text-white">"ALT nous a permis de considérablement gagner en productivité et en réactivité dans le suivi des évolutions réglementaires impactant notre ministère."</p>
           </blockquote>
           <figcaption class="flex items-center justify-center mt-6 space-x-3">
-              <img class="w-6 h-6 rounded-full" src="src/images/portrait-doctor-sitting-desk-office_562859-2792-transformed.jpeg" alt="profile picture"/>
+              <img class="w-6 h-6 rounded-full" src={business}/>
               <div class="flex items-center divide-x-2 divide-gray-500 dark:divide-gray-700">
                   <div class="pr-3 font-medium text-gray-900 dark:text-white">M. Fouda</div>
                   <div class="pl-3 text-sm font-light text-gray-500 dark:text-gray-400">Direction des affaires juridiques du Ministère de l'Économie</div>
