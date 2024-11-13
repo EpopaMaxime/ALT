@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { Bell, Book, Briefcase, Users, Zap, Coffee, Award, ChevronLeft, ChevronRight } from 'lucide-react';
 import anime from '../assets/anime.svg';
+
 
 const DashboardCard = ({ title, icon, content, className }) => (
   <div className={`bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 ${className}`}>
@@ -16,21 +17,49 @@ const DashboardCard = ({ title, icon, content, className }) => (
 
 const ManualCarousel = ({ items }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const carouselRef = useRef();
 
   const goToPrevious = () => {
     setCurrentIndex((prevIndex) => (prevIndex - 1 + items.length) % items.length);
+    scrollToIndex((currentIndex - 1 + items.length) % items.length);
   };
 
   const goToNext = () => {
     setCurrentIndex((prevIndex) => (prevIndex + 1) % items.length);
+    scrollToIndex((currentIndex + 1) % items.length);
+  };
+
+  const scrollToIndex = (index) => {
+    const carousel = carouselRef.current;
+    if (carousel) {
+      carousel.scrollTo({
+        left: index * carousel.offsetWidth,
+        behavior: 'smooth',
+      });
+    }
   };
 
   return (
-    <div className="relative">
-      <div className="overflow-hidden">
-        <div className="flex transition-transform duration-300 ease-in-out" style={{ transform: `translateX(-${currentIndex * 100}%)` }}>
+    <div className="flex items-center space-x-4">
+      <button 
+        onClick={goToPrevious}
+        className="bg-white dark:bg-gray-800 rounded-full p-2 shadow-md"
+        aria-label="Article précédent"
+      >
+        <ChevronLeft className="w-6 h-6 text-green-500" />
+      </button>
+
+      <div 
+        ref={carouselRef}
+        className="overflow-x-auto w-full flex scroll-snap-x snap-mandatory snap-center no-scrollbar"
+      >
+        <div className="flex w-full" style={{ width: `${items.length * 100}%` }}>
           {items.map((item) => (
-            <div key={item.id} className="w-full flex-shrink-0 px-2">
+            <div 
+              key={item.id} 
+              className="w-full flex-shrink-0 px-4 snap-start" 
+              style={{ scrollSnapAlign: 'center' }}
+            >
               <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 h-full">
                 {item.featured_media && (
                   <img 
@@ -49,16 +78,10 @@ const ManualCarousel = ({ items }) => {
           ))}
         </div>
       </div>
-      <button 
-        onClick={goToPrevious}
-        className="absolute top-1/2 left-0 transform -translate-y-1/2 bg-white dark:bg-gray-800 rounded-full p-2 shadow-md z-10 -ml-4"
-        aria-label="Article précédent"
-      >
-        <ChevronLeft className="w-6 h-6 text-green-500" />
-      </button>
+
       <button 
         onClick={goToNext}
-        className="absolute top-1/2 right-0 transform -translate-y-1/2 bg-white dark:bg-gray-800 rounded-full p-2 shadow-md z-10 -mr-4"
+        className="bg-white dark:bg-gray-800 rounded-full p-2 shadow-md"
         aria-label="Article suivant"
       >
         <ChevronRight className="w-6 h-6 text-green-500" />

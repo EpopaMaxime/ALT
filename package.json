@@ -45,6 +45,7 @@
     "react-toastify": "^10.0.6",
     "react-ui-cards": "^2.0.0",
     "recharts": "^2.13.0",
+    "slick-carousel": "^1.8.1",
     "tailwind-merge": "^2.5.2"
   },
   "devDependencies": {
