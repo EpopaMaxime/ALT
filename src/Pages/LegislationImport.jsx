@@ -398,16 +398,20 @@ const LegislationImport = () => {
       let currentChapter = '';
       let currentSection = '';
   
+      // Escape value and remove line breaks
       const escapeValue = (value, forceNoQuotes = false) => {
+        if (typeof value !== 'string') return value; // Handle non-string values
+        // Remove line breaks
+        value = value.replace(/[\r\n]+/g, ' '); 
         if (forceNoQuotes) return value;
-        if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+        if (value.includes(',') || value.includes('"')) {
           return `"${value.replace(/"/g, '""')}"`;
         }
         return value;
       };
-
-        // Get the current date in 'YYYY-MM-DD' format
-       const modificationDate = new Date().toISOString().split('T')[0];
+  
+      // Get the current date in 'YYYY-MM-DD' format
+      const modificationDate = new Date().toISOString().split('T')[0];
   
       // Update the CSV header row to include User ID, Decisions and Comments columns
       const headerRow = 'Titre_legislation,Date_entree,Code_visee,Titre,Chapitre,Section,Article,Categorie,Decision_IDs,Commentaire_IDs,UserId,Modification_date';
@@ -486,6 +490,7 @@ const LegislationImport = () => {
     }
     return null;
   }, [legislationStructures, selectedLegislationIndex, selectedCategoryName, bulkLinkedTexts]);
+  
   
   const handleExportClick = () => {
     const result = exportModifiedCSV();
