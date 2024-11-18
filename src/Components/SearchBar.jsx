@@ -9,7 +9,7 @@ const SearchBar = ({ activeSearchCategory, setActiveSearchCategory, setSearchQue
     const navigate = useNavigate();
     const dropdownRef = useRef(null);
 
-    
+
 
     useEffect(() => {
         const history = JSON.parse(localStorage.getItem('searchHistory')) || [];
@@ -27,21 +27,21 @@ const SearchBar = ({ activeSearchCategory, setActiveSearchCategory, setSearchQue
                     `https://alt.back.qilinsa.com/wp-json/wp/v2/articles?search=${query}`,
                     `https://alt.back.qilinsa.com/wp-json/wp/v2/commentaires?search=${query}`
                 ];
-    
+
                 const responses = await Promise.all(endpoints.map(endpoint => axios.get(endpoint)));
-                
+
                 // Collect all IDs from the responses
                 const resultIds = responses.flatMap(response => response.data.map(item => item.id));
-    
+
                 // Update the search history and store the results in localStorage
                 const newHistory = [{ query, resultIds }, ...searchHistory.slice(0, 9)];
                 setSearchHistory(newHistory);
                 localStorage.setItem('searchHistory', JSON.stringify(newHistory));
-    
+
                 // Redirect to the search results page
                 navigate(`/dashboard/results?query=${encodeURIComponent(query)}`);
                 setIsDropdownVisible(false);
-    
+
                 // Display the search term and results in the console for debugging
                 // console.log('Search Query:', query);
                 // console.log('Search Result IDs:', resultIds.join(','));
@@ -135,22 +135,22 @@ const SearchBar = ({ activeSearchCategory, setActiveSearchCategory, setSearchQue
                             </button>
                         </div>
                         <ul className="max-h-48 overflow-y-auto">
-    {searchHistory.map((item, index) => (
-        <li
-            key={index}
-            className="p-2 cursor-pointer dark:hover:bg-gray-700 hover:bg-gray-200"
-            onClick={() => {
-                setQuery(item.query);
-                handleSearch(new Event('submit'));
-            }}
-        >
-            {item.query}
-        </li>
-    ))}
-</ul>
-
+                            {[...new Map(searchHistory.map(item => [item.query, item])).values()].map((uniqueItem, index) => (
+                                <li
+                                    key={index}
+                                    className="p-2 cursor-pointer dark:hover:bg-gray-700 hover:bg-gray-200"
+                                    onClick={() => {
+                                        setQuery(uniqueItem.query);
+                                        handleSearch(new Event('submit'));
+                                    }}
+                                >
+                                    {uniqueItem.query}
+                                </li>
+                            ))}
+                        </ul>
                     </div>
                 )}
+
             </div>
 
             {/* Recherche pour écran petit */}
