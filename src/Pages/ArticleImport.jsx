@@ -779,7 +779,7 @@ const ArticleImport = () => {
                   <p className="text-red-500">Veuillez d'abord sélectionner une législation à l'étape précédente.</p>
                 )}
                 {loading ? (
-                  <div className="text-center">
+                  <div>
                     <p>Chargement de la structure de la législation...</p>
                   </div>
                 ) : (
