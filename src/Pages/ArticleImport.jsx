@@ -50,6 +50,28 @@ const ArticleImport = () => {
   const [selectedTexts, setSelectedTexts] = useState([]);
   const [importStatus, setImportStatus] = useState(null);
   const [importError, setImportError] = useState(null);
+  const [loadingLegislation, setLoadingLegislation] = useState(false); // Track loading state
+  const [hasFetchedLegislation, setHasFetchedLegislation] = useState(false); // Track if legislations are fetched
+  const API_BASE_URL = "https://alt.back.qilinsa.com/wp-json/wp/v2"; // Replace with your actual API base URL
+
+
+ // Fetch legislations on component mount
+ useEffect(() => {
+  const fetchLegislations = async () => {
+    setLoadingLegislation(true);
+    try {
+      const res = await axios.get(`${API_BASE_URL}/legislations`);
+      setAvailableTexts((prev) => ({ ...prev, Législation: res.data }));
+    } catch (err) {
+      setError("Échec de la récupération des législations disponibles.");
+    } finally {
+      setLoadingLegislation(false);
+    }
+  };
+
+  fetchLegislations();
+}, []); // Empty dependency array ensures this runs only on mount
+
 
   const generateFileName = () => {
     const now = new Date();
@@ -146,78 +168,109 @@ const ArticleImport = () => {
 
   const handleFileChange = useCallback((event) => {
     const uploadedFile = event.target.files?.[0];
-    if (uploadedFile) {
-      setFile(uploadedFile);
-      Papa.parse(uploadedFile, {
-        header: true,
-        skipEmptyLines: true,
-        complete: (results) => {
-          const cleanedData = results.data.map(row => {
-            const cleanedRow = {};
-            Object.keys(row).forEach(key => {
-              cleanedRow[key.trim()] = row[key];
-            });
-            return cleanedRow;
-          });
-
-          if (results.errors.length > 0) {
-            setError(`Erreur de parsing CSV: ${results.errors[0].message}`);
-            setParsedArticles([]);
-          } else if (cleanedData.length === 0) {
-            setError("Le fichier CSV est vide");
-            setParsedArticles([]);
-          } else if (!validateCSVStructure(cleanedData)) {
-            setError("Le fichier choisi n'est pas un article.");
-            setParsedArticles([]);
-          } else {
-            setParsedArticles(cleanedData);
-            setError(null);
-            checkExistingArticles(cleanedData);
-          }
-        }
-      });
+    if (!uploadedFile || !selectedLegislation?.value) {
+      setError("Veuillez sélectionner la législation avent dimporte le fichie d'article");
+      return;
     }
-  }, []);
-
+  
+    setFile(uploadedFile);
+    Papa.parse(uploadedFile, {
+      header: true,
+      skipEmptyLines: true,
+      complete: async (results) => {
+        const cleanedData = results.data.map(row => {
+          const cleanedRow = {};
+          Object.keys(row).forEach(key => {
+            cleanedRow[key.trim()] = row[key];
+          });
+          return cleanedRow;
+        });
+  
+        if (results.errors.length > 0) {
+          setError(`Erreur de parsing CSV: ${results.errors[0].message}`);
+          setParsedArticles([]);
+        } else if (cleanedData.length === 0) {
+          setError("Le fichier CSV est vide");
+          setParsedArticles([]);
+        } else if (!validateCSVStructure(cleanedData)) {
+          setError("Le fichier choisi n'est pas un article.");
+          setParsedArticles([]);
+        } else {
+          await checkExistingArticles(cleanedData, selectedLegislation.value);
+        }
+      }
+    });
+  }, [selectedLegislation]);
+  
+  const formatDateFromCSV = (dateStr) => {
+    // Convert from DD/MM/YYYY to YYYYMMDD
+    const [day, month, year] = dateStr.split('/');
+    return `${year}${month.padStart(2, '0')}${day.padStart(2, '0')}`;
+  };
+  
   const validateCSVStructure = (data) => {
     const requiredColumns = ['Title', 'Content', 'Date_entree'];
     return requiredColumns.every(column => data[0].hasOwnProperty(column) && data[0][column] !== '');
   };
-
-  const checkExistingArticles = async (articles) => {
+  
+  const checkExistingArticles = async (articles, selectedLegislationId) => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/articles`);
-      const existingArticles = response.data;
-      
-      const updatedArticles = articles.map(article => {
-        const existingArticle = existingArticles.find(existing => 
-          existing.title.rendered === article.Title &&
-          formatDate(existing.acf.date_entree) === formatDate(article.Date_entree)
-        );
-
-        if (existingArticle) {
-          return { ...article, exists: true, id: existingArticle.id };
-        }
-
-        const sameTitle = existingArticles.find(existing => 
-          existing.title.rendered === article.Title &&
-          formatDate(existing.acf.date_entree) !== formatDate(article.Date_entree)
-        );
-
-        if (sameTitle) {
-          return { ...article, newVersion: true, originalId: sameTitle.id };
-        }
-
-        return article;
-      });
-
-      setParsedArticles(updatedArticles);
+      const articleChecks = await Promise.all(
+        articles.map(async (article) => {
+          try {
+            // Search for articles with the same title
+            const searchResponse = await axios.get(
+              `https://alt.back.qilinsa.com/wp-json/wp/v2/articles?search=${encodeURIComponent(article.Title)}`
+            );
+  
+            const matchingArticles = searchResponse.data;
+            const formattedCsvDate = formatDateFromCSV(article.Date_entree);
+  
+            // Check each matching article
+            for (const existingArticle of matchingArticles) {
+              // Check if article belongs to the selected legislation
+              const belongsToLegislation = existingArticle.acf.Legislation_ou_titre_ou_chapitre_ou_section
+                .includes(Number(selectedLegislationId));
+  
+              if (belongsToLegislation) {
+                // Compare dates
+                if (existingArticle.acf.date_entree === formattedCsvDate) {
+                  // Same legislation and same date - mark as existing
+                  return { 
+                    ...article, 
+                    exists: true, 
+                    id: existingArticle.id 
+                  };
+                } else {
+                  // Same legislation but different date - mark as new version
+                  return { 
+                    ...article, 
+                    newVersion: true, 
+                    originalId: existingArticle.id 
+                  };
+                }
+              }
+            }
+  
+            // No matching article found in the selected legislation
+            return article;
+  
+          } catch (error) {
+            console.error(`Error checking article "${article.Title}":`, error);
+            return article;
+          }
+        })
+      );
+  
+      setParsedArticles(articleChecks);
+      setError(null);
+  
     } catch (error) {
       console.error("Erreur lors de la vérification des articles existants:", error);
       setError("Impossible de vérifier les articles existants");
     }
   };
-
+  
   const handleArticleSelection = useCallback((index) => {
     const article = parsedArticles[index];
     if (article.exists) {
@@ -485,12 +538,15 @@ const ArticleImport = () => {
     };
   
     switch (currentStep) {
-      case 0:
-        return logValidation(0, 
-          Array.isArray(parsedArticles) && 
-          parsedArticles.length > 0 && 
-          error === null
-        );
+     case 0:
+    return logValidation(
+        0,
+        Array.isArray(parsedArticles) &&
+        parsedArticles.length > 0 &&
+        error === null &&
+        !!selectedLegislation // Check if a legislation is selected
+    );
+
         
       case 1: {
         // Make sure we have both arrays and they're not empty
@@ -616,13 +672,32 @@ const ArticleImport = () => {
       case 0:
         return (
           <div className="space-y-4">
+            <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Lier à une législation : <span className="text-red-500">*</span>
+            </label>
+
+              {loadingLegislation ? (
+                <div className="text-sm text-gray-500">Chargement des législations...</div>
+              ) : (
+                <Select
+                  options={availableTexts["Législation"] || []}
+                  value={selectedLegislation}
+                  onChange={(selected) => setSelectedLegislation(selected)}
+                  className="w-full"
+                />
+              )}
+            </div>
             <h2 className="text-xl font-semibold text-green-500">Charger le fichier CSV</h2>
             <div className="bg-white p-4 rounded-md shadow">
               <p className="text-sm text-gray-600 mb-2">
-                Le fichier CSV doit contenir les colonnes suivantes : Title, Content, Date_entree (obligatoires),
-                ID_decision, ID_commentaire, ID_legislation, Position_legislation (optionnelles)
+                Le fichier CSV doit contenir les colonnes suivantes : Title, Content, Date_entree
+                (obligatoires), ID_decision, ID_commentaire, ID_legislation, Position_legislation
+                (optionnelles)
               </p>
-              <label htmlFor="file-upload" className="block text-sm font-medium text-gray-700 mb-2">Fichier CSV</label>
+              <label htmlFor="file-upload" className="block text-sm font-medium text-gray-700 mb-2">
+                Fichier CSV
+              </label>
               <input
                 id="file-upload"
                 type="file"
@@ -632,7 +707,10 @@ const ArticleImport = () => {
               />
             </div>
             {error && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+              <div
+                className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative"
+                role="alert"
+              >
                 <AlertTriangle className="w-5 h-5 inline mr-2" />
                 {error}
               </div>
@@ -696,15 +774,7 @@ const ArticleImport = () => {
           <div className="space-y-4">
             <h2 className="text-xl font-semibold text-green-500">Lier les textes</h2>
             <div className="bg-white p-4 rounded-md shadow">
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Lier à une législation :</label>
-                <Select
-                  options={availableTexts["Législation"] || []}
-                  value={selectedLegislation}
-                  onChange={(selected) => setSelectedLegislation(selected)}
-                  className="w-full"
-                />
-              </div>
+
               <div className="mb-4">
                 <label className="flex items-center">
                   <input

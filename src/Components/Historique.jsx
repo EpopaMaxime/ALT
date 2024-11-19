@@ -40,28 +40,47 @@ const Historique = () => {
 
     return (
         <div className="pt-10 px-36">
-            <h1 className="text-2xl font-bold mb-4">Historique de Recherche</h1>
-            {searchHistory.length > 0 ? (
-                <div className="flex flex-col">
-                    <button className="text-red-500 text-right mb-4 mr-20 underline" onClick={handleClearAll}>Effacer tout</button>
-                    <ul className="space-y-2">
-                        {currentItems.map((item, index) => (
-                            <li key={index} className="flex justify-between p-2 border-b border-gray-200">
-                                {/* Displaying 'query' field of the search history item */}
-                                {typeof item === 'object' && item.query ? item.query : JSON.stringify(item)}
-                                <button className="text-gray-600 text-right" onClick={() => handleClearOne(index + indexOfFirstItem)}>
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                    </svg>
-                                </button>
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-            ) : (
-                <p className="text-gray-500">Aucune recherche récente</p>
-            )}
-        </div>
+        <h1 className="text-2xl font-bold mb-4">Historique de Recherche</h1>
+        {searchHistory.length > 0 ? (
+          <div className="flex flex-col">
+            <button className="text-red-500 text-right mb-4 mr-20 underline" onClick={handleClearAll}>
+              Effacer tout
+            </button>
+            <ul className="space-y-2">
+              {[...new Map(searchHistory.map(item => [item.query, item])).values()]
+                .slice(indexOfFirstItem, indexOfLastItem) // For pagination
+                .map((item, index) => (
+                  <li key={index} className="flex justify-between p-2 border-b border-gray-200">
+                    {/* Displaying 'query' field of the search history item */}
+                    {typeof item === 'object' && item.query ? item.query : JSON.stringify(item)}
+                    <button
+                      className="text-gray-600 text-right"
+                      onClick={() => handleClearOne(index + indexOfFirstItem)}
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                        />
+                      </svg>
+                    </button>
+                  </li>
+                ))}
+            </ul>
+          </div>
+        ) : (
+          <p className="text-gray-500">Aucune recherche récente</p>
+        )}
+      </div>
+      
     );
 };
 

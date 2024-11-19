@@ -66,23 +66,26 @@ const CommentaireImport = () => {
       
       const updatedCommentaires = commentaires.map(commentaire => {
         const existingCommentaire = existingCommentaires.find(existing => 
-          existing.title.rendered === commentaire.Title
+          // Normalize comparison by trimming and converting to lowercase
+          existing.title.rendered.trim().toLowerCase() === commentaire.Title.trim().toLowerCase()
         );
-
+        
         if (existingCommentaire) {
-          return { ...commentaire, exists: true, id: existingCommentaire.id };
+          return { 
+            ...commentaire, 
+            exists: true, 
+            id: existingCommentaire.id 
+          };
         }
-
         return commentaire;
       });
-
+      
       setParsedCommentaires(updatedCommentaires);
     } catch (error) {
       console.error("Erreur lors de la vérification des commentaires existants:", error);
       setError("Impossible de vérifier les commentaires existants");
     }
   };
-
   const handleFileChange = useCallback((event) => {
     const uploadedFile = event.target.files?.[0];
     if (uploadedFile) {
