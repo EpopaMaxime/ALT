@@ -3,6 +3,7 @@ import { NavLink, Link, Outlet, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import logo from '../assets/logo.png';
 import SearchBar from '../Components/SearchBar';
+import HistoriqueImport from './HistoriqueImport'; 
 import { 
   HiHome, 
   HiDocumentText, 
@@ -15,8 +16,10 @@ import {
   HiMenu,
   HiUpload,
   HiX,
-  HiSearch
+  HiSearch,
+  HiClock
 } from 'react-icons/hi';
+
 
 const Dashboard = () => {
   const [avatarUrl, setAvatarUrl] = useState('');
@@ -232,6 +235,7 @@ const handleAlertClick = async (alert) => {
     { to: "expert", icon: HiUserGroup, text: "Experts", category: "expert" },
     { to: "avis", icon: HiStar, text: "Donner un avis", category: "avis" },
     ...(importer ? [{ to: "legal-text-manager", icon: HiUpload, text: "Importer / Exporter", category: "legal-text-manager" }] : []),
+    ...(importer ? [{ to: "historique-import", icon: HiClock, text: "Historique Import", category: "HistoriqueImport" }] : []),
     { to: "alertes", icon: HiBell, text: "Alertes", mobileOnly: true, category: "alertes" },
     { to: "dossier", icon: HiFolder, text: "Dossiers", mobileOnly: true, category: "dossier" },
   ];
@@ -437,12 +441,13 @@ const handleAlertClick = async (alert) => {
                       Paramètres experts
                     </NavLink>
                   )}
-                   <NavLink
+                  <NavLink
                       to="recherche/historique"
                       className="block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
                     >
                       Historique de Recherche
-                    </NavLink>
+                  </NavLink>
+                  
                   <NavLink
                     to="aide"
                     className="block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700"

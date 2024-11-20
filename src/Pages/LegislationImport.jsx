@@ -64,7 +64,7 @@ const LegislationImport = () => {
   const [unstructuredArticles, setUnstructuredArticles] = useState([]);
   const [parsedArticles, setParsedArticles] = useState([]);
   const [selectedArticles, setSelectedArticles] = useState([]);
-
+  const [importhistory, setImportHistory] = useState(null);
   const [commentsOptions, setCommentsOptions] = useState([]);
   const [decisionsOptions, setDecisionsOptions] = useState([]);
   const [bulkLinkedTexts, setBulkLinkedTexts] = useState({
@@ -142,6 +142,10 @@ const LegislationImport = () => {
 
   const handleFileChange = useCallback(async (event) => {
     const uploadedFile = event.target.files?.[0];
+    // Stocker le nom du fichier avec le suffixe "- état: début"
+    const fileNameWithState = `${uploadedFile.name}`;
+    setImportHistory(fileNameWithState);
+
     if (uploadedFile) {
       setFile(uploadedFile);
       Papa.parse(uploadedFile, {
@@ -255,6 +259,121 @@ const LegislationImport = () => {
       setSelectedLegislationIndex(index);
     }
   }, [legislationStructures]);
+
+  const SaveHistoryDebut = async (event = null) => {
+    if (event) {
+        event.preventDefault();
+    }
+
+    try {
+        const token = localStorage.getItem('token');
+        const currentDate = new Date();
+
+        // Formater la date en JJ/MM/AAAA HH:mm
+        const formattedDate = currentDate.toLocaleString('fr-FR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+        });
+
+        const fileNameWithState = `${importhistory} - état: début - ${formattedDate}`;
+
+        // Récupérer l'historique actuel
+        const responseGet = await axios.get('https://alt.back.qilinsa.com/wp-json/wp/v2/users/me', {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
+
+        const currentHistory = responseGet.data.acf.historique_import || '';
+
+        // Ajouter la nouvelle entrée
+        const updatedHistory = currentHistory ? `${currentHistory}\n${fileNameWithState}` : fileNameWithState;
+
+        // Mettre à jour l'historique
+        const responseUpdate = await axios.patch('https://alt.back.qilinsa.com/wp-json/wp/v2/users/me', {
+            acf: {
+                historique_import: updatedHistory,
+            },
+        }, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
+
+        console.log('Historique début mis à jour avec succès:', responseUpdate.data);
+    } catch (error) {
+        console.error('Erreur lors de la mise à jour de l\'historique début:', error);
+    }
+};
+
+
+
+const SaveHistoryFin = async (event = null) => {
+  if (event) {
+      event.preventDefault();
+  }
+
+  try {
+      const token = localStorage.getItem('token');
+      const currentDate = new Date();
+
+        // Formater la date en JJ/MM/AAAA HH:mm
+        const formattedDate = currentDate.toLocaleString('fr-FR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+        });
+      const fileNameWithState = `${importhistory} - état: fin - ${formattedDate}`;
+
+      // Récupérer l'historique actuel
+      const responseGet = await axios.get('https://alt.back.qilinsa.com/wp-json/wp/v2/users/me', {
+          headers: {
+              Authorization: `Bearer ${token}`,
+          },
+      });
+
+      const currentHistory = responseGet.data.acf.historique_import || '';
+
+      // Ajouter la nouvelle entrée
+      const updatedHistory = currentHistory ? `${currentHistory}\n${fileNameWithState}` : fileNameWithState;
+
+      // Mettre à jour l'historique
+      const responseUpdate = await axios.patch('https://alt.back.qilinsa.com/wp-json/wp/v2/users/me', {
+          acf: {
+              historique_import: updatedHistory,
+          },
+      }, {
+          headers: {
+              Authorization: `Bearer ${token}`,
+          },
+      });
+
+      console.log('Historique fin mis à jour avec succès:', responseUpdate.data);
+  } catch (error) {
+      console.error('Erreur lors de la mise à jour de l\'historique fin:', error);
+  }
+};
+
+useEffect(() => {
+  if (importhistory) {
+    // Appeler la fonction SaveHistoryDebut dès que l'importation debute
+    SaveHistoryDebut();
+  }
+}, [importhistory]);
+
+useEffect(() => {
+  if (isImportComplete) {
+    // Appeler la fonction SaveHistoryFin dès que l'importation est terminée
+    SaveHistoryFin();
+  }
+}, [isImportComplete]);
 
   const handleEdit = useCallback((node) => {
     const newContent = prompt("Entrez le nouveau contenu:", node.content);

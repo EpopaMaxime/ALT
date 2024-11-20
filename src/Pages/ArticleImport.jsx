@@ -49,6 +49,7 @@ const ArticleImport = () => {
   const [showEditPopup, setShowEditPopup] = useState(false);
   const [selectedTexts, setSelectedTexts] = useState([]);
   const [importStatus, setImportStatus] = useState(null);
+  const [importhistory, setImportHistory] = useState(null);
   const [importError, setImportError] = useState(null);
   const [loadingLegislation, setLoadingLegislation] = useState(false); // Track loading state
   const [hasFetchedLegislation, setHasFetchedLegislation] = useState(false); // Track if legislations are fetched
@@ -169,38 +170,45 @@ const ArticleImport = () => {
   const handleFileChange = useCallback((event) => {
     const uploadedFile = event.target.files?.[0];
     if (!uploadedFile || !selectedLegislation?.value) {
-      setError("Veuillez sélectionner la législation avent dimporte le fichie d'article");
-      return;
+        setError("Veuillez sélectionner la législation avant d'importer le fichier d'article");
+        return;
     }
-  
+
+    // Stocker le nom du fichier avec le suffixe "- état: début"
+    const fileNameWithState = `${uploadedFile.name}`;
+    setImportHistory(fileNameWithState);
+
     setFile(uploadedFile);
+    console.log(`Nom du fichier importé : ${fileNameWithState}`); // Pour déboguer ou vérifier le nom du fichier
+
     Papa.parse(uploadedFile, {
-      header: true,
-      skipEmptyLines: true,
-      complete: async (results) => {
-        const cleanedData = results.data.map(row => {
-          const cleanedRow = {};
-          Object.keys(row).forEach(key => {
-            cleanedRow[key.trim()] = row[key];
-          });
-          return cleanedRow;
-        });
-  
-        if (results.errors.length > 0) {
-          setError(`Erreur de parsing CSV: ${results.errors[0].message}`);
-          setParsedArticles([]);
-        } else if (cleanedData.length === 0) {
-          setError("Le fichier CSV est vide");
-          setParsedArticles([]);
-        } else if (!validateCSVStructure(cleanedData)) {
-          setError("Le fichier choisi n'est pas un article.");
-          setParsedArticles([]);
-        } else {
-          await checkExistingArticles(cleanedData, selectedLegislation.value);
+        header: true,
+        skipEmptyLines: true,
+        complete: async (results) => {
+            const cleanedData = results.data.map(row => {
+                const cleanedRow = {};
+                Object.keys(row).forEach(key => {
+                    cleanedRow[key.trim()] = row[key];
+                });
+                return cleanedRow;
+            });
+
+            if (results.errors.length > 0) {
+                setError(`Erreur de parsing CSV: ${results.errors[0].message}`);
+                setParsedArticles([]);
+            } else if (cleanedData.length === 0) {
+                setError("Le fichier CSV est vide");
+                setParsedArticles([]);
+            } else if (!validateCSVStructure(cleanedData)) {
+                setError("Le fichier choisi n'est pas un article.");
+                setParsedArticles([]);
+            } else {
+                await checkExistingArticles(cleanedData, selectedLegislation.value);
+            }
         }
-      }
     });
-  }, [selectedLegislation]);
+}, [selectedLegislation]);
+
   
   const formatDateFromCSV = (dateStr) => {
     // Convert from DD/MM/YYYY to YYYYMMDD
@@ -530,6 +538,122 @@ const ArticleImport = () => {
     }
   };
 
+  const SaveHistoryDebut = async (event = null) => {
+    if (event) {
+        event.preventDefault();
+    }
+
+    try {
+        const token = localStorage.getItem('token');
+        const currentDate = new Date();
+
+        // Formater la date en JJ/MM/AAAA HH:mm
+        const formattedDate = currentDate.toLocaleString('fr-FR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+        });
+
+        const fileNameWithState = `${importhistory} - état: début - ${formattedDate}`;
+
+        // Récupérer l'historique actuel
+        const responseGet = await axios.get('https://alt.back.qilinsa.com/wp-json/wp/v2/users/me', {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
+
+        const currentHistory = responseGet.data.acf.historique_import || '';
+
+        // Ajouter la nouvelle entrée
+        const updatedHistory = currentHistory ? `${currentHistory}\n${fileNameWithState}` : fileNameWithState;
+
+        // Mettre à jour l'historique
+        const responseUpdate = await axios.patch('https://alt.back.qilinsa.com/wp-json/wp/v2/users/me', {
+            acf: {
+                historique_import: updatedHistory,
+            },
+        }, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
+
+        console.log('Historique début mis à jour avec succès:', responseUpdate.data);
+    } catch (error) {
+        console.error('Erreur lors de la mise à jour de l\'historique début:', error);
+    }
+};
+
+
+
+const SaveHistoryFin = async (event = null) => {
+  if (event) {
+      event.preventDefault();
+  }
+
+  try {
+      const token = localStorage.getItem('token');
+      const currentDate = new Date();
+
+        // Formater la date en JJ/MM/AAAA HH:mm
+        const formattedDate = currentDate.toLocaleString('fr-FR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+        });
+      const fileNameWithState = `${importhistory} - état: fin - ${formattedDate}`;
+
+      // Récupérer l'historique actuel
+      const responseGet = await axios.get('https://alt.back.qilinsa.com/wp-json/wp/v2/users/me', {
+          headers: {
+              Authorization: `Bearer ${token}`,
+          },
+      });
+
+      const currentHistory = responseGet.data.acf.historique_import || '';
+
+      // Ajouter la nouvelle entrée
+      const updatedHistory = currentHistory ? `${currentHistory}\n${fileNameWithState}` : fileNameWithState;
+
+      // Mettre à jour l'historique
+      const responseUpdate = await axios.patch('https://alt.back.qilinsa.com/wp-json/wp/v2/users/me', {
+          acf: {
+              historique_import: updatedHistory,
+          },
+      }, {
+          headers: {
+              Authorization: `Bearer ${token}`,
+          },
+      });
+
+      console.log('Historique fin mis à jour avec succès:', responseUpdate.data);
+  } catch (error) {
+      console.error('Erreur lors de la mise à jour de l\'historique fin:', error);
+  }
+};
+
+useEffect(() => {
+  if (importhistory) {
+    // Appeler la fonction SaveHistoryDebut dès que l'importation debute
+    SaveHistoryDebut();
+  }
+}, [importhistory]);
+
+useEffect(() => {
+  if (isImportComplete) {
+    // Appeler la fonction SaveHistoryFin dès que l'importation est terminée
+    SaveHistoryFin();
+  }
+}, [isImportComplete]);
+
+
   const isStepValid = useCallback(() => {
     // Add debug logging
     const logValidation = (step, result) => {
@@ -549,6 +673,7 @@ const ArticleImport = () => {
 
         
       case 1: {
+        
         // Make sure we have both arrays and they're not empty
         if (!Array.isArray(selectedArticles) || !Array.isArray(parsedArticles)) {
           return logValidation(1, false);
@@ -667,6 +792,11 @@ const ArticleImport = () => {
     </div>
   );
 
+
+
+
+
+
   const renderStepContent = () => {
     switch (currentStep) {
       case 0:
@@ -719,8 +849,10 @@ const ArticleImport = () => {
         );
         
       case 1:
+        
         return (
           <div className="space-y-4">
+            
             <h2 className="text-xl font-semibold text-green-500">Prévisualisation des articles</h2>
             <div className="bg-white p-4 rounded-md shadow max-h-96 overflow-y-auto">
               <div className="flex justify-between mb-4">
@@ -841,85 +973,106 @@ const ArticleImport = () => {
           </div>
         );
       case 3:
-          return (
-            <DndProvider backend={HTML5Backend}>
-              <div className="space-y-4">
-                <h2 className="text-xl font-semibold text-green-500">Structurer la législation</h2>
-                {!selectedLegislation && (
-                  <p className="text-red-500">Veuillez d'abord sélectionner une législation à l'étape précédente.</p>
-                )}
-                {loading ? (
-                  <div className="text-center">
-                    <p>Chargement de la structure de la législation...</p>
-                  </div>
-                ) : (
-                  <div className="bg-white p-4 rounded-md shadow">
-                    <p className="mb-4">Structuration de la législation : {selectedLegislation?.label}</p>
-                    <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
-                      <div className="w-full md:w-2/3">
-                        <h3 className="text-lg font-medium mb-2">Structure de la législation</h3>
-                        <ul className="space-y-2 min-h-[400px] border-2 border-dashed border-gray-300 p-4 rounded-md">
-                        {legislationStructure.map((item, index) => (
-                          <li
-                            key={item.id}
-                            className={`p-2 rounded flex items-center mb-2 ${
-                              item.isDroppedToStructure ? 'bg-green-100' : 'bg-gray-100'
-                            }`}
-                            draggable
-                            onDragStart={(e) => {
-                              e.dataTransfer.setData('text/plain', JSON.stringify({ id: item.id, index, compartment: 'structure' }));
-                            }}
-                            onDragOver={(e) => e.preventDefault()}
-                            onDrop={(e) => {
-                              e.preventDefault();
-                              const droppedItem = JSON.parse(e.dataTransfer.getData('text/plain'));
-                              onDragEnd({
-                                source: { index: droppedItem.index, droppableId: droppedItem.compartment },
-                                destination: { index, droppableId: 'structure' }
-                              });
-                            }}
-                          >
-                            <GripVertical className="mr-2 text-gray-500" />
-                            <span>{item.title?.rendered || item.acf?.titre || item.title || 'Sans titre'}</span>
-                            <span className="ml-auto text-sm text-gray-500">Position: {item.position}</span>
-                          </li>
-                        ))}
-                      </ul>
-
+        return (
+          <DndProvider backend={HTML5Backend}>
+            <div className="space-y-4">
+              <h2 className="text-xl font-semibold text-green-500">Structurer la législation</h2>
+  
+              {!selectedLegislation && (
+                <p className="text-red-500">
+                  Veuillez d'abord sélectionner une législation à l'étape précédente.
+                </p>
+              )}
+  
+              {loading ? (
+                <div className="text-center bg-gray-100 p-4 rounded-md shadow">
+                  <p className="text-lg font-medium text-gray-700">
+                    Chargement de la structure de la législation en cours...
+                  </p>
+                </div>
+              ) : (
+                <div className="bg-white p-4 rounded-md shadow">
+                  <p className="mb-4 text-gray-700">
+                    Structuration de la législation :{" "}
+                    <span className="font-semibold">{selectedLegislation?.label}</span>
+                  </p>
+                  <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
+                    {/* Structure de la législation */}
+                    <div className="w-full md:w-2/3">
+                      <h3 className="text-lg font-medium mb-2">Structure de la législation</h3>
+                      <div className="min-h-[400px] max-h-[400px] border-2 border-dashed border-gray-300 p-4 rounded-md overflow-y-auto">
+                        <ul className="space-y-2">
+                          {legislationStructure.map((item, index) => (
+                            <li
+                              key={item.id}
+                              className={`p-2 rounded flex items-center mb-2 ${
+                                item.isDroppedToStructure ? "bg-green-100" : "bg-gray-100"
+                              }`}
+                              draggable
+                              onDragStart={(e) => {
+                                e.dataTransfer.setData(
+                                  "text/plain",
+                                  JSON.stringify({ id: item.id, index, compartment: "structure" })
+                                );
+                              }}
+                              onDragOver={(e) => e.preventDefault()}
+                              onDrop={(e) => {
+                                e.preventDefault();
+                                const droppedItem = JSON.parse(e.dataTransfer.getData("text/plain"));
+                                onDragEnd({
+                                  source: { index: droppedItem.index, droppableId: droppedItem.compartment },
+                                  destination: { index, droppableId: "structure" },
+                                });
+                              }}
+                            >
+                              <GripVertical className="mr-2 text-gray-500" />
+                              <span>{item.title?.rendered || item.acf?.titre || item.title || "Sans titre"}</span>
+                              <span className="ml-auto text-sm text-gray-500">Position: {item.position}</span>
+                            </li>
+                          ))}
+                        </ul>
                       </div>
-                      <div className="w-full md:w-1/3">
-                        <h3 className="text-lg font-medium mb-2">Articles à importer</h3>
-                        <ul className="space-y-2 min-h-[400px] border-2 border-dashed border-gray-300 p-4 rounded-md">
+                    </div>
+  
+                    {/* Articles à importer */}
+                    <div className="w-full md:w-1/3">
+                      <h3 className="text-lg font-medium mb-2">Articles à importer</h3>
+                      <div className="min-h-[400px] max-h-[400px] border-2 border-dashed border-gray-300 p-4 rounded-md overflow-y-auto">
+                        <ul className="space-y-2">
                           {unstructuredArticles.map((item, index) => (
                             <li
                               key={item.id}
                               className="bg-blue-100 p-2 rounded flex items-center mb-2"
                               draggable
                               onDragStart={(e) => {
-                                e.dataTransfer.setData('text/plain', JSON.stringify({ id: item.id, index, compartment: 'unstructured' }));
+                                e.dataTransfer.setData(
+                                  "text/plain",
+                                  JSON.stringify({ id: item.id, index, compartment: "unstructured" })
+                                );
                               }}
                               onDragOver={(e) => e.preventDefault()}
                               onDrop={(e) => {
                                 e.preventDefault();
-                                const droppedItem = JSON.parse(e.dataTransfer.getData('text/plain'));
+                                const droppedItem = JSON.parse(e.dataTransfer.getData("text/plain"));
                                 onDragEnd({
                                   source: { index: droppedItem.index, droppableId: droppedItem.compartment },
-                                  destination: { index, droppableId: 'unstructured' }
+                                  destination: { index, droppableId: "unstructured" },
                                 });
                               }}
                             >
                               <GripVertical className="mr-2 text-gray-500" />
-                              <span>{item.title || 'Sans titre'}</span>
+                              <span>{item.title || "Sans titre"}</span>
                             </li>
                           ))}
                         </ul>
                       </div>
                     </div>
                   </div>
-                )}
-              </div>
-            </DndProvider>
-          );
+                </div>
+              )}
+            </div>
+          </DndProvider>
+            );
       case 4:
         if (!parsedArticles.length || !selectedArticles.length) return null
         return (
@@ -1074,6 +1227,7 @@ const ArticleImport = () => {
             {renderStepContent()}
           </motion.div>
         ) : (
+          
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}

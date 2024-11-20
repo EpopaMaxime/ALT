@@ -42,6 +42,7 @@ import SearchResults from './Components/SearchResults';
 import Historique from "./Components/Historique";
 import LegalTextManager2 from "./Pages/LegalTextmanager2";
 import CompteDesactiver from "./Pages/CompteDesactiver";
+import HistoriqueImport from "./Pages/HistoriqueImport";
 
 
 
@@ -102,6 +103,7 @@ const router = createBrowserRouter(
                 <Route path="results" element={<SearchResults />} />
                 <Route path="/dashboard/recherche/historique" element={<Historique />}/>
                 <Route path="legal-text-manager" element={<LegalTextManager2 />} />
+                <Route path="historique-import" element={<HistoriqueImport />} />
                 
                 
                 {/* TEXTES JURIDIQUES */}
