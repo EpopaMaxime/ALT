@@ -20,107 +20,107 @@ const ArticleDetail = () => {
   const [previousArticle, setPreviousArticle] = useState(null);
   const [nextArticle, setNextArticle] = useState(null);
 
-useEffect(() => {
-  const fetchArticleNavigation = async () => {
-    try {
-      const altUrl = 'https://alt.back.qilinsa.com';
+  useEffect(() => {
+    const fetchArticleNavigation = async () => {
+      try {
+        const altUrl = 'https://alt.back.qilinsa.com';
 
-      // Fetch all articles
-      const response = await axios.get(`${altUrl}/wp-json/wp/v2/articles`, {
-        params: {
-          orderby: 'title',
-          order: 'asc',
-          per_page: 100
-        }
-      });
-
-      // Function to extract and parse article number from title
-      const getArticleNumber = (title) => {
-        const match = title.match(/Article\s+(\d+(?:-\d+)?)/i);
-        if (!match) return null;
-
-        const num = match[1];
-        const parts = num.split('-');
-
-        return [
-          parseInt(parts[0]),
-          parts.length > 1 ? parseInt(parts[1]) : 0
-        ];
-      };
-
-      // Filter and group articles by title and legislation ID
-      const uniqueArticles = response.data
-        .filter((article) => getArticleNumber(article.title.rendered) !== null) // Only valid article numbers
-        .reduce((acc, current) => {
-          const currentNum = getArticleNumber(current.title.rendered);
-          const legislationIds = current.acf?.Legislation_ou_titre_ou_chapitre_ou_section || [];
-
-          // Check if this title-legislation combination already exists
-          const duplicate = acc.find((item) => {
-            const itemNum = getArticleNumber(item.title.rendered);
-            const itemLegislationIds = item.acf?.Legislation_ou_titre_ou_chapitre_ou_section || [];
-
-            return (
-              current.title.rendered.toLowerCase() === item.title.rendered.toLowerCase() &&
-              itemNum[0] === currentNum[0] &&
-              legislationIds.some((id) => itemLegislationIds.includes(id))
-            );
-          });
-
-          if (!duplicate) {
-            acc.push(current);
+        // Fetch all articles
+        const response = await axios.get(`${altUrl}/wp-json/wp/v2/articles`, {
+          params: {
+            orderby: 'title',
+            order: 'asc',
+            per_page: 100
           }
-          return acc;
-        }, [])
-        .sort((a, b) => {
-          // Custom sorting based on article numbers
-          const aNum = getArticleNumber(a.title.rendered);
-          const bNum = getArticleNumber(b.title.rendered);
-
-          // Compare main numbers first
-          if (aNum[0] !== bNum[0]) {
-            return aNum[0] - bNum[0];
-          }
-          // If main numbers are same, compare sub-numbers
-          return aNum[1] - bNum[1];
         });
 
-      // Find the current article's position
-      const currentIndex = uniqueArticles.findIndex((article) => article.id === parseInt(id));
+        // Function to extract and parse article number from title
+        const getArticleNumber = (title) => {
+          const match = title.match(/Article\s+(\d+(?:-\d+)?)/i);
+          if (!match) return null;
 
-      if (currentIndex !== -1) {
-        // Set previous article
-        if (currentIndex > 0) {
-          const prevArticle = uniqueArticles[currentIndex - 1];
-          setPreviousArticle({
-            id: prevArticle.id,
-            title: prevArticle.title.rendered
-          });
-        } else {
-          setPreviousArticle(null);
-        }
+          const num = match[1];
+          const parts = num.split('-');
 
-        // Set next article
-        if (currentIndex < uniqueArticles.length - 1) {
-          const nextArticle = uniqueArticles[currentIndex + 1];
-          setNextArticle({
-            id: nextArticle.id,
-            title: nextArticle.title.rendered
+          return [
+            parseInt(parts[0]),
+            parts.length > 1 ? parseInt(parts[1]) : 0
+          ];
+        };
+
+        // Filter and group articles by title and legislation ID
+        const uniqueArticles = response.data
+          .filter((article) => getArticleNumber(article.title.rendered) !== null) // Only valid article numbers
+          .reduce((acc, current) => {
+            const currentNum = getArticleNumber(current.title.rendered);
+            const legislationIds = current.acf?.Legislation_ou_titre_ou_chapitre_ou_section || [];
+
+            // Check if this title-legislation combination already exists
+            const duplicate = acc.find((item) => {
+              const itemNum = getArticleNumber(item.title.rendered);
+              const itemLegislationIds = item.acf?.Legislation_ou_titre_ou_chapitre_ou_section || [];
+
+              return (
+                current.title.rendered.toLowerCase() === item.title.rendered.toLowerCase() &&
+                itemNum[0] === currentNum[0] &&
+                legislationIds.some((id) => itemLegislationIds.includes(id))
+              );
+            });
+
+            if (!duplicate) {
+              acc.push(current);
+            }
+            return acc;
+          }, [])
+          .sort((a, b) => {
+            // Custom sorting based on article numbers
+            const aNum = getArticleNumber(a.title.rendered);
+            const bNum = getArticleNumber(b.title.rendered);
+
+            // Compare main numbers first
+            if (aNum[0] !== bNum[0]) {
+              return aNum[0] - bNum[0];
+            }
+            // If main numbers are same, compare sub-numbers
+            return aNum[1] - bNum[1];
           });
-        } else {
-          setNextArticle(null);
+
+        // Find the current article's position
+        const currentIndex = uniqueArticles.findIndex((article) => article.id === parseInt(id));
+
+        if (currentIndex !== -1) {
+          // Set previous article
+          if (currentIndex > 0) {
+            const prevArticle = uniqueArticles[currentIndex - 1];
+            setPreviousArticle({
+              id: prevArticle.id,
+              title: prevArticle.title.rendered
+            });
+          } else {
+            setPreviousArticle(null);
+          }
+
+          // Set next article
+          if (currentIndex < uniqueArticles.length - 1) {
+            const nextArticle = uniqueArticles[currentIndex + 1];
+            setNextArticle({
+              id: nextArticle.id,
+              title: nextArticle.title.rendered
+            });
+          } else {
+            setNextArticle(null);
+          }
         }
+      } catch (error) {
+        console.error('Failed to fetch article navigation data:', error);
       }
-    } catch (error) {
-      console.error('Failed to fetch article navigation data:', error);
-    }
-  };
+    };
 
-  // Execute immediately when component mounts or `id` changes
-  if (id) {
-    fetchArticleNavigation();
-  }
-}, [id]);
+    // Execute immediately when component mounts or `id` changes
+    if (id) {
+      fetchArticleNavigation();
+    }
+  }, [id]);
 
 
   useEffect(() => {
@@ -147,7 +147,7 @@ useEffect(() => {
 
         // Fetch decisions if available
         if (articleData.acf && articleData.acf.decision && Array.isArray(articleData.acf.decision)) {
-          const decisionPromises = articleData.acf.decision.map(decisionId => 
+          const decisionPromises = articleData.acf.decision.map(decisionId =>
             axios.get(`${altUrl}/wp-json/wp/v2/decisions/${decisionId}`).catch(error => {
               console.error(`Failed to fetch decision ${decisionId}:`, error);
               return null;
@@ -160,7 +160,7 @@ useEffect(() => {
 
         // Fetch commentaires if available
         if (articleData.acf && articleData.acf.commentaire && Array.isArray(articleData.acf.commentaire)) {
-          const commentairePromises = articleData.acf.commentaire.map(commentaireId => 
+          const commentairePromises = articleData.acf.commentaire.map(commentaireId =>
             axios.get(`${altUrl}/wp-json/wp/v2/commentaires/${commentaireId}`).catch(error => {
               console.error(`Failed to fetch commentaire ${commentaireId}:`, error);
               return null;
@@ -234,10 +234,10 @@ useEffect(() => {
           )}
         </aside>
         <main className="lg:col-span-3 p-6 rounded shadow">
-        <div className="flex justify-end items-center mb-4 space-x-6">
+          <div className="flex justify-end items-center mb-4 space-x-6">
             {previousArticle && (
-              <Link 
-                to={`/dashboard/article/${previousArticle.id}`} 
+              <Link
+                to={`/dashboard/article/${previousArticle.id}`}
                 className="flex items-center text-blue-500 hover:underline"
               >
                 <FaArrowLeft className="mr-2" />
@@ -245,19 +245,19 @@ useEffect(() => {
               </Link>
             )}
             {nextArticle && (
-              <Link 
-                to={`/dashboard/article/${nextArticle.id}`} 
+              <Link
+                to={`/dashboard/article/${nextArticle.id}`}
                 className="flex items-center text-blue-500 hover:underline"
               >
                 <span className="max-w-xs truncate">{nextArticle.title}</span>
                 <FaArrowRight className="ml-2" />
               </Link>
             )}
-            </div>
+          </div>
 
           <div className="text-lg leading-relaxed">
             <h1 className="text-2xl font-semibold mb-4 mt-4">{article.title.rendered}</h1>
-            <br/>
+            <br />
             <ArticleTimeline />
             <h1 className="text-2xl font-semibold mb-4 mt-4">
               <a
