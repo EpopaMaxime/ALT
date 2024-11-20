@@ -971,7 +971,7 @@ useEffect(() => {
                     <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
                       <div className="w-full md:w-2/3">
                         <h3 className="text-lg font-medium mb-2">Structure de la législation</h3>
-                        <ul className="space-y-2 min-h-[400px] border-2 border-dashed border-gray-300 p-4 rounded-md">
+                        <ul className="min-h-[400px] max-h-[400px] border-2 border-dashed border-gray-300 p-4 rounded-md overflow-y-auto">
                         {legislationStructure.map((item, index) => (
                           <li
                             key={item.id}
@@ -1002,7 +1002,7 @@ useEffect(() => {
                       </div>
                       <div className="w-full md:w-1/3">
                         <h3 className="text-lg font-medium mb-2">Articles à importer</h3>
-                        <ul className="space-y-2 min-h-[400px] border-2 border-dashed border-gray-300 p-4 rounded-md">
+                        <ul className="min-h-[400px] max-h-[400px] border-2 border-dashed border-gray-300 p-4 rounded-md overflow-y-auto">
                           {unstructuredArticles.map((item, index) => (
                             <li
                               key={item.id}
