@@ -20,99 +20,108 @@ const ArticleDetail = () => {
   const [previousArticle, setPreviousArticle] = useState(null);
   const [nextArticle, setNextArticle] = useState(null);
 
-  useEffect(() => {
-    const fetchArticleNavigation = async () => {
-      try {
-        const altUrl = 'https://alt.back.qilinsa.com';
-  
-        // Fetch the current article list
-        const response = await axios.get(`${altUrl}/wp-json/wp/v2/articles`, {
-          params: {
-            orderby: 'title',
-            order: 'asc',
-            per_page: 100
-          }
-        });
-  
-        // Function to extract and parse article number from title
-        const getArticleNumber = (title) => {
-          const match = title.match(/Article\s+(\d+(?:-\d+)?)/i);
-          if (!match) return null;
-          
-          const num = match[1];
-          // Split on hyphen if it exists
-          const parts = num.split('-');
-          
-          // Convert to comparable number format
-          // For example: "87" becomes [87, 0], "87-1" becomes [87, 1]
-          return [
-            parseInt(parts[0]),
-            parts.length > 1 ? parseInt(parts[1]) : 0
-          ];
-        };
-  
-        // Filter and sort articles
-        const uniqueArticles = response.data
-          .filter(article => {
-            // Only include articles with valid article numbers
-            const articleNum = getArticleNumber(article.title.rendered);
-            return articleNum !== null;
-          })
-          .reduce((acc, current) => {
-            // Remove duplicates based on exact title match
-            const titleExists = acc.find(item => 
-              item.title.rendered.toLowerCase() === current.title.rendered.toLowerCase()
-            );
-            if (!titleExists) {
-              acc.push(current);
-            }
-            return acc;
-          }, [])
-          .sort((a, b) => {
-            // Custom sorting based on article numbers
-            const aNum = getArticleNumber(a.title.rendered);
-            const bNum = getArticleNumber(b.title.rendered);
-            
-            // Compare main numbers first
-            if (aNum[0] !== bNum[0]) {
-              return aNum[0] - bNum[0];
-            }
-            // If main numbers are same, compare sub-numbers
-            return aNum[1] - bNum[1];
-          });
-  
-        const currentIndex = uniqueArticles.findIndex(article => article.id === parseInt(id));
-        
-        if (currentIndex !== -1) {
-          // Set previous article
-          if (currentIndex > 0) {
-            const prevArticle = uniqueArticles[currentIndex - 1];
-            setPreviousArticle({
-              id: prevArticle.id,
-              title: prevArticle.title.rendered
-            });
-          } else {
-            setPreviousArticle(null);
-          }
-          
-          // Set next article
-          if (currentIndex < uniqueArticles.length - 1) {
-            const nextArticle = uniqueArticles[currentIndex + 1];
-            setNextArticle({
-              id: nextArticle.id,
-              title: nextArticle.title.rendered
-            });
-          } else {
-            setNextArticle(null);
-          }
+useEffect(() => {
+  const fetchArticleNavigation = async () => {
+    try {
+      const altUrl = 'https://alt.back.qilinsa.com';
+
+      // Fetch all articles
+      const response = await axios.get(`${altUrl}/wp-json/wp/v2/articles`, {
+        params: {
+          orderby: 'title',
+          order: 'asc',
+          per_page: 100
         }
-      } catch (error) {
-        console.error('Failed to fetch article navigation data:', error);
+      });
+
+      // Function to extract and parse article number from title
+      const getArticleNumber = (title) => {
+        const match = title.match(/Article\s+(\d+(?:-\d+)?)/i);
+        if (!match) return null;
+
+        const num = match[1];
+        const parts = num.split('-');
+
+        return [
+          parseInt(parts[0]),
+          parts.length > 1 ? parseInt(parts[1]) : 0
+        ];
+      };
+
+      // Filter and group articles by title and legislation ID
+      const uniqueArticles = response.data
+        .filter((article) => getArticleNumber(article.title.rendered) !== null) // Only valid article numbers
+        .reduce((acc, current) => {
+          const currentNum = getArticleNumber(current.title.rendered);
+          const legislationIds = current.acf?.Legislation_ou_titre_ou_chapitre_ou_section || [];
+
+          // Check if this title-legislation combination already exists
+          const duplicate = acc.find((item) => {
+            const itemNum = getArticleNumber(item.title.rendered);
+            const itemLegislationIds = item.acf?.Legislation_ou_titre_ou_chapitre_ou_section || [];
+
+            return (
+              current.title.rendered.toLowerCase() === item.title.rendered.toLowerCase() &&
+              itemNum[0] === currentNum[0] &&
+              legislationIds.some((id) => itemLegislationIds.includes(id))
+            );
+          });
+
+          if (!duplicate) {
+            acc.push(current);
+          }
+          return acc;
+        }, [])
+        .sort((a, b) => {
+          // Custom sorting based on article numbers
+          const aNum = getArticleNumber(a.title.rendered);
+          const bNum = getArticleNumber(b.title.rendered);
+
+          // Compare main numbers first
+          if (aNum[0] !== bNum[0]) {
+            return aNum[0] - bNum[0];
+          }
+          // If main numbers are same, compare sub-numbers
+          return aNum[1] - bNum[1];
+        });
+
+      // Find the current article's position
+      const currentIndex = uniqueArticles.findIndex((article) => article.id === parseInt(id));
+
+      if (currentIndex !== -1) {
+        // Set previous article
+        if (currentIndex > 0) {
+          const prevArticle = uniqueArticles[currentIndex - 1];
+          setPreviousArticle({
+            id: prevArticle.id,
+            title: prevArticle.title.rendered
+          });
+        } else {
+          setPreviousArticle(null);
+        }
+
+        // Set next article
+        if (currentIndex < uniqueArticles.length - 1) {
+          const nextArticle = uniqueArticles[currentIndex + 1];
+          setNextArticle({
+            id: nextArticle.id,
+            title: nextArticle.title.rendered
+          });
+        } else {
+          setNextArticle(null);
+        }
       }
-    };
-  
+    } catch (error) {
+      console.error('Failed to fetch article navigation data:', error);
+    }
+  };
+
+  // Execute immediately when component mounts or `id` changes
+  if (id) {
     fetchArticleNavigation();
-  }, [id]);
+  }
+}, [id]);
+
 
   useEffect(() => {
     const fetchArticleAndRelatedData = async () => {

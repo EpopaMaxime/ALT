@@ -9,36 +9,62 @@ const Commentaires = () => {
   const searchParams = new URLSearchParams(location.search);
   const legislationId = searchParams.get('legislationId');
 
-  const [Commentaires, setCommentaires] = useState([]);
+  const [commentaires, setCommentaires] = useState([]);
+  const [displayedCommentaires, setDisplayedCommentaires] = useState([]);
   const [totalCommentaires, setTotalCommentaires] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [limit, setLimit] = useState(5); // Initially show 5 comments
 
-  useEffect(() => {
-    const fetchCommentaires = async () => {
-      setLoading(true);
-      setError('');
-      try {
-        const res = await axios.get('https://alt.back.qilinsa.com/wp-json/wp/v2/commentaires');
-        let fetchedCommentaires = res.data;
+  const fetchAllComments = async (url, legislationId) => {
+    let allCommentaires = [];
+    let page = 1;
+    let hasMore = true;
 
+    try {
+      while (hasMore) {
+        const response = await axios.get(url, {
+          params: { page, per_page: 100 }, // Fetch up to 100 items per page (API limit)
+        });
+
+        const fetchedCommentaires = response.data;
+
+        // Filter by legislationId if provided
         if (legislationId) {
           const legislationIdNum = parseInt(legislationId, 10);
-          fetchedCommentaires = fetchedCommentaires.filter(comment =>
+          const filtered = fetchedCommentaires.filter((comment) =>
             comment.acf.legislation_commentaire.includes(legislationIdNum)
           );
+          allCommentaires = [...allCommentaires, ...filtered];
+        } else {
+          allCommentaires = [...allCommentaires, ...fetchedCommentaires];
         }
 
-        setCommentaires(fetchedCommentaires);
-        setTotalCommentaires(fetchedCommentaires.length); // Set the total number of comments
-      } catch (err) {
-        setError('Failed to fetch Commentaires');
-      } finally {
-        setLoading(false);
+        // Check if there are more pages
+        hasMore = fetchedCommentaires.length === 100;
+        page++;
       }
-    };
 
-    fetchCommentaires();
+      setCommentaires(allCommentaires);
+      setDisplayedCommentaires(allCommentaires.slice(0, limit)); // Show initial limit of comments
+      setTotalCommentaires(allCommentaires.length); // Update total count
+    } catch (err) {
+      setError('Failed to fetch commentaires.');
+    }
+  };
+
+  const handleVoirPlus = () => {
+    const newLimit = limit + 5;
+    setLimit(newLimit);
+    setDisplayedCommentaires(commentaires.slice(0, newLimit));
+  };
+
+  useEffect(() => {
+    setLoading(true);
+    setError('');
+
+    fetchAllComments('https://alt.back.qilinsa.com/wp-json/wp/v2/commentaires', legislationId)
+      .finally(() => setLoading(false));
   }, [legislationId]);
 
   return (
@@ -46,7 +72,7 @@ const Commentaires = () => {
       <div className="mr-6 lg:w-[1200px] mt-8 py-2 flex-shrink-0 flex flex-col bg-light-background dark:bg-dark-background text-light-text dark:text-dark-text rounded-lg">
         <h3 className="flex items-center pt-1 pb-1 px-8 text-lg font-semibold capitalize dark:text-white">
           <span>
-          {totalCommentaires} Commentaires {legislationId ? ` trouve sure la législation ` : ''}
+            {totalCommentaires} Commentaires {legislationId ? `trouvés pour la législation` : ''}
           </span>
           <button className="ml-2">
             <svg className="h-5 w-5 fill-current" viewBox="0 0 256 512">
@@ -64,8 +90,8 @@ const Commentaires = () => {
           ) : (
             <>
               <ul className="pt-1 pb-2 px-3 overflow-y-auto">
-                {Commentaires.length > 0 ? (
-                  Commentaires.map((commentaire) => (
+                {displayedCommentaires.length > 0 ? (
+                  displayedCommentaires.map((commentaire) => (
                     <li key={commentaire.id} className="mt-2">
                       <NavLink to={`${commentaire.id}`} className="pt-5 flex flex-col justify-between dark:bg-gray-800 rounded-lg">
                         <div className="flex items-center justify-between font-semibold capitalize dark:text-gray-100">
@@ -86,6 +112,16 @@ const Commentaires = () => {
                   <li className="mt-2 text-center">Aucun commentaire trouvé.</li>
                 )}
               </ul>
+              {limit < totalCommentaires && (
+                <div className="flex justify-center my-4">
+                  <button
+                    onClick={handleVoirPlus}
+                    className="px-4 py-2 bg-blue-500 text-white font-semibold rounded hover:bg-blue-600"
+                  >
+                    Voir Plus
+                  </button>
+                </div>
+              )}
             </>
           )}
         </div>

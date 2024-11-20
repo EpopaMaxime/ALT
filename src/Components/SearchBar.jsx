@@ -135,21 +135,27 @@ const SearchBar = ({ activeSearchCategory, setActiveSearchCategory, setSearchQue
                             </button>
                         </div>
                         <ul className="max-h-48 overflow-y-auto">
-                            {[...new Map(searchHistory.map(item => [item.query, item])).values()].map((uniqueItem, index) => (
-                                <li
-                                    key={index}
-                                    className="p-2 cursor-pointer dark:hover:bg-gray-700 hover:bg-gray-200"
-                                    onClick={() => {
-                                        setQuery(uniqueItem.query);
-                                        handleSearch(new Event('submit'));
-                                    }}
-                                >
-                                    {uniqueItem.query}
-                                </li>
-                            ))}
+                            {
+                                // Filter for unique items, maintaining case sensitivity
+                                [...new Map(
+                                    searchHistory.map((item) => [item.query, item])
+                                ).values()].map((uniqueItem, index) => (
+                                    <li
+                                        key={index}
+                                        className="p-2 cursor-pointer dark:hover:bg-gray-700 hover:bg-gray-200"
+                                        onClick={() => {
+                                            setQuery(uniqueItem.query);
+                                            handleSearch(new Event('submit'));
+                                        }}
+                                    >
+                                        {uniqueItem.query}
+                                    </li>
+                                ))
+                            }
                         </ul>
                     </div>
                 )}
+
 
             </div>
 
