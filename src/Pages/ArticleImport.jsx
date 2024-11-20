@@ -50,11 +50,10 @@ const ArticleImport = () => {
   const [selectedTexts, setSelectedTexts] = useState([]);
   const [importStatus, setImportStatus] = useState(null);
   const [importError, setImportError] = useState(null);
+
   const [loadingLegislation, setLoadingLegislation] = useState(false); // Track loading state
   const [hasFetchedLegislation, setHasFetchedLegislation] = useState(false); // Track if legislations are fetched
   const API_BASE_URL = "https://alt.back.qilinsa.com/wp-json/wp/v2"; // Replace with your actual API base URL
-
-
  // Fetch legislations on component mount
  useEffect(() => {
   const fetchLegislations = async () => {
@@ -68,9 +67,9 @@ const ArticleImport = () => {
       setLoadingLegislation(false);
     }
   };
-
   fetchLegislations();
 }, []); // Empty dependency array ensures this runs only on mount
+
 
 
   const generateFileName = () => {
@@ -183,6 +182,7 @@ const ArticleImport = () => {
           Object.keys(row).forEach(key => {
             cleanedRow[key.trim()] = row[key];
           });
+
           return cleanedRow;
         });
   
@@ -207,12 +207,12 @@ const ArticleImport = () => {
     const [day, month, year] = dateStr.split('/');
     return `${year}${month.padStart(2, '0')}${day.padStart(2, '0')}`;
   };
-  
+
   const validateCSVStructure = (data) => {
     const requiredColumns = ['Title', 'Content', 'Date_entree'];
     return requiredColumns.every(column => data[0].hasOwnProperty(column) && data[0][column] !== '');
   };
-  
+
   const checkExistingArticles = async (articles, selectedLegislationId) => {
     try {
       const articleChecks = await Promise.all(
@@ -264,13 +264,12 @@ const ArticleImport = () => {
   
       setParsedArticles(articleChecks);
       setError(null);
-  
     } catch (error) {
       console.error("Erreur lors de la vérification des articles existants:", error);
       setError("Impossible de vérifier les articles existants");
     }
   };
-  
+
   const handleArticleSelection = useCallback((index) => {
     const article = parsedArticles[index];
     if (article.exists) {
@@ -538,15 +537,14 @@ const ArticleImport = () => {
     };
   
     switch (currentStep) {
-     case 0:
-    return logValidation(
-        0,
-        Array.isArray(parsedArticles) &&
-        parsedArticles.length > 0 &&
-        error === null &&
-        !!selectedLegislation // Check if a legislation is selected
-    );
-
+      case 0:
+        return logValidation(
+            0,
+            Array.isArray(parsedArticles) &&
+            parsedArticles.length > 0 &&
+            error === null &&
+            !!selectedLegislation // Check if a legislation is selected
+        );
         
       case 1: {
         // Make sure we have both arrays and they're not empty
@@ -672,11 +670,10 @@ const ArticleImport = () => {
       case 0:
         return (
           <div className="space-y-4">
-            <div className="mb-4">
+             <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Lier à une législation : <span className="text-red-500">*</span>
             </label>
-
               {loadingLegislation ? (
                 <div className="text-sm text-gray-500">Chargement des législations...</div>
               ) : (
@@ -691,13 +688,10 @@ const ArticleImport = () => {
             <h2 className="text-xl font-semibold text-green-500">Charger le fichier CSV</h2>
             <div className="bg-white p-4 rounded-md shadow">
               <p className="text-sm text-gray-600 mb-2">
-                Le fichier CSV doit contenir les colonnes suivantes : Title, Content, Date_entree
-                (obligatoires), ID_decision, ID_commentaire, ID_legislation, Position_legislation
-                (optionnelles)
+                Le fichier CSV doit contenir les colonnes suivantes : Title, Content, Date_entree (obligatoires),
+                ID_decision, ID_commentaire, ID_legislation, Position_legislation (optionnelles)
               </p>
-              <label htmlFor="file-upload" className="block text-sm font-medium text-gray-700 mb-2">
-                Fichier CSV
-              </label>
+              <label htmlFor="file-upload" className="block text-sm font-medium text-gray-700 mb-2">Fichier CSV</label>
               <input
                 id="file-upload"
                 type="file"
@@ -707,7 +701,7 @@ const ArticleImport = () => {
               />
             </div>
             {error && (
-              <div
+                <div
                 className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative"
                 role="alert"
               >
@@ -774,7 +768,6 @@ const ArticleImport = () => {
           <div className="space-y-4">
             <h2 className="text-xl font-semibold text-green-500">Lier les textes</h2>
             <div className="bg-white p-4 rounded-md shadow">
-
               <div className="mb-4">
                 <label className="flex items-center">
                   <input

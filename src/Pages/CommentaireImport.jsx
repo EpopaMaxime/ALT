@@ -121,7 +121,7 @@ const CommentaireImport = () => {
   }, []);
 
   const validateCSVStructure = (data) => {
-    const requiredColumns = ['Title', 'Content', 'Url'];
+    const requiredColumns = ['Title', 'Content'];
     return requiredColumns.every(column => data[0].hasOwnProperty(column) && data[0][column] !== '');
   };
 
@@ -344,55 +344,67 @@ const CommentaireImport = () => {
             )}
           </div>
         );
-      case 1:
-        return (
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-green-500">Prévisualisation des commentaires</h2>
-            <div className="bg-white p-4 rounded-md shadow max-h-96 overflow-y-auto">
-              <div className="flex justify-between mb-4">
-                <button
-                  onClick={() => setSelectedCommentaires(parsedCommentaires.map((_, index) => index).filter(index => !parsedCommentaires[index].exists))}
-                  className="text-green-500"
-                >
-                  Tout sélectionner
-                </button>
-                <button
-                  onClick={() => setSelectedCommentaires([])}
-                  className="text-green-500"
-                >
-                  Tout désélectionner
-                </button>
-              </div>
-              {parsedCommentaires.map((commentaire, index) => (
-                <div key={index} className={`mb-4 p-3 border-b last:border-b-0 ${commentaire.exists ? 'bg-red-100' : ''}`}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <input
-                        type="checkbox"
-                        id={`commentaire-${index}`}
-                        checked={selectedCommentaires.includes(index)}
-                        onChange={() => handleCommentaireSelection(index)}
-                        disable={commentaire.exists}
-                        className="mr-3 h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
-                      />
-                      <label htmlFor={`commentaire-${index}`} className="text-sm font-medium text-gray-700">
-                        {commentaire.Title}
-                      </label>
-                    </div>
-                    {commentaire.exists && (
-                      <span className="bg-red-500 text-white text-xs font-medium mr-2 px-2.5 py-0.5 rounded">Existant</span>
-                    )}
-                    {(commentaire.ID_decisions || commentaire.ID_articles || commentaire.ID_legislation) && (
-                      <span className="bg-green-100 text-green-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded">Déjà lié</span>
-                    )}
-                  </div>
-                  <p className="mt-2 text-sm text-gray-500">{commentaire.Content.substring(0, 100)}...</p>
-                  <p className="mt-1 text-xs text-blue-500">{commentaire.Url}</p>
+        case 1:
+          return (
+            <div className="space-y-4">
+              <p className="text-sm text-gray-500">Nombre d'éléments : {parsedCommentaires.length}</p>
+              <h2 className="text-xl font-semibold text-green-500">Prévisualisation des commentaires</h2>
+              <div className="bg-white p-4 rounded-md shadow max-h-96 overflow-y-auto">
+                <div className="flex justify-between mb-4">
+                  <button
+                    onClick={() =>
+                      setSelectedCommentaires(
+                        parsedCommentaires.map((_, index) => index).filter(index => !parsedCommentaires[index].exists)
+                      )
+                    }
+                    className="text-green-500"
+                  >
+                    Tout sélectionner
+                  </button>
+                  <button
+                    onClick={() => setSelectedCommentaires([])}
+                    className="text-green-500"
+                  >
+                    Tout désélectionner
+                  </button>
                 </div>
-              ))}
+                {parsedCommentaires.map((commentaire, index) => (
+                  <div
+                    key={index}
+                    className={`mb-4 p-3 border-b last:border-b-0 ${commentaire.exists ? 'bg-red-100' : ''}`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          id={`commentaire-${index}`}
+                          checked={selectedCommentaires.includes(index)}
+                          onChange={() => handleCommentaireSelection(index)}
+                          disabled={commentaire.exists}
+                          className="mr-3 h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                        />
+                        <label htmlFor={`commentaire-${index}`} className="text-sm font-medium text-gray-700">
+                          {commentaire.Title}
+                        </label>
+                      </div>
+                      {commentaire.exists && (
+                        <span className="bg-red-500 text-white text-xs font-medium mr-2 px-2.5 py-0.5 rounded">
+                          Existant
+                        </span>
+                      )}
+                      {(commentaire.ID_decisions || commentaire.ID_articles || commentaire.ID_legislation) && (
+                        <span className="bg-green-100 text-green-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded">
+                          Déjà lié
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-2 text-sm text-gray-500">{commentaire.Content.substring(0, 100)}...</p>
+                    <p className="mt-1 text-xs text-blue-500">{commentaire.Url}</p>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        );
+          );        
       case 2:
         return (
           <div className="space-y-4">
