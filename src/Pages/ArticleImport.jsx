@@ -54,21 +54,21 @@ const ArticleImport = () => {
   const [loadingLegislation, setLoadingLegislation] = useState(false); // Track loading state
   const [hasFetchedLegislation, setHasFetchedLegislation] = useState(false); // Track if legislations are fetched
   const API_BASE_URL = "https://alt.back.qilinsa.com/wp-json/wp/v2"; // Replace with your actual API base URL
- // Fetch legislations on component mount
- useEffect(() => {
-  const fetchLegislations = async () => {
-    setLoadingLegislation(true);
-    try {
-      const res = await axios.get(`${API_BASE_URL}/legislations`);
-      setAvailableTexts((prev) => ({ ...prev, Législation: res.data }));
-    } catch (err) {
-      setError("Échec de la récupération des législations disponibles.");
-    } finally {
-      setLoadingLegislation(false);
-    }
-  };
-  fetchLegislations();
-}, []); // Empty dependency array ensures this runs only on mount
+  // Fetch legislations on component mount
+  useEffect(() => {
+    const fetchLegislations = async () => {
+      setLoadingLegislation(true);
+      try {
+        const res = await axios.get(`${API_BASE_URL}/legislations`);
+        setAvailableTexts((prev) => ({ ...prev, Législation: res.data }));
+      } catch (err) {
+        setError("Échec de la récupération des législations disponibles.");
+      } finally {
+        setLoadingLegislation(false);
+      }
+    };
+    fetchLegislations();
+  }, []); // Empty dependency array ensures this runs only on mount
 
 
 
@@ -84,23 +84,23 @@ const ArticleImport = () => {
     if (!destination) return;
 
     if (source.droppableId === 'unstructured' && destination.droppableId === 'unstructured') {
-        return;
+      return;
     }
 
     if (source.droppableId === 'structure' && destination.droppableId === 'structure') {
-        if (source.index !== destination.index) {
-            const sourceList = [...legislationStructure];
-            const [removed] = sourceList.splice(source.index, 1);
-            sourceList.splice(destination.index, 0, removed);
+      if (source.index !== destination.index) {
+        const sourceList = [...legislationStructure];
+        const [removed] = sourceList.splice(source.index, 1);
+        sourceList.splice(destination.index, 0, removed);
 
-            const updatedSourceList = sourceList.map((item, index) => ({
-                ...item,
-                position: index + 1
-            }));
+        const updatedSourceList = sourceList.map((item, index) => ({
+          ...item,
+          position: index + 1
+        }));
 
-            setLegislationStructure(updatedSourceList);
-        }
-        return;
+        setLegislationStructure(updatedSourceList);
+      }
+      return;
     }
 
     const sourceList = source.droppableId === 'structure' ? [...legislationStructure] : [...unstructuredArticles];
@@ -110,23 +110,23 @@ const ArticleImport = () => {
     destList.splice(destination.index, 0, { ...removed, isDroppedToStructure: destination.droppableId === 'structure' });
 
     const updatedDestList = destList.map((item, index) => ({
-        ...item,
-        position: index + 1
+      ...item,
+      position: index + 1
     }));
 
     if (source.droppableId !== destination.droppableId) {
-        if (destination.droppableId === 'structure') {
-            setLegislationStructure(updatedDestList);
-            setUnstructuredArticles(sourceList);
-        } else {
-            setUnstructuredArticles(updatedDestList);
-            setLegislationStructure(sourceList.map((item, index) => ({
-                ...item,
-                position: index + 1
-            })));
-        }
+      if (destination.droppableId === 'structure') {
+        setLegislationStructure(updatedDestList);
+        setUnstructuredArticles(sourceList);
+      } else {
+        setUnstructuredArticles(updatedDestList);
+        setLegislationStructure(sourceList.map((item, index) => ({
+          ...item,
+          position: index + 1
+        })));
+      }
     }
-}, [legislationStructure, unstructuredArticles]);
+  }, [legislationStructure, unstructuredArticles]);
 
 
   useEffect(() => {
@@ -176,7 +176,7 @@ const ArticleImport = () => {
       setError("Veuillez sélectionner la législation avent dimporte le fichie d'article");
       return;
     }
-  
+
     setFile(uploadedFile);
     Papa.parse(uploadedFile, {
       header: true,
@@ -190,7 +190,7 @@ const ArticleImport = () => {
 
           return cleanedRow;
         });
-  
+
         if (results.errors.length > 0) {
           setError(`Erreur de parsing CSV: ${results.errors[0].message}`);
           setParsedArticles([]);
@@ -209,81 +209,30 @@ const ArticleImport = () => {
 
   const SaveHistoryDebut = async (event = null) => {
     if (event) {
-        event.preventDefault();
+      event.preventDefault();
     }
 
     try {
-        const token = localStorage.getItem('token');
-        const currentDate = new Date();
-
-        // Formater la date en JJ/MM/AAAA HH:mm
-        const formattedDate = currentDate.toLocaleString('fr-FR', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-        });
-
-        const fileNameWithState = `${importhistory} - état: début - ${formattedDate}`;
-
-        // Récupérer l'historique actuel
-        const responseGet = await axios.get('https://alt.back.qilinsa.com/wp-json/wp/v2/users/me', {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        });
-
-        const currentHistory = responseGet.data.acf.historique_import || '';
-
-        // Ajouter la nouvelle entrée
-        const updatedHistory = currentHistory ? `${currentHistory}\n${fileNameWithState}` : fileNameWithState;
-
-        // Mettre à jour l'historique
-        const responseUpdate = await axios.patch('https://alt.back.qilinsa.com/wp-json/wp/v2/users/me', {
-            acf: {
-                historique_import: updatedHistory,
-            },
-        }, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        });
-
-        console.log('Historique début mis à jour avec succès:', responseUpdate.data);
-    } catch (error) {
-        console.error('Erreur lors de la mise à jour de l\'historique début:', error);
-    }
-};
-
-
-
-const SaveHistoryFin = async (event = null) => {
-  if (event) {
-      event.preventDefault();
-  }
-
-  try {
       const token = localStorage.getItem('token');
       const currentDate = new Date();
 
-        // Formater la date en JJ/MM/AAAA HH:mm
-        const formattedDate = currentDate.toLocaleString('fr-FR', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-        });
-      const fileNameWithState = `${importhistory} - état: fin - ${formattedDate}`;
+      // Formater la date en JJ/MM/AAAA HH:mm
+      const formattedDate = currentDate.toLocaleString('fr-FR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      });
+
+      const fileNameWithState = `${importhistory} - état: début - ${formattedDate}`;
 
       // Récupérer l'historique actuel
       const responseGet = await axios.get('https://alt.back.qilinsa.com/wp-json/wp/v2/users/me', {
-          headers: {
-              Authorization: `Bearer ${token}`,
-          },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       const currentHistory = responseGet.data.acf.historique_import || '';
@@ -293,35 +242,86 @@ const SaveHistoryFin = async (event = null) => {
 
       // Mettre à jour l'historique
       const responseUpdate = await axios.patch('https://alt.back.qilinsa.com/wp-json/wp/v2/users/me', {
-          acf: {
-              historique_import: updatedHistory,
-          },
+        acf: {
+          historique_import: updatedHistory,
+        },
       }, {
-          headers: {
-              Authorization: `Bearer ${token}`,
-          },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      console.log('Historique début mis à jour avec succès:', responseUpdate.data);
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour de l\'historique début:', error);
+    }
+  };
+
+
+
+  const SaveHistoryFin = async (event = null) => {
+    if (event) {
+      event.preventDefault();
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      const currentDate = new Date();
+
+      // Formater la date en JJ/MM/AAAA HH:mm
+      const formattedDate = currentDate.toLocaleString('fr-FR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      });
+      const fileNameWithState = `${importhistory} - état: fin - ${formattedDate}`;
+
+      // Récupérer l'historique actuel
+      const responseGet = await axios.get('https://alt.back.qilinsa.com/wp-json/wp/v2/users/me', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const currentHistory = responseGet.data.acf.historique_import || '';
+
+      // Ajouter la nouvelle entrée
+      const updatedHistory = currentHistory ? `${currentHistory}\n${fileNameWithState}` : fileNameWithState;
+
+      // Mettre à jour l'historique
+      const responseUpdate = await axios.patch('https://alt.back.qilinsa.com/wp-json/wp/v2/users/me', {
+        acf: {
+          historique_import: updatedHistory,
+        },
+      }, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       console.log('Historique fin mis à jour avec succès:', responseUpdate.data);
-  } catch (error) {
+    } catch (error) {
       console.error('Erreur lors de la mise à jour de l\'historique fin:', error);
-  }
-};
+    }
+  };
 
-useEffect(() => {
-  if (importhistory) {
-    // Appeler la fonction SaveHistoryDebut dès que l'importation debute
-    SaveHistoryDebut();
-  }
-}, [importhistory]);
+  useEffect(() => {
+    if (importhistory) {
+      // Appeler la fonction SaveHistoryDebut dès que l'importation debute
+      SaveHistoryDebut();
+    }
+  }, [importhistory]);
 
-useEffect(() => {
-  if (isImportComplete) {
-    // Appeler la fonction SaveHistoryFin dès que l'importation est terminée
-    SaveHistoryFin();
-  }
-}, [isImportComplete]);
-  
+  useEffect(() => {
+    if (isImportComplete) {
+      // Appeler la fonction SaveHistoryFin dès que l'importation est terminée
+      SaveHistoryFin();
+    }
+  }, [isImportComplete]);
+
   const formatDateFromCSV = (dateStr) => {
     // Convert from DD/MM/YYYY to YYYYMMDD
     const [day, month, year] = dateStr.split('/');
@@ -344,37 +344,55 @@ useEffect(() => {
             );
   
             const matchingArticles = searchResponse.data;
-            const formattedCsvDate = formatDateFromCSV(article.Date_entree);
+  
+            // Helper to convert date from "DD/MM/YYYY" to "YYYYMMDD"
+            const formatDateToServerFormat = (date) => {
+              const [day, month, year] = date.split("/");
+              return `${year}${month}${day}`; // Convert to "YYYYMMDD"
+            };
+  
+            // Convert CSV date to server format
+            const formattedCsvDate = formatDateToServerFormat(article.Date_entree);
+  
+            let isExisting = false;
+            let isNewVersion = false;
+            let matchedArticleId = null;
   
             // Check each matching article
             for (const existingArticle of matchingArticles) {
-              // Check if article belongs to the selected legislation
               const belongsToLegislation = existingArticle.acf.Legislation_ou_titre_ou_chapitre_ou_section
                 .includes(Number(selectedLegislationId));
   
               if (belongsToLegislation) {
-                // Compare dates
                 if (existingArticle.acf.date_entree === formattedCsvDate) {
-                  // Same legislation and same date - mark as existing
-                  return { 
-                    ...article, 
-                    exists: true, 
-                    id: existingArticle.id 
-                  };
+                  // Found exact match in legislation with the same date
+                  isExisting = true;
+                  matchedArticleId = existingArticle.id;
+                  break; // No need to check further
                 } else {
-                  // Same legislation but different date - mark as new version
-                  return { 
-                    ...article, 
-                    newVersion: true, 
-                    originalId: existingArticle.id 
-                  };
+                  // Found a match in legislation but different date
+                  isNewVersion = true;
+                  matchedArticleId = existingArticle.id;
                 }
               }
             }
   
-            // No matching article found in the selected legislation
-            return article;
-  
+            // Return the appropriate result
+            if (isExisting) {
+              return {
+                ...article,
+                exists: true,
+                id: matchedArticleId,
+              };
+            } else if (isNewVersion) {
+              return {
+                ...article,
+                newVersion: true,
+                originalId: matchedArticleId,
+              };
+            } else {
+              return article; // No match found
+            }
           } catch (error) {
             console.error(`Error checking article "${article.Title}":`, error);
             return article;
@@ -389,13 +407,14 @@ useEffect(() => {
       setError("Impossible de vérifier les articles existants");
     }
   };
+  
 
   const handleArticleSelection = useCallback((index) => {
     const article = parsedArticles[index];
     if (article.exists) {
       return;
     }
-    setSelectedArticles(prev => 
+    setSelectedArticles(prev =>
       prev.includes(index) ? prev.filter(i => i !== index) : [...prev, index]
     );
   }, [parsedArticles]);
@@ -471,27 +490,27 @@ useEffect(() => {
     const hierarchyIds = [];
 
     for (let pos = position - 1; pos >= 0; pos--) {
-        const section = legislationStructure.find(item => item.position === pos && item.endpoint === 'sections');
-        const chapter = legislationStructure.find(item => item.position === pos && item.endpoint === 'chapitres');
-        const title = legislationStructure.find(item => item.position === pos && item.endpoint === 'titres');
+      const section = legislationStructure.find(item => item.position === pos && item.endpoint === 'sections');
+      const chapter = legislationStructure.find(item => item.position === pos && item.endpoint === 'chapitres');
+      const title = legislationStructure.find(item => item.position === pos && item.endpoint === 'titres');
 
-        if (section) {
-            // Ajouter l'ID de la section et continuer pour trouver le chapitre et titre
-            hierarchyIds.unshift(section.id);
-            continue;
-        } else if (chapter) {
-            // Ajouter l'ID du chapitre et continuer pour trouver le titre
-            hierarchyIds.unshift(chapter.id);
-            continue;
-        } else if (title) {
-            // Ajouter l'ID du titre et retourner le tableau
-            hierarchyIds.unshift(title.id);
-            break;
-        }
+      if (section) {
+        // Ajouter l'ID de la section et continuer pour trouver le chapitre et titre
+        hierarchyIds.unshift(section.id);
+        continue;
+      } else if (chapter) {
+        // Ajouter l'ID du chapitre et continuer pour trouver le titre
+        hierarchyIds.unshift(chapter.id);
+        continue;
+      } else if (title) {
+        // Ajouter l'ID du titre et retourner le tableau
+        hierarchyIds.unshift(title.id);
+        break;
+      }
     }
 
     return hierarchyIds.length > 0 ? hierarchyIds : null;
-};
+  };
 
 
   const fetchAvailableTexts = useCallback(async () => {
@@ -523,7 +542,7 @@ useEffect(() => {
       selectedArticles.forEach(index => {
         const article = parsedArticles[index];
         const linkedTexts = [];
-  
+
         if (article.ID_commentaire) {
           const commentaireIds = article.ID_commentaire.split(',');
           commentaireIds.forEach(id => {
@@ -533,7 +552,7 @@ useEffect(() => {
             }
           });
         }
-  
+
         if (article.ID_decision) {
           const decisionIds = article.ID_decision.split(',');
           decisionIds.forEach(id => {
@@ -543,17 +562,17 @@ useEffect(() => {
             }
           });
         }
-  
+
         if (linkedTexts.length > 0) {
           newSelectedLinkedTexts[index] = linkedTexts;
         }
       });
-  
+
       setSelectedLinkedTexts(newSelectedLinkedTexts);
-  
+
       if (parsedArticles.length >
 
- 0 && parsedArticles[0].ID_legislation) {
+        0 && parsedArticles[0].ID_legislation) {
         const legislationId = parsedArticles[0].ID_legislation;
         const legislation = availableTexts["Législation"]?.find(t => t.value === legislationId);
         if (legislation) {
@@ -655,23 +674,23 @@ useEffect(() => {
       console.log(`Step ${step} validation:`, result);
       return result;
     };
-  
+
     switch (currentStep) {
       case 0:
         return logValidation(
-            0,
-            Array.isArray(parsedArticles) &&
-            parsedArticles.length > 0 &&
-            error === null &&
-            !!selectedLegislation // Check if a legislation is selected
+          0,
+          Array.isArray(parsedArticles) &&
+          parsedArticles.length > 0 &&
+          error === null &&
+          !!selectedLegislation // Check if a legislation is selected
         );
-        
+
       case 1: {
         // Make sure we have both arrays and they're not empty
         if (!Array.isArray(selectedArticles) || !Array.isArray(parsedArticles)) {
           return logValidation(1, false);
         }
-        
+
         // If we only have one article, check if it's marked as existing
         if (parsedArticles.length === 1) {
           const singleArticle = parsedArticles[0];
@@ -680,23 +699,23 @@ useEffect(() => {
             return logValidation(1, false);
           }
         }
-        
+
         // Check if we have any valid selected articles
-        const hasValidSelection = selectedArticles.length > 0 && 
+        const hasValidSelection = selectedArticles.length > 0 &&
           selectedArticles.some(index => {
             const article = parsedArticles[index];
             return article && !article.exists;
           });
-          
+
         return logValidation(1, hasValidSelection);
       }
-        
+
       case 2: {
         // Ensure we have a legislation selected
         if (!selectedLegislation) {
           return logValidation(2, false);
         }
-  
+
         // if (bulkSelection) {
         //   // For bulk selection, verify we have at least one selection
         //   const hasBulkLinks = (
@@ -713,23 +732,23 @@ useEffect(() => {
         // }
         return logValidation(2, true);  //Uncomment the one up and remove this line of code to use the other condition up
       }
-        
+
       case 3: {
         // Check if legislation is selected
         const hasLegislation = Boolean(selectedLegislation?.value);
-        
+
         // Check if unstructured articles list is empty
-        const isUnstructuredEmpty = Array.isArray(unstructuredArticles) && 
+        const isUnstructuredEmpty = Array.isArray(unstructuredArticles) &&
           unstructuredArticles.length === 0;
-        
+
         // Button should only be enabled if we have legislation selected AND
         // the unstructured articles list is empty
         return logValidation(3, hasLegislation && isUnstructuredEmpty);
       }
-        
+
       case 4:
         return logValidation(4, true);
-        
+
       default:
         return logValidation('default', false);
     }
@@ -744,7 +763,7 @@ useEffect(() => {
     // selectedLinkedTexts,
     unstructuredArticles, // Added new dependency
   ]);
-  
+
   const buttonSection = (
     <div className="flex justify-between">
       <button
@@ -754,7 +773,7 @@ useEffect(() => {
       >
         <ArrowLeft className="mr-2 h-4 w-4 inline" /> Précédent
       </button>
-      
+
       {currentStep === steps.length - 1 ? (
         <button
           onClick={handleImportConfirmation}
@@ -773,11 +792,10 @@ useEffect(() => {
         <button
           onClick={() => setCurrentStep(prev => Math.min(steps.length - 1, prev + 1))}
           disabled={!isStepValid()}
-          className={`px-4 py-2 rounded-md transition-colors duration-200 flex items-center ${
-            isStepValid() 
-              ? 'bg-green-500 text-white hover:bg-green-600' 
+          className={`px-4 py-2 rounded-md transition-colors duration-200 flex items-center ${isStepValid()
+              ? 'bg-green-500 text-white hover:bg-green-600'
               : 'px-4 py-2 bg-green-500 text-white rounded-md disabled:opacity-50'
-          }`}
+            }`}
         >
           Suivant <ArrowRight className="ml-2 h-4 w-4" />
         </button>
@@ -790,10 +808,10 @@ useEffect(() => {
       case 0:
         return (
           <div className="space-y-4">
-             <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Lier à une législation : <span className="text-red-500">*</span>
-            </label>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Lier à une législation : <span className="text-red-500">*</span>
+              </label>
               {loadingLegislation ? (
                 <div className="text-sm text-gray-500">Chargement des législations...</div>
               ) : (
@@ -821,7 +839,7 @@ useEffect(() => {
               />
             </div>
             {error && (
-                <div
+              <div
                 className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative"
                 role="alert"
               >
@@ -831,7 +849,7 @@ useEffect(() => {
             )}
           </div>
         );
-        
+
       case 1:
         return (
           <div className="space-y-4">
@@ -954,30 +972,29 @@ useEffect(() => {
           </div>
         );
       case 3:
-          return (
-            <DndProvider backend={HTML5Backend}>
-              <div className="space-y-4">
-                <h2 className="text-xl font-semibold text-green-500">Structurer la législation</h2>
-                {!selectedLegislation && (
-                  <p className="text-red-500">Veuillez d'abord sélectionner une législation à l'étape précédente.</p>
-                )}
-                {loading ? (
-                  <div className="text-center">
-                    <p>Chargement de la structure de la législation...</p>
-                  </div>
-                ) : (
-                  <div className="bg-white p-4 rounded-md shadow">
-                    <p className="mb-4">Structuration de la législation : {selectedLegislation?.label}</p>
-                    <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
-                      <div className="w-full md:w-2/3">
-                        <h3 className="text-lg font-medium mb-2">Structure de la législation</h3>
-                        <ul className="min-h-[400px] max-h-[400px] border-2 border-dashed border-gray-300 p-4 rounded-md overflow-y-auto">
+        return (
+          <DndProvider backend={HTML5Backend}>
+            <div className="space-y-4">
+              <h2 className="text-xl font-semibold text-green-500">Structurer la législation</h2>
+              {!selectedLegislation && (
+                <p className="text-red-500">Veuillez d'abord sélectionner une législation à l'étape précédente.</p>
+              )}
+              {loading ? (
+                <div className="text-center">
+                  <p>Chargement de la structure de la législation...</p>
+                </div>
+              ) : (
+                <div className="bg-white p-4 rounded-md shadow">
+                  <p className="mb-4">Structuration de la législation : {selectedLegislation?.label}</p>
+                  <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
+                    <div className="w-full md:w-2/3">
+                      <h3 className="text-lg font-medium mb-2">Structure de la législation</h3>
+                      <ul className="min-h-[400px] max-h-[400px] border-2 border-dashed border-gray-300 p-4 rounded-md overflow-y-auto">
                         {legislationStructure.map((item, index) => (
                           <li
                             key={item.id}
-                            className={`p-2 rounded flex items-center mb-2 ${
-                              item.isDroppedToStructure ? 'bg-green-100' : 'bg-gray-100'
-                            }`}
+                            className={`p-2 rounded flex items-center mb-2 ${item.isDroppedToStructure ? 'bg-green-100' : 'bg-gray-100'
+                              }`}
                             draggable
                             onDragStart={(e) => {
                               e.dataTransfer.setData('text/plain', JSON.stringify({ id: item.id, index, compartment: 'structure' }));
@@ -999,40 +1016,40 @@ useEffect(() => {
                         ))}
                       </ul>
 
-                      </div>
-                      <div className="w-full md:w-1/3">
-                        <h3 className="text-lg font-medium mb-2">Articles à importer</h3>
-                        <ul className="min-h-[400px] max-h-[400px] border-2 border-dashed border-gray-300 p-4 rounded-md overflow-y-auto">
-                          {unstructuredArticles.map((item, index) => (
-                            <li
-                              key={item.id}
-                              className="bg-blue-100 p-2 rounded flex items-center mb-2"
-                              draggable
-                              onDragStart={(e) => {
-                                e.dataTransfer.setData('text/plain', JSON.stringify({ id: item.id, index, compartment: 'unstructured' }));
-                              }}
-                              onDragOver={(e) => e.preventDefault()}
-                              onDrop={(e) => {
-                                e.preventDefault();
-                                const droppedItem = JSON.parse(e.dataTransfer.getData('text/plain'));
-                                onDragEnd({
-                                  source: { index: droppedItem.index, droppableId: droppedItem.compartment },
-                                  destination: { index, droppableId: 'unstructured' }
-                                });
-                              }}
-                            >
-                              <GripVertical className="mr-2 text-gray-500" />
-                              <span>{item.title || 'Sans titre'}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
+                    </div>
+                    <div className="w-full md:w-1/3">
+                      <h3 className="text-lg font-medium mb-2">Articles à importer</h3>
+                      <ul className="min-h-[400px] max-h-[400px] border-2 border-dashed border-gray-300 p-4 rounded-md overflow-y-auto">
+                        {unstructuredArticles.map((item, index) => (
+                          <li
+                            key={item.id}
+                            className="bg-blue-100 p-2 rounded flex items-center mb-2"
+                            draggable
+                            onDragStart={(e) => {
+                              e.dataTransfer.setData('text/plain', JSON.stringify({ id: item.id, index, compartment: 'unstructured' }));
+                            }}
+                            onDragOver={(e) => e.preventDefault()}
+                            onDrop={(e) => {
+                              e.preventDefault();
+                              const droppedItem = JSON.parse(e.dataTransfer.getData('text/plain'));
+                              onDragEnd({
+                                source: { index: droppedItem.index, droppableId: droppedItem.compartment },
+                                destination: { index, droppableId: 'unstructured' }
+                              });
+                            }}
+                          >
+                            <GripVertical className="mr-2 text-gray-500" />
+                            <span>{item.title || 'Sans titre'}</span>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
                   </div>
-                )}
-              </div>
-            </DndProvider>
-          );
+                </div>
+              )}
+            </div>
+          </DndProvider>
+        );
       case 4:
         if (!parsedArticles.length || !selectedArticles.length) return null
         return (
@@ -1042,68 +1059,66 @@ useEffect(() => {
               <h3 className="text-lg font-medium mb-2">Récapitulatif de l'importation</h3>
               <p>Nombre d'articles sélectionnés : {selectedArticles.length}</p>
               <p>Législation liée : {selectedLegislation?.label || "Aucune"}</p>
-              
+
               <h4 className="text-md font-medium mt-4 mb-2">Articles et leurs liaisons :</h4>
               {bulkSelection ? (
-  <div>
-    <ul className="list-disc list-inside">
-      {selectedArticles.map((index) => (
-        <li
-          key={index}
-          className={`p-2 rounded ${
-            legislationStructure.some(item => item.id === index.toString()) ? 'bg-green-100' : ''
-          }`}
-        >
-          {parsedArticles[index].Title}
-        </li>
-      ))}
-    </ul>
-    <div className="mt-2">
-      <h5 className="font-medium">Commentaires liés :</h5>
-      <ul className="list-disc list-inside ml-4">
-        {bulkLinkedTexts.commentaires.map((comment, i) => (
-          <li key={i}>{comment.label}</li>
-        ))}
-      </ul>
-    </div>
-    <div className="mt-2">
-      <h5 className="font-medium">Décisions liées :</h5>
-      <ul className="list-disc list-inside ml-4">
-        {bulkLinkedTexts.decisions.map((decision, i) => (
-          <li key={i}>{decision.label}</li>
-        ))}
-      </ul>
-    </div>
-  </div>
-) : (
-  selectedArticles.map((index) => {
-    const article = parsedArticles[index];
-    const structureItem = legislationStructure.find(item => item.id === index.toString());
-    return (
-      <div
-        key={index}
-        className={`mb-4 p-3 rounded-md ${
-          structureItem ? 'bg-green-100' : 'bg-gray-50'
-        }`}
-      >
-        <h5 className="font-medium">{article.Title}</h5>
-        <p className="text-sm text-gray-500">Position : {structureItem ? structureItem.position : 'Non définie'}</p>
-        {["Commentaire", "Décision"].map(type => (
-          <div key={type}>
-            <h6 className="font-medium text-sm mt-2">{type}s liés :</h6>
-            <ul className="list-disc list-inside ml-4">
-              {selectedLinkedTexts[index]?.filter(text => text.type === type).map((text, i) => (
-                <li key={i}>{text.label}</li>
-              ))}
-            </ul>
-          </div>
-        ))}
-      </div>
-    );
-  })
-)}
+                <div>
+                  <ul className="list-disc list-inside">
+                    {selectedArticles.map((index) => (
+                      <li
+                        key={index}
+                        className={`p-2 rounded ${legislationStructure.some(item => item.id === index.toString()) ? 'bg-green-100' : ''
+                          }`}
+                      >
+                        {parsedArticles[index].Title}
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="mt-2">
+                    <h5 className="font-medium">Commentaires liés :</h5>
+                    <ul className="list-disc list-inside ml-4">
+                      {bulkLinkedTexts.commentaires.map((comment, i) => (
+                        <li key={i}>{comment.label}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="mt-2">
+                    <h5 className="font-medium">Décisions liées :</h5>
+                    <ul className="list-disc list-inside ml-4">
+                      {bulkLinkedTexts.decisions.map((decision, i) => (
+                        <li key={i}>{decision.label}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              ) : (
+                selectedArticles.map((index) => {
+                  const article = parsedArticles[index];
+                  const structureItem = legislationStructure.find(item => item.id === index.toString());
+                  return (
+                    <div
+                      key={index}
+                      className={`mb-4 p-3 rounded-md ${structureItem ? 'bg-green-100' : 'bg-gray-50'
+                        }`}
+                    >
+                      <h5 className="font-medium">{article.Title}</h5>
+                      <p className="text-sm text-gray-500">Position : {structureItem ? structureItem.position : 'Non définie'}</p>
+                      {["Commentaire", "Décision"].map(type => (
+                        <div key={type}>
+                          <h6 className="font-medium text-sm mt-2">{type}s liés :</h6>
+                          <ul className="list-disc list-inside ml-4">
+                            {selectedLinkedTexts[index]?.filter(text => text.type === type).map((text, i) => (
+                              <li key={i}>{text.label}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })
+              )}
 
-  
+
               {selectedLegislation && (
                 <div className="mt-4">
                   <h4 className="text-md font-medium mb-2">Structure finale de la législation :</h4>
@@ -1119,7 +1134,7 @@ useEffect(() => {
                 </div>
               )}
             </div>
-            
+
             <div className="flex justify-between items-center">
               <p className="text-sm text-gray-600">Veuillez vérifier que toutes les informations ci-dessus sont correctes avant de procéder à l'importation.</p>
               <button
@@ -1144,13 +1159,12 @@ useEffect(() => {
         return (
           <div key={step} className="flex flex-col items-center mx-2">
             <motion.div
-              className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                index < currentStep
+              className={`w-8 h-8 rounded-full flex items-center justify-center ${index < currentStep
                   ? 'bg-green-500 text-white'
                   : index === currentStep
-                  ? 'bg-gray-300 text-gray-700'
-                  : 'bg-gray-200 text-gray-400'
-              }`}
+                    ? 'bg-gray-300 text-gray-700'
+                    : 'bg-gray-200 text-gray-400'
+                }`}
               initial={false}
               animate={{
                 scale: index === currentStep ? 1.2 : 1,
