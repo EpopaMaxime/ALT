@@ -100,7 +100,7 @@ const ProtectedRoute = ({ children }) => {
     return <Navigate to="/authform" />;
   }
 
-  if (actif === false) {
+  if (actif === false && isOnline === true && isApiReachable === true) {
     return <Navigate to="/comptedesactiver" />;
   }
 
