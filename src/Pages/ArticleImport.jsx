@@ -173,7 +173,7 @@ const ArticleImport = () => {
     setImportHistory(fileNameWithState);
 
     if (!uploadedFile || !selectedLegislation?.value) {
-      setError("Veuillez sélectionner la législation avent dimporte le fichie d'article");
+      setError("Veuillez sélectionner la législation avant d'importer le fichier");
       return;
     }
 
