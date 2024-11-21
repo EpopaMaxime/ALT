@@ -889,6 +889,7 @@ const ArticleImport = () => {
         return (
           <div className="space-y-4">
             <h2 className="text-xl font-semibold text-green-500">Prévisualisation des articles</h2>
+            <p className="text-sm text-gray-500">Nombre d'éléments : {parsedArticles.length}</p>
             <div className="bg-white p-4 rounded-md shadow max-h-96 overflow-y-auto">
               <div className="flex justify-between mb-4">
                 <button

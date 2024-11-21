@@ -468,8 +468,8 @@ useEffect(() => {
         case 1:
           return (
             <div className="space-y-4">
-              <p className="text-sm text-gray-500">Nombre d'éléments : {parsedCommentaires.length}</p>
               <h2 className="text-xl font-semibold text-green-500">Prévisualisation des commentaires</h2>
+              <p className="text-sm text-gray-500">Nombre d'éléments : {parsedCommentaires.length}</p>
               <div className="bg-white p-4 rounded-md shadow max-h-96 overflow-y-auto">
                 <div className="flex justify-between mb-4">
                   <button
