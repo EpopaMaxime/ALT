@@ -338,7 +338,32 @@ const ArticleImport = () => {
       const articleChecks = await Promise.all(
         articles.map(async (article) => {
           try {
-            // Search for articles with the same title
+            // Implement a more precise title matching function
+            const normalizeTitleForSearch = (title) => {
+              // Remove extra whitespaces and convert to lowercase
+              const normalizedTitle = title.trim().toLowerCase();
+              
+              // Extract the article number using a regex
+              // This will match "article" followed by a number, ensuring precise matching
+              const articleNumberMatch = normalizedTitle.match(/article\s+(\d+)/);
+              
+              if (articleNumberMatch) {
+                return {
+                  fullTitle: normalizedTitle,
+                  articleNumber: articleNumberMatch[1]
+                };
+              }
+              
+              return {
+                fullTitle: normalizedTitle,
+                articleNumber: null
+              };
+            };
+            
+            // Normalize the current article's title
+            const currentArticleNormalized = normalizeTitleForSearch(article.Title);
+
+            // Search for articles with similar titles
             const searchResponse = await axios.get(
               `https://alt.back.qilinsa.com/wp-json/wp/v2/articles?search=${encodeURIComponent(article.Title)}`
             );
@@ -360,10 +385,20 @@ const ArticleImport = () => {
   
             // Check each matching article
             for (const existingArticle of matchingArticles) {
+              // Normalize the existing article's title
+              const existingArticleNormalized = normalizeTitleForSearch(existingArticle.title.rendered);
+              
               const belongsToLegislation = existingArticle.acf.Legislation_ou_titre_ou_chapitre_ou_section
                 .includes(Number(selectedLegislationId));
-  
-              if (belongsToLegislation) {
+              
+              // Check if article numbers match exactly (if available)
+              const articleNumberMatches = 
+                currentArticleNormalized.articleNumber && 
+                existingArticleNormalized.articleNumber 
+                  ? currentArticleNormalized.articleNumber === existingArticleNormalized.articleNumber
+                  : currentArticleNormalized.fullTitle === existingArticleNormalized.fullTitle;
+
+              if (belongsToLegislation && articleNumberMatches) {
                 if (existingArticle.acf.date_entree === formattedCsvDate) {
                   // Found exact match in legislation with the same date
                   isExisting = true;
