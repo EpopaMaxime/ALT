@@ -34,6 +34,7 @@ const CommentaireImport = () => {
   const [importStatus, setImportStatus] = useState(null);
   const [importError, setImportError] = useState(null);
   const [importhistory, setImportHistory] = useState(null);
+  const [historiquePostId, setHistoriquePostId] = useState(null);
 
 
   const isStepValid = () => {
@@ -159,79 +160,80 @@ const CommentaireImport = () => {
     if (event) {
       event.preventDefault();
     }
-
+  
     try {
-      const token = localStorage.getItem('token');
-      const currentDate = new Date();
+        const token = localStorage.getItem('token');
+        const currentDate = new Date();
 
-      // Formater la date en JJ/MM/AAAA HH:mm
-      const formattedDate = currentDate.toLocaleString('fr-FR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-      });
+        // Formater la date en JJ/MM/AAAA HH:mm
+        const formattedDate = currentDate.toLocaleString('fr-FR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+        });
 
-      const fileNameWithState = `${importhistory} - état: début - ${formattedDate}`;
+        const fileNameWithState = `${importhistory} - état: début - ${formattedDate}`;
 
-      // Récupérer l'historique actuel
-      const responseGet = await axios.get('https://alt.back.qilinsa.com/wp-json/wp/v2/users/me', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+        // Récupérer l'historique actuel
+        const responseGet = await axios.get('https://alt.back.qilinsa.com/wp-json/wp/v2/users/me', {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
 
-      const currentHistory = responseGet.data.acf.historique_import || '';
+        const currentHistory = responseGet.data.acf.historique_import || '';
 
-      // Ajouter la nouvelle entrée
-      const updatedHistory = currentHistory ? `${currentHistory}\n${fileNameWithState}` : fileNameWithState;
+        // Ajouter la nouvelle entrée
+        const updatedHistory = currentHistory ? `${currentHistory}\n${fileNameWithState}` : fileNameWithState;
 
-      // Mettre à jour l'historique
-      const responseUpdate = await axios.patch('https://alt.back.qilinsa.com/wp-json/wp/v2/users/me', {
-        acf: {
-          historique_import: updatedHistory,
-        },
-      }, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+        // Mettre à jour l'historique
+        const responseUpdate = await axios.patch('https://alt.back.qilinsa.com/wp-json/wp/v2/users/me', {
+            acf: {
+                historique_import: updatedHistory,
+            },
+        }, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
 
-      console.log('Historique début mis à jour avec succès:', responseUpdate.data);
+        console.log('Historique début mis à jour avec succès:', responseUpdate.data);
     } catch (error) {
-      console.error('Erreur lors de la mise à jour de l\'historique début:', error);
+        console.error('Erreur lors de la mise à jour de l\'historique début:', error);
     }
-  };
+};
 
-
+  
 
   const SaveHistoryFin = async (event = null) => {
     if (event) {
       event.preventDefault();
-    }
+  }
 
-    try {
+  try {
       const token = localStorage.getItem('token');
+      const iduser = localStorage.getItem('iduser');
       const currentDate = new Date();
 
-      // Formater la date en JJ/MM/AAAA HH:mm
-      const formattedDate = currentDate.toLocaleString('fr-FR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-      });
+        // Formater la date en JJ/MM/AAAA HH:mm
+        const formattedDate = currentDate.toLocaleString('fr-FR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+        });
       const fileNameWithState = `${importhistory} - état: fin - ${formattedDate}`;
 
       // Récupérer l'historique actuel
       const responseGet = await axios.get('https://alt.back.qilinsa.com/wp-json/wp/v2/users/me', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+          headers: {
+              Authorization: `Bearer ${token}`,
+          },
       });
 
       const currentHistory = responseGet.data.acf.historique_import || '';
@@ -241,20 +243,20 @@ const CommentaireImport = () => {
 
       // Mettre à jour l'historique
       const responseUpdate = await axios.patch('https://alt.back.qilinsa.com/wp-json/wp/v2/users/me', {
-        acf: {
-          historique_import: updatedHistory,
-        },
+          acf: {
+              historique_import: updatedHistory,
+          },
       }, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+          headers: {
+              Authorization: `Bearer ${token}`,
+          },
       });
 
       console.log('Historique fin mis à jour avec succès:', responseUpdate.data);
-    } catch (error) {
+  } catch (error) {
       console.error('Erreur lors de la mise à jour de l\'historique fin:', error);
-    }
-  };
+  }
+};
 
   useEffect(() => {
     if (importhistory) {
