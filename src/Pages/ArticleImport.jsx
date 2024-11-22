@@ -51,6 +51,7 @@ const ArticleImport = () => {
   const [importStatus, setImportStatus] = useState(null);
   const [importError, setImportError] = useState(null);
   const [importhistory, setImportHistory] = useState(null);
+  const [historiquePostId, setHistoriquePostId] = useState(null);
   const [loadingLegislation, setLoadingLegislation] = useState(false); // Track loading state
   const [hasFetchedLegislation, setHasFetchedLegislation] = useState(false); // Track if legislations are fetched
   const API_BASE_URL = "https://alt.back.qilinsa.com/wp-json/wp/v2"; // Replace with your actual API base URL
@@ -207,15 +208,18 @@ const ArticleImport = () => {
     });
   }, [selectedLegislation]);
 
+  //let historiquePostId = null; // Stocke l'identifiant du post créé
+
   const SaveHistoryDebut = async (event = null) => {
     if (event) {
       event.preventDefault();
     }
-
+  
     try {
       const token = localStorage.getItem('token');
+      const iduser = localStorage.getItem('iduser');
       const currentDate = new Date();
-
+  
       // Formater la date en JJ/MM/AAAA HH:mm
       const formattedDate = currentDate.toLocaleString('fr-FR', {
         day: '2-digit',
@@ -225,49 +229,86 @@ const ArticleImport = () => {
         minute: '2-digit',
         second: '2-digit',
       });
+  
+      const fileNameWithState = `${importhistory}`;
 
-      const fileNameWithState = `${importhistory} - état: début - ${formattedDate}`;
+      // Fonction pour uploader le fichier
+    const uploadFile = async (file) => {
+      const formData = new FormData();
+      formData.append('file', file); // Ajouter le fichier au FormData
+      formData.append('title', fileNameWithState); // Titre optionnel
+      formData.append('status', 'publish'); // Statut de la publication
 
-      // Récupérer l'historique actuel
-      const responseGet = await axios.get('https://alt.back.qilinsa.com/wp-json/wp/v2/users/me', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await axios.post(
+        "https://alt.back.qilinsa.com/wp-json/wp/v2/media",
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+      return response.data.id; // Retourne l'identifiant du fichier uploadé
+    };
 
-      const currentHistory = responseGet.data.acf.historique_import || '';
+    // Upload du fichier et récupération de son identifiant
+    let fileId = null;
+    if (file) {
+      fileId = await uploadFile(file);
+    }
 
-      // Ajouter la nouvelle entrée
-      const updatedHistory = currentHistory ? `${currentHistory}\n${fileNameWithState}` : fileNameWithState;
-
-      // Mettre à jour l'historique
-      const responseUpdate = await axios.patch('https://alt.back.qilinsa.com/wp-json/wp/v2/users/me', {
+  
+      // Construire le JSON à envoyer
+      const payload = {
+        title: fileNameWithState, // Nom du fichier avec état et date
         acf: {
-          historique_import: updatedHistory,
+          type_import: "Article", // Type d'import
+          date: currentDate.toISOString().slice(0, 19).replace("T", " "), // AAAA-MM-JJ HH:mm:ss
+          statut: "Débuté", // Statut défini sur "Débuté"
+          fichier_entrant: fileId, // Pas de fichier encore
+          auteur: iduser, // ID de l'auteur
         },
-      }, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      console.log('Historique début mis à jour avec succès:', responseUpdate.data);
+        status: "publish", // Statut de la publication
+      };
+  
+      // Envoyer la requête POST
+      const response = await axios.post(
+        "https://alt.back.qilinsa.com/wp-json/wp/v2/historiqueimport",
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+  
+      const historiquePostId = response.data.id; // Stocker l'identifiant du post créé
+      setHistoriquePostId(historiquePostId);
+      console.log("Post créé avec succès. ID:", historiquePostId);
     } catch (error) {
-      console.error('Erreur lors de la mise à jour de l\'historique début:', error);
+      console.error("Erreur lors de la création de l'historique début:", error);
     }
   };
+  
 
-
+  
 
   const SaveHistoryFin = async (event = null) => {
     if (event) {
       event.preventDefault();
     }
-
+  
+    if (!historiquePostId) {
+      console.error("Aucun identifiant de post trouvé. Veuillez exécuter SaveHistoryDebut d'abord.");
+      return;
+    }
+  
     try {
       const token = localStorage.getItem('token');
+      const iduser = localStorage.getItem('iduser');
       const currentDate = new Date();
-
+  
       // Formater la date en JJ/MM/AAAA HH:mm
       const formattedDate = currentDate.toLocaleString('fr-FR', {
         day: '2-digit',
@@ -277,36 +318,66 @@ const ArticleImport = () => {
         minute: '2-digit',
         second: '2-digit',
       });
-      const fileNameWithState = `${importhistory} - état: fin - ${formattedDate}`;
-
-      // Récupérer l'historique actuel
-      const responseGet = await axios.get('https://alt.back.qilinsa.com/wp-json/wp/v2/users/me', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const currentHistory = responseGet.data.acf.historique_import || '';
-
-      // Ajouter la nouvelle entrée
-      const updatedHistory = currentHistory ? `${currentHistory}\n${fileNameWithState}` : fileNameWithState;
-
-      // Mettre à jour l'historique
-      const responseUpdate = await axios.patch('https://alt.back.qilinsa.com/wp-json/wp/v2/users/me', {
+  
+      //const fileNameWithState = `${importhistory} - état: fin - ${formattedDate}`;
+  
+      // Générer le fichier CSV exporté
+      const { blob } = exportModifiedCSV(); // Utilise la fonction exportModifiedCSV
+      const exportFileName = generateFileName();
+  
+      // Fonction pour uploader le fichier
+      const uploadFile = async (fileBlob, fileName) => {
+        const formData = new FormData();
+        formData.append('file', fileBlob, fileName);
+        formData.append('title', fileName); // Titre optionnel
+        formData.append('status', 'publish'); // Statut de la publication
+  
+        const response = await axios.post(
+          "https://alt.back.qilinsa.com/wp-json/wp/v2/media",
+          formData,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'multipart/form-data',
+            },
+          }
+        );
+        return response.data.id; // Retourne l'identifiant du fichier uploadé
+      };
+  
+      // Charger le fichier et obtenir son identifiant
+      const fileId = await uploadFile(blob, exportFileName);
+  
+      // Construire le JSON à envoyer pour la mise à jour
+      const payload = {
+        title: exportFileName, // Nom du fichier avec état et date
         acf: {
-          historique_import: updatedHistory,
+          type_import: "Article", // Type d'import
+          date: currentDate.toISOString().slice(0, 19).replace("T", " "), // AAAA-MM-JJ HH:mm:ss
+          statut: "Terminé", // Statut défini sur "Terminé"
+          fichier_sortant: fileId, // Identifiant du fichier importé
+          auteur: iduser, // ID de l'auteur
         },
-      }, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      console.log('Historique fin mis à jour avec succès:', responseUpdate.data);
+      };
+  
+      // Envoyer la requête PATCH pour mettre à jour le post
+      const response = await axios.patch(
+        `https://alt.back.qilinsa.com/wp-json/wp/v2/historiqueimport/${historiquePostId}`,
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+  
+      console.log("Post mis à jour avec succès:", response.data);
     } catch (error) {
-      console.error('Erreur lors de la mise à jour de l\'historique fin:', error);
+      console.error("Erreur lors de la mise à jour de l'historique fin:", error);
     }
   };
+  
+  
 
   useEffect(() => {
     if (importhistory) {
