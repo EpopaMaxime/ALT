@@ -103,47 +103,54 @@ const HistoriqueImport = () => {
   return (
     <div className="p-6">
       {/* Barre de recherche et filtres */}
-      <div className="mb-4 flex justify-between gap-4">
-        <input
-          type="text"
-          className="border p-2 w-1/3"
-          placeholder="Rechercher par nom"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
+      <div className="mb-4 flex flex-wrap gap-4">
+        <div className="w-full sm:w-1/3">
+          <input
+            type="text"
+            className="border p-2 w-full"
+            placeholder="Rechercher par nom"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
 
-        <select
-          className="border p-2 w-1/4"
-          value={selectedType}
-          onChange={(e) => setSelectedType(e.target.value)}
-        >
-          <option value="">Type d'import</option>
-          <option value="Article">Article</option>
-          <option value="Legislation">Legislation</option>
-          <option value="Decision">Decision</option>
-          <option value="Commentaire">Commentaire</option>
-        </select>
+        <div className="w-full sm:w-1/4">
+          <select
+            className="border p-2 w-full"
+            value={selectedType}
+            onChange={(e) => setSelectedType(e.target.value)}
+          >
+            <option value="">Type d'import</option>
+            <option value="Article">Article</option>
+            <option value="Legislation">Legislation</option>
+            <option value="Decision">Decision</option>
+            <option value="Commentaire">Commentaire</option>
+          </select>
+        </div>
 
-        <select
-          className="border p-2 w-1/4"
-          value={selectedStatus}
-          onChange={(e) => setSelectedStatus(e.target.value)}
-        >
-          <option value="">Statut</option>
-          <option value="Débuté">Débuté</option>
-          <option value="Terminé">Terminé</option>
-        </select>
+        <div className="w-full sm:w-1/4">
+          <select
+            className="border p-2 w-full"
+            value={selectedStatus}
+            onChange={(e) => setSelectedStatus(e.target.value)}
+          >
+            <option value="">Statut</option>
+            <option value="Débuté">Débuté</option>
+            <option value="Terminé">Terminé</option>
+            <option value="Echec">Echec</option>
+          </select>
+        </div>
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
           <input
             type="date"
-            className="border p-2"
+            className="border p-2 w-full sm:w-auto"
             value={dateFrom}
             onChange={(e) => setDateFrom(e.target.value)}
           />
           <input
             type="date"
-            className="border p-2"
+            className="border p-2 w-full sm:w-auto"
             value={dateTo}
             onChange={(e) => setDateTo(e.target.value)}
           />
