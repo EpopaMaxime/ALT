@@ -8,6 +8,7 @@ const ProtectedRoute = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isApiReachable, setIsApiReachable] = useState(true);
+  const [redirectToAuth, setRedirectToAuth] = useState(false);
 
   const isLoggedIn = !!localStorage.getItem('token');
 
@@ -38,8 +39,15 @@ const ProtectedRoute = ({ children }) => {
         const userData = response.data;
         setActif(userData.acf.compte_actif);
       } catch (error) {
-        console.error('Erreur de récupération des données :', error);
-        setActif(false);
+        if (error.response?.status === 403) {
+          // Si le serveur retourne 403 Forbidden
+          console.warn('Session expirée ou accès refusé. Redirection vers l\'authentification.');
+          localStorage.removeItem('token');
+          setRedirectToAuth(true);
+        } else {
+          console.error('Erreur de récupération des données :', error);
+          setActif(false);
+        }
       } finally {
         setLoading(false);
       }
@@ -72,6 +80,10 @@ const ProtectedRoute = ({ children }) => {
     };
   }, [isLoggedIn, isOnline]);
 
+  if (redirectToAuth) {
+    return <Navigate to="/authform" />;
+  }
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -100,7 +112,7 @@ const ProtectedRoute = ({ children }) => {
     return <Navigate to="/authform" />;
   }
 
-  if (actif === false && isOnline === true && isApiReachable === true) {
+  if (actif === false && isOnline === true && isApiReachable === true && redirectToAuth === false) {
     return <Navigate to="/comptedesactiver" />;
   }
 

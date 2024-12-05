@@ -329,7 +329,7 @@ const DecisionImport = () => {
         acf: {
           type_import: "Decision", // Type d'import
           date: currentDate.toISOString().slice(0, 19).replace("T", " "), // AAAA-MM-JJ HH:mm:ss
-          statut: "Débuté", // Statut défini sur "Débuté"
+          statut: "Brouillon", // Statut défini sur "Brouillon"
           fichier_entrant: fileId, // Pas de fichier encore
           auteur: iduser, // ID de l'auteur
         },
@@ -355,10 +355,7 @@ const DecisionImport = () => {
     }
   };
   
-
-  
-
-  const SaveHistoryFin = async (event = null) => {
+  const SaveHistoryMapped = async (event = null) => {
     if (event) {
       event.preventDefault();
     }
@@ -418,7 +415,7 @@ const DecisionImport = () => {
         acf: {
           type_import: "Decision", // Type d'import
           date: currentDate.toISOString().slice(0, 19).replace("T", " "), // AAAA-MM-JJ HH:mm:ss
-          statut: "Terminé", // Statut défini sur "Terminé"
+          statut: "Brouillon", // Statut défini sur "Terminé"
           fichier_sortant: fileId, // Identifiant du fichier importé
           auteur: iduser, // ID de l'auteur
         },
@@ -440,6 +437,114 @@ const DecisionImport = () => {
       console.error("Erreur lors de la mise à jour de l'historique fin:", error);
     }
   };
+  
+
+  const SaveHistoryFin = async (event = null) => {
+    if (event) {
+      event.preventDefault();
+    }
+  
+    if (!historiquePostId) {
+      console.error("Aucun identifiant de post trouvé. Veuillez exécuter SaveHistoryDebut d'abord.");
+      return;
+    }
+  
+    try {
+      const token = localStorage.getItem('token');
+      const iduser = localStorage.getItem('iduser');
+      const currentDate = new Date();
+  
+      // Formater la date en JJ/MM/AAAA HH:mm
+      const formattedDate = currentDate.toLocaleString('fr-FR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      });
+  
+      //const fileNameWithState = `${importhistory} - état: fin - ${formattedDate}`;
+  
+      // Générer le fichier CSV exporté
+      const { blob } = exportModifiedCSV(); // Utilise la fonction exportModifiedCSV
+      const exportFileName = generateFileName();
+  
+      // Fonction pour uploader le fichier
+      const uploadFile = async (fileBlob, fileName) => {
+        const formData = new FormData();
+        formData.append('file', fileBlob, fileName);
+        formData.append('title', fileName); // Titre optionnel
+        formData.append('status', 'publish'); // Statut de la publication
+  
+        const response = await axios.post(
+          "https://alt.back.qilinsa.com/wp-json/wp/v2/media",
+          formData,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'multipart/form-data',
+            },
+          }
+        );
+        return response.data.id; // Retourne l'identifiant du fichier uploadé
+      };
+  
+      // Charger le fichier et obtenir son identifiant
+      const fileId = await uploadFile(blob, exportFileName);
+
+      // Construire le JSON à envoyer pour la mise à jour
+      const payloadDemande = {
+        title: exportFileName, // Nom du fichier avec état et date
+        acf: {
+          type_import: "Decision", // Type d'import
+          date: currentDate.toISOString().slice(0, 19).replace("T", " "), // AAAA-MM-JJ HH:mm:ss
+          statut: "Demande-envoyé", // Statut défini sur "Demande-envoyé"
+          fichier_sortant: fileId, // Identifiant du fichier importé
+          auteur: iduser, // ID de l'auteur
+        },
+      };
+  
+      // Construire le JSON à envoyer pour la mise à jour
+      const payload = {
+        title: exportFileName, // Nom du fichier avec état et date
+        acf: {
+          type_import: "Decision", // Type d'import
+          date: currentDate.toISOString().slice(0, 19).replace("T", " "), // AAAA-MM-JJ HH:mm:ss
+          statut: "En-cours", // Statut défini sur "En-cours"
+          fichier_sortant: fileId, // Identifiant du fichier importé
+          auteur: iduser, // ID de l'auteur
+        },
+      };
+
+      // Envoyer la requête PATCH pour mettre à jour le post
+      const responseDemande = await axios.patch(
+        `https://alt.back.qilinsa.com/wp-json/wp/v2/historiqueimport/${historiquePostId}`,
+        payloadDemande,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+  
+      // Envoyer la requête PATCH pour mettre à jour le post
+      const response = await axios.patch(
+        `https://alt.back.qilinsa.com/wp-json/wp/v2/historiqueimport/${historiquePostId}`,
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+  
+      console.log("Import Demandé:", responseDemande.data);
+      console.log("Post mis à jour avec succès:", response.data);
+    } catch (error) {
+      console.error("Erreur lors de la mise à jour de l'historique fin:", error);
+    }
+  };
 
 useEffect(() => {
   if (importhistory) {
@@ -454,6 +559,13 @@ useEffect(() => {
     SaveHistoryFin();
   }
 }, [isImportComplete]);
+
+useEffect(() => {
+  if (currentStep === 3) {
+    SaveHistoryMapped();
+   
+  }
+}, [currentStep]);
 
   const handleExportClick = () => {
     const { blob } = exportModifiedCSV();
