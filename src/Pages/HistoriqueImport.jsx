@@ -24,7 +24,7 @@ const HistoriqueImport = () => {
 
         // Requête API pour récupérer tous les enregistrements
         const response = await axios.get(
-          "https://alt.back.qilinsa.com/wp-json/wp/v2/historiqueimport",
+          "https://alt.back.qilinsa.com/wp-json/wp/v2/historiqueimport?per_page=100",
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -136,6 +136,7 @@ const HistoriqueImport = () => {
           >
             <option value="">Statut</option>
             <option value="Débuté">Débuté</option>
+            <option value="En-cours">En-cours</option>
             <option value="Terminé">Terminé</option>
             <option value="Echec">Echec</option>
           </select>
