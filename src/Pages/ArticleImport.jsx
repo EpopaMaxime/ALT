@@ -499,7 +499,7 @@ const ArticleImport = () => {
   }, [isImportComplete]);
 
   useEffect(() => {
-    if (currentStep === 3) {
+    if (currentStep === 4) {
       SaveHistoryMapped();
      
     }
