@@ -93,73 +93,82 @@ const HistoriqueImport = () => {
     }
   };
 
-  const resendFile = async (item) => {
-    try {
-      const token = localStorage.getItem("token");
-      console.log("Début du processus de renvoi du fichier...");
-      console.log("Token récupéré :", token);
-  
-      // Télécharger le fichier sortant
-      console.log("Téléchargement du fichier sortant...");
-      const fileResponse = await fetch(
-        `https://alt.back.qilinsa.com/wp-json/wp/v2/media/${item.acf.fichier_sortant}`
-      );
-      const fileBlob = await fileResponse.blob();
-      console.log("Fichier téléchargé avec succès :", fileBlob);
-  
-      // Créer un objet FormData pour envoyer le fichier
-      const formData = new FormData();
-      formData.append("file", fileBlob, "fichier_sortant.csv");
-      console.log("FormData créé avec le fichier téléchargé.");
-  
-      // Déterminer le bon endpoint en fonction du type d'import
-      const endpoints = {
-        Article: "https://alt.back.qilinsa.com/wp-json/wp/v2/importarticles",
-        Legislation: "https://alt.back.qilinsa.com/wp-json/wp/v2/importlegislations",
-        Commentaire: "https://alt.back.qilinsa.com/wp-json/wp/v2/importcommentaires",
-        Decision: "https://alt.back.qilinsa.com/wp-json/wp/v2/importdecisions",
-      };
-  
-      const endpoint = endpoints[item.acf.type_import];
-      console.log("Endpoint sélectionné :", endpoint);
-  
-      if (endpoint) {
-        // Envoyer le fichier au backend
-        console.log("Envoi du fichier au backend...");
-        await axios.post(endpoint, formData, {
+const resendFile = async (item) => {
+  try {
+    const token = localStorage.getItem("token");
+    console.log("Début du processus de renvoi du fichier...");
+    console.log("Token récupéré :", token);
+    const currentDate = new Date();
+
+    // Télécharger le fichier sortant
+    console.log("Téléchargement du fichier sortant...");
+    const fileResponse = await fetch(
+      `https://alt.back.qilinsa.com/wp-json/wp/v2/media/${item.acf.fichier_sortant}`
+    );
+    const fileBlob = await fileResponse.blob();
+    console.log("Fichier téléchargé avec succès :", fileBlob);
+
+    // Déterminer le nom du fichier en fonction du titre
+    const fileName = `${item.title.rendered}`.replace(/[^\w\s.-]/gi, "_");
+    console.log("Nom du fichier généré :", fileName);
+
+    // Créer un objet FormData pour envoyer le fichier
+    const formData = new FormData();
+    formData.append("file", fileBlob, fileName);
+    console.log("FormData créé avec le fichier téléchargé.");
+
+    // Déterminer le bon endpoint en fonction du type d'import
+    const endpoints = {
+      Article: "https://alt.back.qilinsa.com/wp-json/wp/v2/importarticles",
+      Legislation: "https://alt.back.qilinsa.com/wp-json/wp/v2/importlegislations",
+      Commentaire: "https://alt.back.qilinsa.com/wp-json/wp/v2/importcommentaires",
+      Decision: "https://alt.back.qilinsa.com/wp-json/wp/v2/importdecisions",
+    };
+
+    const endpoint = endpoints[item.acf.type_import];
+    console.log("Endpoint sélectionné :", endpoint);
+
+    if (endpoint) {
+      // Envoyer le fichier au backend
+      console.log("Envoi du fichier au backend...");
+      await axios.post(endpoint, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      console.log("Fichier envoyé avec succès au backend.");
+
+      // Mettre à jour l'état du post (champ ACF `statut`)
+      console.log("Mise à jour du statut du post à 'En-cours'...");
+      await axios.post(
+        `https://alt.back.qilinsa.com/wp-json/wp/v2/historiqueimport/${item.id}`,
+        {
+          acf: {
+            date: currentDate.toISOString().slice(0, 19).replace("T", " "),
+            statut: "En-cours",
+          },
+        },
+        {
           headers: {
             Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data",
           },
-        });
-        console.log("Fichier envoyé avec succès au backend.");
-  
-        // Mettre à jour l'état du post (champ ACF `statut`)
-        console.log("Mise à jour du statut du post à 'En-cours'...");
-        await axios.post(
-          `https://alt.back.qilinsa.com/wp-json/wp/v2/historiqueimport/${item.id}`,
-          {
-            acf: {
-              statut: "En-cours",
-            },
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        console.log("Statut du post mis à jour avec succès.");
-        alert("Fichier renvoyé et statut mis à jour avec succès !");
-      } else {
-        console.log("Type d'import inconnu :", item.acf.type_import);
-        alert("Type d'import inconnu.");
-      }
-    } catch (error) {
-      console.error("Erreur lors du processus de renvoi :", error);
-      alert("Une erreur est survenue lors du renvoi du fichier.");
+        }
+      );
+      console.log("Statut du post mis à jour avec succès.");
+      alert("Fichier renvoyé et statut mis à jour avec succès !");
+      // Actualisation de la page
+      window.location.reload();
+    } else {
+      console.log("Type d'import inconnu :", item.acf.type_import);
+      alert("Type d'import inconnu.");
     }
-  };
+  } catch (error) {
+    console.error("Erreur lors du processus de renvoi :", error);
+    alert("Une erreur est survenue lors du renvoi du fichier.");
+  }
+};
+
   
   
 
