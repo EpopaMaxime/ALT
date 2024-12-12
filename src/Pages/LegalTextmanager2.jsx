@@ -3,12 +3,14 @@ import ArticleImport from './ArticleImport'
 import LegislationImport from './LegislationImport'
 import DecisionImport from './DecisionImport'
 import CommentaireImport from './CommentaireImport'
+import ImportComplet from './ImportComplet'
 
 const textTypes = [
   { value: "Article", label: "Article" },
   { value: "Législation", label: "Législation" },
   { value: "Décision", label: "Décision" },
-  { value: "Commentaire", label: "Commentaire" }
+  { value: "Commentaire", label: "Commentaire" },
+  { value: "ImportComplet", label: "ImportComplet" }
 ]
 
 const LegalTextImporter = () => {
@@ -28,6 +30,8 @@ const LegalTextImporter = () => {
         return <DecisionImport />
       case "Commentaire":
         return <CommentaireImport />
+      case "ImportComplet":
+        return <ImportComplet/>
       default:
         return null
     }

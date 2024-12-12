@@ -63,12 +63,28 @@ const HistoriqueImport = () => {
       filtered = filtered.filter((item) => item.acf.statut === selectedStatus);
     }
 
+    function truncateToDate(date) {
+      const truncated = new Date(date);
+      truncated.setHours(0, 0, 0, 0); // Réinitialise l'heure à 00:00:00
+      return truncated;
+    }
+    
     if (dateFrom) {
-      filtered = filtered.filter((item) => new Date(item.acf.date) >= new Date(dateFrom));
+      const dateFromTruncated = truncateToDate(dateFrom);
+      filtered = filtered.filter((item) => {
+        const itemDateTruncated = truncateToDate(item.acf.date);
+        return itemDateTruncated >= dateFromTruncated;
+      });
     }
+    
     if (dateTo) {
-      filtered = filtered.filter((item) => new Date(item.acf.date) <= new Date(dateTo));
+      const dateToTruncated = truncateToDate(dateTo);
+      filtered = filtered.filter((item) => {
+        const itemDateTruncated = truncateToDate(item.acf.date);
+        return itemDateTruncated <= dateToTruncated;
+      });
     }
+    
 
     setFilteredHistorique(filtered);
   }, [searchTerm, selectedType, selectedStatus, dateFrom, dateTo, historique]);
