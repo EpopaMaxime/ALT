@@ -321,7 +321,7 @@ const ImportComplet = () => {
       const payload = {
         title: fileNameWithState, // Nom du fichier avec état et date
         acf: {
-          type_import: "Legislation", // Type d'import
+          type_import: "Import_Complet", // Type d'import
           date: currentDate.toISOString().slice(0, 19).replace("T", " "), // AAAA-MM-JJ HH:mm:ss
           statut: "Brouillon", // Statut défini sur "Brouillon"
           fichier_entrant: fileId, // Pas de fichier encore
@@ -407,7 +407,7 @@ const ImportComplet = () => {
       const payload = {
         title: exportFileName, // Nom du fichier avec état et date
         acf: {
-          type_import: "Legislation", // Type d'import
+          type_import: "Import_Complet", // Type d'import
           date: currentDate.toISOString().slice(0, 19).replace("T", " "), // AAAA-MM-JJ HH:mm:ss
           statut: "Brouillon", // Statut défini sur "Brouillon"
           fichier_sortant: fileId, // Identifiant du fichier importé
@@ -491,7 +491,7 @@ const ImportComplet = () => {
       const payloadDemande = {
         title: exportFileName, // Nom du fichier avec état et date
         acf: {
-          type_import: "Legislation", // Type d'import
+          type_import: "Import_Complet", // Type d'import
           date: currentDate.toISOString().slice(0, 19).replace("T", " "), // AAAA-MM-JJ HH:mm:ss
           statut: "Demande-envoyé", // Statut défini sur "Demande-envoyé"
           fichier_sortant: fileId, // Identifiant du fichier importé
@@ -503,7 +503,7 @@ const ImportComplet = () => {
       const payload = {
         title: exportFileName, // Nom du fichier avec état et date
         acf: {
-          type_import: "Legislation", // Type d'import
+          type_import: "Import_Complet", // Type d'import
           date: currentDate.toISOString().slice(0, 19).replace("T", " "), // AAAA-MM-JJ HH:mm:ss
           statut: "En-cours", // Statut défini sur "Terminé"
           fichier_sortant: fileId, // Identifiant du fichier importé
@@ -840,7 +840,7 @@ useEffect(() => {
   
       // Choisir le bon endpoint en fonction de isEditingExisting
       const endpoint = isEditingExisting 
-        ? 'https://alt.back.qilinsa.com/wp-json/wp/v2/editimportlegisation'
+        ? 'https://alt.back.qilinsa.com/wp-json/wp/v2/editimportcompletelegisations'
         : 'https://alt.back.qilinsa.com/wp-json/wp/v2/importcompletelegislations';
   
       const response = await axios.post(endpoint, formData, {

@@ -10,7 +10,7 @@ const textTypes = [
   { value: "Législation", label: "Législation" },
   { value: "Décision", label: "Décision" },
   { value: "Commentaire", label: "Commentaire" },
-  { value: "ImportComplet", label: "ImportComplet" }
+  { value: "ImportComplet", label: "Import Complet" }
 ]
 
 const LegalTextImporter = () => {

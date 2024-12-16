@@ -139,6 +139,7 @@ const resendFile = async (item) => {
       Legislation: "https://alt.back.qilinsa.com/wp-json/wp/v2/importlegislations",
       Commentaire: "https://alt.back.qilinsa.com/wp-json/wp/v2/importcommentaires",
       Decision: "https://alt.back.qilinsa.com/wp-json/wp/v2/importdecisions",
+      Import_Complet: "https://alt.back.qilinsa.com/wp-json/wp/v2/importcompletelegislations",
     };
 
     const endpoint = endpoints[item.acf.type_import];
@@ -212,6 +213,7 @@ const resendFile = async (item) => {
             <option value="Legislation">Legislation</option>
             <option value="Decision">Decision</option>
             <option value="Commentaire">Commentaire</option>
+            <option value="Import_Complet">Import_Complet</option>
           </select>
         </div>
 
