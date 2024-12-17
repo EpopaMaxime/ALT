@@ -117,6 +117,23 @@ const AuthForm = () => {
       conError: '',
       conRememberMe: false
     });
+
+    // Charger les informations sauvegardées si "Se souvenir de moi" a été coché
+  useEffect(() => {
+    const savedUsername = Cookies.get('conUserName') || localStorage.getItem('conUserName');
+    const savedPassword = Cookies.get('password'); // Sauvegardez uniquement si c'est sécurisé
+    const rememberMe = Cookies.get('rememberMe');
+    //const rememberMe = Cookies.get('rememberMe') === 'true';
+
+    if (rememberMe && savedUsername) {
+      setConState((prevState) => ({
+        ...prevState,
+        conUsername: savedUsername,
+        conPassword: savedPassword || '',
+        conRememberMe: rememberMe,
+      }));
+    }
+  }, []);
   
     const onFormSubmitCon = (event) => {
       event.preventDefault();
@@ -144,8 +161,10 @@ const AuthForm = () => {
           }
     
           if (conState.conRememberMe) {
-            Cookies.set('token', res.data.token, { expires: 2 });
-            Cookies.set('conUserName', res.data.user_nicename, { expires: 2 });
+            Cookies.set('token', res.data.token, { expires: 5 });
+            Cookies.set('conUserName', conState.conUsername, { expires: 5 });
+            Cookies.set('password', conState.conPassword, { expires: 5 }); // Note: Attention à stocker les mots de passe !
+            Cookies.set('rememberMe', 'true', { expires: 2 });
             localStorage.setItem('token', res.data.token);
             localStorage.setItem('conUserName', res.data.user_nicename);
             localStorage.setItem('conUserEmail', res.data.user_email);
@@ -184,10 +203,7 @@ const AuthForm = () => {
   
     const { conUsername, conPassword, conLoggedIn, conError, conRememberMe } = conState;
   
-    // if (conLoggedIn || localStorage.getItem('token') || Cookies.get('token')) {
-    //   navigate('/authform');
-    //   return null;
-    // }
+
 
   return (
     <div className="w-full h-screen flex flex-col md:flex-row">
