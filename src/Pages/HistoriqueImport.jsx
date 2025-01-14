@@ -13,7 +13,6 @@ const HistoriqueImport = () => {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
 
-  // Récupérer l'ID de l'utilisateur depuis localStorage
   const iduser = localStorage.getItem("iduser") || "22";
 
   useEffect(() => {
@@ -22,7 +21,6 @@ const HistoriqueImport = () => {
       try {
         const token = localStorage.getItem("token");
 
-        // Requête API pour récupérer tous les enregistrements
         const response = await axios.get(
           "https://alt.back.qilinsa.com/wp-json/wp/v2/historiqueimport?per_page=100",
           {
@@ -32,7 +30,6 @@ const HistoriqueImport = () => {
           }
         );
 
-        // Filtrer les enregistrements localement sur la base de `acf.auteur`
         const filteredData = response.data.filter(
           (item) => item.acf && item.acf.auteur === parseInt(iduser, 10)
         );
@@ -52,30 +49,42 @@ const HistoriqueImport = () => {
   useEffect(() => {
     let filtered = [...historique];
 
-    // Filtrer par nom
     if (searchTerm) {
       filtered = filtered.filter((item) =>
         item.title.rendered.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
-    // Filtrer par type d'import
     if (selectedType) {
       filtered = filtered.filter((item) => item.acf.type_import === selectedType);
     }
 
-    // Filtrer par statut
     if (selectedStatus) {
       filtered = filtered.filter((item) => item.acf.statut === selectedStatus);
     }
 
-    // Filtrer par date
+    function truncateToDate(date) {
+      const truncated = new Date(date);
+      truncated.setHours(0, 0, 0, 0); // Réinitialise l'heure à 00:00:00
+      return truncated;
+    }
+    
     if (dateFrom) {
-      filtered = filtered.filter((item) => new Date(item.acf.date) >= new Date(dateFrom));
+      const dateFromTruncated = truncateToDate(dateFrom);
+      filtered = filtered.filter((item) => {
+        const itemDateTruncated = truncateToDate(item.acf.date);
+        return itemDateTruncated >= dateFromTruncated;
+      });
     }
+    
     if (dateTo) {
-      filtered = filtered.filter((item) => new Date(item.acf.date) <= new Date(dateTo));
+      const dateToTruncated = truncateToDate(dateTo);
+      filtered = filtered.filter((item) => {
+        const itemDateTruncated = truncateToDate(item.acf.date);
+        return itemDateTruncated <= dateToTruncated;
+      });
     }
+    
 
     setFilteredHistorique(filtered);
   }, [searchTerm, selectedType, selectedStatus, dateFrom, dateTo, historique]);
@@ -100,9 +109,88 @@ const HistoriqueImport = () => {
     }
   };
 
+const resendFile = async (item) => {
+  try {
+    const token = localStorage.getItem("token");
+    console.log("Début du processus de renvoi du fichier...");
+    console.log("Token récupéré :", token);
+    const currentDate = new Date();
+
+    // Télécharger le fichier sortant
+    console.log("Téléchargement du fichier sortant...");
+    const fileResponse = await fetch(
+      `https://alt.back.qilinsa.com/wp-json/wp/v2/media/${item.acf.fichier_sortant}`
+    );
+    const fileBlob = await fileResponse.blob();
+    console.log("Fichier téléchargé avec succès :", fileBlob);
+
+    // Déterminer le nom du fichier en fonction du titre
+    const fileName = `${item.title.rendered}`.replace(/[^\w\s.-]/gi, "_");
+    console.log("Nom du fichier généré :", fileName);
+
+    // Créer un objet FormData pour envoyer le fichier
+    const formData = new FormData();
+    formData.append("file", fileBlob, fileName);
+    console.log("FormData créé avec le fichier téléchargé.");
+
+    // Déterminer le bon endpoint en fonction du type d'import
+    const endpoints = {
+      Article: "https://alt.back.qilinsa.com/wp-json/wp/v2/importarticles",
+      Legislation: "https://alt.back.qilinsa.com/wp-json/wp/v2/importlegislations",
+      Commentaire: "https://alt.back.qilinsa.com/wp-json/wp/v2/importcommentaires",
+      Decision: "https://alt.back.qilinsa.com/wp-json/wp/v2/importdecisions",
+      Import_Complet: "https://alt.back.qilinsa.com/wp-json/wp/v2/importcompletelegislations",
+    };
+
+    const endpoint = endpoints[item.acf.type_import];
+    console.log("Endpoint sélectionné :", endpoint);
+
+    if (endpoint) {
+      // Envoyer le fichier au backend
+      console.log("Envoi du fichier au backend...");
+      await axios.post(endpoint, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      console.log("Fichier envoyé avec succès au backend.");
+
+      // Mettre à jour l'état du post (champ ACF `statut`)
+      console.log("Mise à jour du statut du post à 'En-cours'...");
+      await axios.post(
+        `https://alt.back.qilinsa.com/wp-json/wp/v2/historiqueimport/${item.id}`,
+        {
+          acf: {
+            date: currentDate.toISOString().slice(0, 19).replace("T", " "),
+            statut: "En-cours",
+          },
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      console.log("Statut du post mis à jour avec succès.");
+      alert("Fichier renvoyé et statut mis à jour avec succès !");
+      // Actualisation de la page
+      window.location.reload();
+    } else {
+      console.log("Type d'import inconnu :", item.acf.type_import);
+      alert("Type d'import inconnu.");
+    }
+  } catch (error) {
+    console.error("Erreur lors du processus de renvoi :", error);
+    alert("Une erreur est survenue lors du renvoi du fichier.");
+  }
+};
+
+  
+  
+
   return (
     <div className="p-6">
-      {/* Barre de recherche et filtres */}
       <div className="mb-4 flex flex-wrap gap-4">
         <div className="w-full sm:w-1/3">
           <input
@@ -125,6 +213,7 @@ const HistoriqueImport = () => {
             <option value="Legislation">Legislation</option>
             <option value="Decision">Decision</option>
             <option value="Commentaire">Commentaire</option>
+            <option value="Import_Complet">Import_Complet</option>
           </select>
         </div>
 
@@ -135,7 +224,7 @@ const HistoriqueImport = () => {
             onChange={(e) => setSelectedStatus(e.target.value)}
           >
             <option value="">Statut</option>
-            <option value="Débuté">Débuté</option>
+            <option value="Brouillon">Brouillon</option>
             <option value="En-cours">En-cours</option>
             <option value="Terminé">Terminé</option>
             <option value="Echec">Echec</option>
@@ -158,11 +247,9 @@ const HistoriqueImport = () => {
         </div>
       </div>
 
-      {/* Messages d'erreur ou de chargement */}
       {loading && <p className="text-center text-gray-500">Chargement des données...</p>}
       {error && <p className="text-center text-red-500">{error}</p>}
 
-      {/* Tableau des données filtrées */}
       {filteredHistorique.length === 0 && !loading && !error ? (
         <p className="text-center text-gray-500">Aucun historique trouvé pour cet utilisateur.</p>
       ) : (
@@ -176,6 +263,7 @@ const HistoriqueImport = () => {
                 <th className="px-4 py-2 border border-gray-300">Statut</th>
                 <th className="px-4 py-2 border border-gray-300">Fichier Entrant</th>
                 <th className="px-4 py-2 border border-gray-300">Fichier Sortant</th>
+                <th className="px-4 py-2 border border-gray-300">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -210,6 +298,16 @@ const HistoriqueImport = () => {
                       </button>
                     ) : (
                       "Non disponible"
+                    )}
+                  </td>
+                  <td className="px-4 py-2 border border-gray-300">
+                    {item.acf.statut === "Brouillon" && item.acf.fichier_sortant && (
+                      <button
+                        className="text-green-500 hover:underline"
+                        onClick={() => resendFile(item)}
+                      >
+                        Renvoyer
+                      </button>
                     )}
                   </td>
                 </tr>
