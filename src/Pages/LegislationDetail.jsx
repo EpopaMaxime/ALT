@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useParams } from 'react-router-dom';
 import anime from '../assets/anime.svg';
 import { Link } from 'react-router-dom';
+import parse from 'html-react-parser';
 
 
 const checkArticleId = async (id) => {
@@ -62,20 +63,37 @@ const LegislationDetail = () => {
             let formattedDate = '';
 
             if (entryDateRaw) {
-              if (entryDateRaw.includes('/')) {
-                // Handle "DD/MM/YYYY" format
-                const [day, month, year] = entryDateRaw.split('/');
-                formattedDate = `${parseInt(day, 10)} ${new Date(year, month - 1).toLocaleString('default', { month: 'long' })} ${year}`;
+              // Trim any leading/trailing whitespace
+              const sanitizedDateRaw = entryDateRaw.trim();
+            
+              if (sanitizedDateRaw.includes('-')) {
+                // Handle "YYYY-MM-DD" format
+                const [year, month, day] = sanitizedDateRaw.split('-');
+            
+                // Parse values correctly
+                const parsedDay = parseInt(day, 10);
+                const parsedMonth = parseInt(month, 10); // Month is 1-12
+                const parsedYear = parseInt(year, 10);
+            
+                console.log("Raw input:", entryDateRaw);
+                console.log("Parsed day:", parsedDay, "Parsed month:", parsedMonth, "Parsed year:", parsedYear);
+            
+                // Format the date correctly
+                if (!isNaN(parsedDay) && !isNaN(parsedMonth) && !isNaN(parsedYear)) {
+                  formattedDate = `${parsedDay} ${new Date(parsedYear, parsedMonth - 1).toLocaleString('fr-FR', { month: 'long' }).toUpperCase()} ${parsedYear}`;
+                } else {
+                  console.error("Invalid date components:", { day, month, year });
+                }
               } else {
-                // Handle "YYYYMMDD" format
-                const year = entryDateRaw.slice(0, 4);
-                const month = entryDateRaw.slice(4, 6);
-                const day = entryDateRaw.slice(6, 8);
-                formattedDate = `${parseInt(day, 10)} ${new Date(year, month - 1).toLocaleString('default', { month: 'long' })} ${year}`;
+                console.error("Invalid date format:", entryDateRaw);
               }
-              
+            
+              // Set the formatted date
               setEntryDate(formattedDate);
+            } else {
+              console.error("Entry date is empty or undefined:", entryDateRaw);
             }
+            
 
   
         // Fetch the "code" field
@@ -246,7 +264,7 @@ const LegislationDetail = () => {
                       onClick={() => scrollToSection(`detail-${item.id}`)}
                       className="cursor-pointer text-blue-500 text-sm dark:text-blue-200 hover:underline"
                     >
-                      {extractLastPart(item.title.rendered)}
+                      {parse(item.title.rendered)}
                     </a>
                   </li>
                 ))}
@@ -286,7 +304,7 @@ const LegislationDetail = () => {
     </h2>
     {comments.slice(0, 3).map((comment, index) => (
       <div key={index} className="mb-4" id={`comment-${comment.id}`}>
-        <h3 className="text-xl font-semibold mb-2">{extractLastPart(comment.title.rendered)}</h3>
+        <h3 className="text-xl font-semibold mb-2">{parse(comment.title.rendered)}</h3>
         <a href={comment.acf.url} target="_blank" rel="noopener noreferrer" className="text-blue-500">
           {comment.acf.url}
         </a>
@@ -320,7 +338,7 @@ const LegislationDetail = () => {
                 </h2>
                 {decisions.slice(0, 3).map((decision, index) => (
                   <div key={index} className="mb-4" id={`decision-${decision.id}`}>
-                    <h3 className="text-xl font-semibold mb-2">{extractLastPart(decision.title.rendered)}</h3>
+                    <h3 className="text-xl font-semibold mb-2">{decision.title.rendered}</h3>
                     <div className="line-clamp-3" dangerouslySetInnerHTML={{ __html: decodeHTMLEntities(decision.content.rendered) }} />
                   </div>
                 ))}
@@ -355,7 +373,7 @@ const LegislationDetail = () => {
                       }}
                     >
                       <h3 className="text-xl font-semibold mb-2">
-                        {extractLastPart(item.title.rendered)}
+                        {parse(item.title.rendered)}
                       </h3>
                 </Link>
 
