@@ -53,7 +53,7 @@ const CommentaireImport = () => {
         return false;
     }
   };
-
+  
   const generateFileName = () => {
     const now = new Date();
     const date = `${now.getDate()}_${now.getMonth() + 1}_${now.getFullYear()}`;
@@ -65,30 +65,29 @@ const CommentaireImport = () => {
     try {
       const response = await axios.get(`${API_BASE_URL}/commentaires`);
       const existingCommentaires = response.data;
-
+      
       const updatedCommentaires = commentaires.map(commentaire => {
-        const existingCommentaire = existingCommentaires.find(existing =>
+        const existingCommentaire = existingCommentaires.find(existing => 
           // Normalize comparison by trimming and converting to lowercase
           existing.title.rendered.trim().toLowerCase() === commentaire.Title.trim().toLowerCase()
         );
-
+        
         if (existingCommentaire) {
-          return {
-            ...commentaire,
-            exists: true,
-            id: existingCommentaire.id
+          return { 
+            ...commentaire, 
+            exists: true, 
+            id: existingCommentaire.id 
           };
         }
         return commentaire;
       });
-
+      
       setParsedCommentaires(updatedCommentaires);
     } catch (error) {
       console.error("Erreur lors de la vérification des commentaires existants:", error);
       setError("Impossible de vérifier les commentaires existants");
     }
   };
-  
   const handleFileChange = useCallback((event) => {
     const uploadedFile = event.target.files?.[0];
 
@@ -138,7 +137,7 @@ const CommentaireImport = () => {
     if (commentaire.exists) {
       return;
     }
-    setSelectedCommentaires(prev =>
+    setSelectedCommentaires(prev => 
       prev.includes(index) ? prev.filter(i => i !== index) : [...prev, index]
     );
   }, [parsedCommentaires]);
@@ -162,47 +161,48 @@ const CommentaireImport = () => {
     }
   
     try {
-        const token = localStorage.getItem('token');
-        const currentDate = new Date();
+      const token = localStorage.getItem('token');
+      const iduser = localStorage.getItem('iduser');
+      const currentDate = new Date();
+  
+      // Formater la date en JJ/MM/AAAA HH:mm
+      const formattedDate = currentDate.toLocaleString('fr-FR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      });
+  
+      const fileNameWithState = `${importhistory}`;
 
-        // Formater la date en JJ/MM/AAAA HH:mm
-        const formattedDate = currentDate.toLocaleString('fr-FR', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-        });
+      // Fonction pour uploader le fichier
+    const uploadFile = async (file) => {
+      const formData = new FormData();
+      formData.append('file', file); // Ajouter le fichier au FormData
+      formData.append('title', fileNameWithState); // Titre optionnel
+      formData.append('status', 'publish'); // Statut de la publication
 
-        const fileNameWithState = `${importhistory} - état: début - ${formattedDate}`;
+      const response = await axios.post(
+        "https://alt.back.qilinsa.com/wp-json/wp/v2/media",
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+      return response.data.id; // Retourne l'identifiant du fichier uploadé
+    };
 
-        // Récupérer l'historique actuel
-        const responseGet = await axios.get('https://alt.back.qilinsa.com/wp-json/wp/v2/users/me', {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        });
+    // Upload du fichier et récupération de son identifiant
+    let fileId = null;
+    if (file) {
+      fileId = await uploadFile(file);
+    }
 
-<<<<<<< HEAD
-        const currentHistory = responseGet.data.acf.historique_import || '';
-
-        // Ajouter la nouvelle entrée
-        const updatedHistory = currentHistory ? `${currentHistory}\n${fileNameWithState}` : fileNameWithState;
-
-        // Mettre à jour l'historique
-        const responseUpdate = await axios.patch('https://alt.back.qilinsa.com/wp-json/wp/v2/users/me', {
-            acf: {
-                historique_import: updatedHistory,
-            },
-        }, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        });
-
-        console.log('Historique début mis à jour avec succès:', responseUpdate.data);
-=======
   
       // Construire le JSON à envoyer
       const payload = {
@@ -231,37 +231,26 @@ const CommentaireImport = () => {
       const historiquePostId = response.data.id; // Stocker l'identifiant du post créé
       setHistoriquePostId(historiquePostId);
       console.log("Post créé avec succès. ID:", historiquePostId);
->>>>>>> maxime
     } catch (error) {
-        console.error('Erreur lors de la mise à jour de l\'historique début:', error);
+      console.error("Erreur lors de la création de l'historique début:", error);
     }
-};
+  };
+  
 
   const SaveHistoryMapped = async (event = null) => {
     if (event) {
       event.preventDefault();
-  }
-
-  try {
+    }
+  
+    if (!historiquePostId) {
+      console.error("Aucun identifiant de post trouvé. Veuillez exécuter SaveHistoryDebut d'abord.");
+      return;
+    }
+  
+    try {
       const token = localStorage.getItem('token');
       const iduser = localStorage.getItem('iduser');
       const currentDate = new Date();
-<<<<<<< HEAD
-
-        // Formater la date en JJ/MM/AAAA HH:mm
-        const formattedDate = currentDate.toLocaleString('fr-FR', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-        });
-      const fileNameWithState = `${importhistory} - état: fin - ${formattedDate}`;
-
-      // Récupérer l'historique actuel
-      const responseGet = await axios.get('https://alt.back.qilinsa.com/wp-json/wp/v2/users/me', {
-=======
   
       // Formater la date en JJ/MM/AAAA HH:mm
       const formattedDate = currentDate.toLocaleString('fr-FR', {
@@ -319,49 +308,18 @@ const CommentaireImport = () => {
         `https://alt.back.qilinsa.com/wp-json/wp/v2/historiqueimport/${historiquePostId}`,
         payload,
         {
->>>>>>> maxime
           headers: {
-              Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
-      });
-
-      const currentHistory = responseGet.data.acf.historique_import || '';
-
-      // Ajouter la nouvelle entrée
-      const updatedHistory = currentHistory ? `${currentHistory}\n${fileNameWithState}` : fileNameWithState;
-
-      // Mettre à jour l'historique
-      const responseUpdate = await axios.patch('https://alt.back.qilinsa.com/wp-json/wp/v2/users/me', {
-          acf: {
-              historique_import: updatedHistory,
-          },
-      }, {
-          headers: {
-              Authorization: `Bearer ${token}`,
-          },
-      });
-
-      console.log('Historique fin mis à jour avec succès:', responseUpdate.data);
-  } catch (error) {
-      console.error('Erreur lors de la mise à jour de l\'historique fin:', error);
-  }
-};
-
-  useEffect(() => {
-    if (importhistory) {
-      // Appeler la fonction SaveHistoryDebut dès que l'importation debute
-      SaveHistoryDebut();
+        }
+      );
+  
+      console.log("Post mis à jour avec succès:", response.data);
+    } catch (error) {
+      console.error("Erreur lors de la mise à jour de l'historique fin:", error);
     }
-  }, [importhistory]);
+  };
 
-<<<<<<< HEAD
-  useEffect(() => {
-    if (isImportComplete) {
-      // Appeler la fonction SaveHistoryFin dès que l'importation est terminée
-      SaveHistoryFin();
-    }
-  }, [isImportComplete]);
-=======
   
 
   const SaveHistoryFin = async (event = null) => {
@@ -484,7 +442,6 @@ useEffect(() => {
     SaveHistoryFin();
   }
 }, [isImportComplete]);
->>>>>>> maxime
 
 useEffect(() => {
   if (currentStep === 3) {
@@ -521,24 +478,24 @@ useEffect(() => {
     const exportData = selectedCommentaires.map(index => {
       const commentaire = parsedCommentaires[index];
       const exportRow = { ...commentaire };
-
+  
       const linkedTexts = selectedLinkedTexts[index] || [];
       const decisions = linkedTexts.filter(t => t.type === "Décision").map(t => t.value);
       const articles = linkedTexts.filter(t => t.type === "Article").map(t => t.value);
-
+  
       exportRow.ID_decisions = decisions.join(',');
       exportRow.ID_articles = articles.join(',');
-
+  
       if (selectedLegislation) {
         exportRow.ID_legislation = selectedLegislation.value;
       }
-
+  
       // Add the user ID to the exportRow
       exportRow.UserId = localStorage.getItem('iduser');
-
+  
       return exportRow;
     });
-
+  
     const csv = Papa.unparse(exportData);
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     return { csv, blob };
@@ -573,7 +530,7 @@ useEffect(() => {
       selectedCommentaires.forEach(index => {
         const commentaire = parsedCommentaires[index];
         const linkedTexts = [];
-
+  
         if (commentaire.ID_decisions) {
           const decisionIds = commentaire.ID_decisions.split(',');
           decisionIds.forEach(id => {
@@ -583,7 +540,7 @@ useEffect(() => {
             }
           });
         }
-
+  
         if (commentaire.ID_articles) {
           const articleIds = commentaire.ID_articles.split(',');
           articleIds.forEach(id => {
@@ -593,14 +550,14 @@ useEffect(() => {
             }
           });
         }
-
+  
         if (linkedTexts.length > 0) {
           newSelectedLinkedTexts[index] = linkedTexts;
         }
       });
-
+  
       setSelectedLinkedTexts(newSelectedLinkedTexts);
-
+  
       if (parsedCommentaires.length > 0 && parsedCommentaires[0].ID_legislation) {
         const legislationId = parsedCommentaires[0].ID_legislation;
         const legislation = availableTexts["Législation"]?.find(t => t.value === legislationId);
@@ -689,67 +646,67 @@ useEffect(() => {
             )}
           </div>
         );
-      case 1:
-        return (
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-green-500">Prévisualisation des commentaires</h2>
-            <p className="text-sm text-gray-500">Nombre d'éléments : {parsedCommentaires.length}</p>
-            <div className="bg-white p-4 rounded-md shadow max-h-96 overflow-y-auto">
-              <div className="flex justify-between mb-4">
-                <button
-                  onClick={() =>
-                    setSelectedCommentaires(
-                      parsedCommentaires.map((_, index) => index).filter(index => !parsedCommentaires[index].exists)
-                    )
-                  }
-                  className="text-green-500"
-                >
-                  Tout sélectionner
-                </button>
-                <button
-                  onClick={() => setSelectedCommentaires([])}
-                  className="text-green-500"
-                >
-                  Tout désélectionner
-                </button>
-              </div>
-              {parsedCommentaires.map((commentaire, index) => (
-                <div
-                  key={index}
-                  className={`mb-4 p-3 border-b last:border-b-0 ${commentaire.exists ? 'bg-red-100' : ''}`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <input
-                        type="checkbox"
-                        id={`commentaire-${index}`}
-                        checked={selectedCommentaires.includes(index)}
-                        onChange={() => handleCommentaireSelection(index)}
-                        disabled={commentaire.exists}
-                        className="mr-3 h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
-                      />
-                      <label htmlFor={`commentaire-${index}`} className="text-sm font-medium text-gray-700">
-                        {commentaire.Title}
-                      </label>
-                    </div>
-                    {commentaire.exists && (
-                      <span className="bg-red-500 text-white text-xs font-medium mr-2 px-2.5 py-0.5 rounded">
-                        Existant
-                      </span>
-                    )}
-                    {(commentaire.ID_decisions || commentaire.ID_articles || commentaire.ID_legislation) && (
-                      <span className="bg-green-100 text-green-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded">
-                        Déjà lié
-                      </span>
-                    )}
-                  </div>
-                  <p className="mt-2 text-sm text-gray-500">{commentaire.Content.substring(0, 100)}...</p>
-                  <p className="mt-1 text-xs text-blue-500">{commentaire.Url}</p>
+        case 1:
+          return (
+            <div className="space-y-4">
+              <h2 className="text-xl font-semibold text-green-500">Prévisualisation des commentaires</h2>
+              <p className="text-sm text-gray-500">Nombre d'éléments : {parsedCommentaires.length}</p>
+              <div className="bg-white p-4 rounded-md shadow max-h-96 overflow-y-auto">
+                <div className="flex justify-between mb-4">
+                  <button
+                    onClick={() =>
+                      setSelectedCommentaires(
+                        parsedCommentaires.map((_, index) => index).filter(index => !parsedCommentaires[index].exists)
+                      )
+                    }
+                    className="text-green-500"
+                  >
+                    Tout sélectionner
+                  </button>
+                  <button
+                    onClick={() => setSelectedCommentaires([])}
+                    className="text-green-500"
+                  >
+                    Tout désélectionner
+                  </button>
                 </div>
-              ))}
+                {parsedCommentaires.map((commentaire, index) => (
+                  <div
+                    key={index}
+                    className={`mb-4 p-3 border-b last:border-b-0 ${commentaire.exists ? 'bg-red-100' : ''}`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          id={`commentaire-${index}`}
+                          checked={selectedCommentaires.includes(index)}
+                          onChange={() => handleCommentaireSelection(index)}
+                          disabled={commentaire.exists}
+                          className="mr-3 h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                        />
+                        <label htmlFor={`commentaire-${index}`} className="text-sm font-medium text-gray-700">
+                          {commentaire.Title}
+                        </label>
+                      </div>
+                      {commentaire.exists && (
+                        <span className="bg-red-500 text-white text-xs font-medium mr-2 px-2.5 py-0.5 rounded">
+                          Existant
+                        </span>
+                      )}
+                      {(commentaire.ID_decisions || commentaire.ID_articles || commentaire.ID_legislation) && (
+                        <span className="bg-green-100 text-green-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded">
+                          Déjà lié
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-2 text-sm text-gray-500">{commentaire.Content.substring(0, 100)}...</p>
+                    <p className="mt-1 text-xs text-blue-500">{commentaire.Url}</p>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        );
+          );        
       case 2:
         return (
           <div className="space-y-4">
@@ -838,7 +795,7 @@ useEffect(() => {
               <h3 className="text-lg font-medium mb-2">Récapitulatif de l'importation</h3>
               <p>Nombre de commentaires sélectionnés : {selectedCommentaires.length}</p>
               <p>Législation liée : {selectedLegislation?.label || "Aucune"}</p>
-
+              
               <h4 className="text-md font-medium mt-4 mb-2">Commentaires et leurs liaisons :</h4>
               {bulkSelection ? (
                 <div>
@@ -885,7 +842,7 @@ useEffect(() => {
                 })
               )}
             </div>
-
+            
             <div className="flex justify-between items-center">
               <p className="text-sm text-gray-600">Veuillez vérifier que toutes les informations ci-dessus sont correctes avant de procéder à l'importation.</p>
               <button
@@ -908,12 +865,13 @@ useEffect(() => {
       {steps.map((step, index) => (
         <div key={step} className="flex flex-col items-center mx-2">
           <motion.div
-            className={`w-8 h-8 rounded-full flex items-center justify-center ${index < currentStep
+            className={`w-8 h-8 rounded-full flex items-center justify-center ${
+              index < currentStep
                 ? 'bg-green-500 text-white'
                 : index === currentStep
-                  ? 'bg-gray-300 text-gray-700'
-                  : 'bg-gray-200 text-gray-400'
-              }`}
+                ? 'bg-gray-300 text-gray-700'
+                : 'bg-gray-200 text-gray-400'
+            }`}
             initial={false}
             animate={{
               scale: index === currentStep ? 1.2 : 1,
@@ -990,13 +948,13 @@ useEffect(() => {
             </button>
           ) : (
             <button
-              onClick={() => setCurrentStep(prev => Math.min(steps.length - 1, prev + 1))}
-              disabled={!isStepValid()} // Disable based on validation
-              className="px-4 py-2 bg-green-500 text-white rounded-md disabled:opacity-50"
-            >
-              Suivant <ArrowRight className="ml-2 h-4 w-4 inline" />
-            </button>
-
+            onClick={() => setCurrentStep(prev => Math.min(steps.length - 1, prev + 1))}
+            disabled={!isStepValid()} // Disable based on validation
+            className="px-4 py-2 bg-green-500 text-white rounded-md disabled:opacity-50"
+          >
+            Suivant <ArrowRight className="ml-2 h-4 w-4 inline" />
+          </button>
+          
           )}
         </div>
       )}
