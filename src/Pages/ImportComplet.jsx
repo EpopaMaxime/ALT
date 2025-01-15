@@ -183,7 +183,7 @@ const ImportComplet = () => {
   }, []);
 
   const validateCSVStructure = (data) => {
-    const requiredColumns = ['Titre_legislation', 'Date_entree', 'Code_visee', 'Titre', 'Chapitre', 'Section', 'Article', 'Contenu_article'];
+    const requiredColumns = ['Titre_legislation', 'Date_entree', 'Code_visee', 'Titre', 'Chapitre', 'Section', 'Article', 'Contenu_article','Contenu_article2'];
     return requiredColumns.every(column => data[0].hasOwnProperty(column));
   };
 
@@ -251,6 +251,13 @@ const ImportComplet = () => {
           id: Math.random().toString(36).substr(2, 9),
           type: 'Contenu_article',
           content: row.Contenu_article,
+        });
+      }
+      if (row.Contenu_article2) {
+        currentStructure.structure.push({
+          id: Math.random().toString(36).substr(2, 9),
+          type: 'Contenu_article2',
+          content: row.Contenu_article2,
         });
       }
     });
@@ -704,42 +711,61 @@ useEffect(() => {
         let currentSection = '';
 
         // Escape value and remove line breaks
-        const escapeValue = (value, forceNoQuotes = false) => {
+        const escapeValue = (value) => {
             if (typeof value !== 'string') return value; // Handle non-string values
-            // Remove line breaks
-            value = value.replace(/[\r\n]+/g, ' '); 
-            if (forceNoQuotes) return value;
+            value = value?.toString().replace(/[\r\n]+/g, ' '); // Remove line breaks
             if (value.includes(',') || value.includes('"')) {
-                return `"${value.replace(/"/g, '""')}"`;
+                return `"${value.replace(/"/g, '""')}"`; // Escape quotes and wrap
             }
-            return value;
+            return value || ''; // Return value or empty string
         };
 
         // Get the current date in 'YYYY-MM-DD' format
         const modificationDate = new Date().toISOString().split('T')[0];
 
-        // Update the CSV header row to include User ID, Decisions and Comments columns
-        const headerRow = 'Titre_legislation,Date_entree,Code_visee,Titre,Chapitre,Section,Article,Contenu_article,Categorie,Decision_IDs,Commentaire_IDs,UserId,Modification_date';
+        // Header row
+        const headerRow = [
+            'Titre_legislation',
+            'Date_entree',
+            'Code_visee',
+            'Titre',
+            'Chapitre',
+            'Section',
+            'Article',
+            'Contenu_article',
+            'Contenu_article2',
+            'Categorie',
+            'Decision_IDs',
+            'Commentaire_IDs',
+            'UserId',
+            'Modification_date'
+        ].map(escapeValue).join(',');
 
-        // Gather all linked decision and comment IDs from bulkLinkedTexts
+        // Collect decision and comment IDs
         const decisionIds = bulkLinkedTexts.decisions?.map(decision => decision.value).join(',') || '';
         const commentaireIds = bulkLinkedTexts.commentaires?.map(comment => comment.value).join(',') || '';
 
-        // Format the legislationInfoRow to ensure consistent alignment
+        // Information row
         const legislationInfoRow = [
             selectedLegislation.Titre_legislation,
             selectedLegislation["Date d'entrée en vigueur"],
             selectedLegislation["Code visé"],
-            '', '', '', '', '',
-            selectedCategoryName || '', // Nom de la catégorie
-            decisionIds,                 // Decision IDs
-            commentaireIds,               // Commentaire IDs
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            selectedCategoryName || '',
+            decisionIds,
+            commentaireIds,
             userId,
-            modificationDate              // Add modification date
-        ].map(value => escapeValue(value)).join(',');
+            modificationDate
+        ].map(escapeValue).join(',');
 
+        // Data rows
         const exportData = selectedLegislation.structure.map((item, index) => {
-            const baseInfo = [
+            let baseInfo = [
                 selectedLegislation.Titre_legislation,
                 selectedLegislation["Date d'entrée en vigueur"],
                 selectedLegislation["Code visé"],
@@ -748,11 +774,12 @@ useEffect(() => {
                 '',
                 '',
                 '',
-                selectedCategoryName || '',  // Nom de la catégorie
-                decisionIds,                 // Decision IDs
-                commentaireIds,               // Commentaire IDs
+                '',
+                selectedCategoryName || '',
+                decisionIds,
+                commentaireIds,
                 userId,
-                modificationDate              // Add modification date
+                modificationDate
             ];
 
             switch (item.type) {
@@ -772,22 +799,25 @@ useEffect(() => {
                     baseInfo[5] = item.content;
                     break;
                 case 'Article':
-                    baseInfo[6] = item.linkedTextId ? item.linkedTextId : item.content;
+                    baseInfo[6] = item.linkedTextId || item.content;
                     if (selectedLegislation.structure[index + 1]?.type === 'Contenu_article') {
                         baseInfo[7] = selectedLegislation.structure[index + 1].content;
+                        if (selectedLegislation.structure[index + 2]?.type === 'Contenu_article2') {
+                            baseInfo[8] = selectedLegislation.structure[index + 2].content;
+                        }
                     }
                     break;
             }
 
-            // Update title, chapter, and section in the baseInfo array
+            // Update title, chapter, and section
             baseInfo[3] = currentTitle;
             baseInfo[4] = currentChapter;
             baseInfo[5] = currentSection;
 
-            return baseInfo.map((value, index) => escapeValue(value, index < 4)).join(',');
+            return baseInfo.map(escapeValue).join(',');
         });
 
-        // Ensure the first row aligns with the header if legislationInfoRow is included as the first row
+        // Combine rows
         const allRows = [
             headerRow,
             legislationInfoRow,
