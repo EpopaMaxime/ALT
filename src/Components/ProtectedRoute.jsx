@@ -44,7 +44,7 @@ const ProtectedRoute = ({ children }) => {
           console.warn('Session expirée ou accès refusé. Redirection vers l\'authentification.');
           localStorage.removeItem('token');
           setRedirectToAuth(true);
-        } else {
+        } else if(error.response?.status === 504){
           console.error('Erreur de récupération des données :', error);
           setActif(false);
         }

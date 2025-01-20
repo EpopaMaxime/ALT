@@ -151,10 +151,10 @@ const SearchResults = () => {
 
       try {
         const endpoints = [
-          `/wp-json/wp/v2/decisions?search=${query}&per_page=100`,
-          `/wp-json/wp/v2/legislations?search=${query}&per_page=100`,
-          `/wp-json/wp/v2/commentaires?search=${query}&per_page=100`,
-          `/wp-json/wp/v2/articles?search=${query}&per_page=100`,
+          `/wp-json/wp/v2/decisions?search=${query}`,
+          `/wp-json/wp/v2/legislations?search=${query}`,
+          `/wp-json/wp/v2/commentaires?search=${query}`,
+          `/wp-json/wp/v2/articles?search=${query}`,
         ];
 
         const [decisions, allLegislations, commentaires, articles] = await Promise.all(
