@@ -932,40 +932,40 @@ useEffect(() => {
 };
 
 
-useEffect(() => {
-  if (currentStep === 3 && selectedLegislation) {
-    setLoading(true);
-    const fetchLegislationStructure = async () => {
-      try {
-        const endpoints = ['titres', 'chapitres', 'sections', 'articles'];
-        const res = await axios.get(`${API_BASE_URL}/legislations/${selectedLegislation}`);
-        const identifiers = res.data.acf.titre_ou_chapitre_ou_section_ou_articles || [];
+// useEffect(() => {
+//   if (currentStep === 3 && selectedLegislation) {
+//     setLoading(true);
+//     const fetchLegislationStructure = async () => {
+//       try {
+//         const endpoints = ['titres', 'chapitres', 'sections', 'articles'];
+//         const res = await axios.get(`${API_BASE_URL}/legislations/${selectedLegislation}`);
+//         const identifiers = res.data.acf.titre_ou_chapitre_ou_section_ou_articles || [];
 
-        const fetchData = async (id) => {
-          for (let endpoint of endpoints) {
-            try {
-              const res = await axios.get(`${API_BASE_URL}/${endpoint}/${id}`);
-              if (res.data) return { ...res.data, endpoint, id };
-            } catch (err) {
-              // Continue to the next endpoint if not found
-            }
-          }
-          return null;
-        };
+//         const fetchData = async (id) => {
+//           for (let endpoint of endpoints) {
+//             try {
+//               const res = await axios.get(`${API_BASE_URL}/${endpoint}/${id}`);
+//               if (res.data) return { ...res.data, endpoint, id };
+//             } catch (err) {
+//               // Continue to the next endpoint if not found
+//             }
+//           }
+//           return null;
+//         };
 
-        const detailsData = await Promise.all(identifiers.map(fetchData));
-        const successfulItems = detailsData.filter(item => item !== null);
-        setLegislationStructure(successfulItems.map((item, index) => ({ ...item, position: index + 1 })));
-      } catch (err) {
-        setError('Échec de la récupération de la structure de la législation');
-      } finally {
-        setLoading(false);
-      }
-    };
+//         const detailsData = await Promise.all(identifiers.map(fetchData));
+//         const successfulItems = detailsData.filter(item => item !== null);
+//         setLegislationStructure(successfulItems.map((item, index) => ({ ...item, position: index + 1 })));
+//       } catch (err) {
+//         setError('Échec de la récupération de la structure de la législation');
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
 
-    fetchLegislationStructure();
-  }
-}, [currentStep, selectedLegislation]);
+//     fetchLegislationStructure();
+//   }
+// }, [currentStep, selectedLegislation]);
 
 const onDragEnd = ({ source, destination }) => {
   if (destination && source.index !== destination.index) {
