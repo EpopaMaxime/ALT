@@ -9,7 +9,6 @@ const LegislationPage = ({ legislationId }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [related, setRelated] = useState([]);
-    const [uniqueArticles, setUniqueArticles] = useState([]);
     const [decisions, setDecisions] = useState([]);
     const [comments, setComments] = useState([]);
 
@@ -33,56 +32,6 @@ const LegislationPage = ({ legislationId }) => {
         fetchLegislationData();
     }, [legislationId]);
 
-    useEffect(() => {
-        // Filtrage des articles uniques
-        const filteredArticles = related
-            .filter(Boolean)
-            .reduce((acc, currentArticle) => {
-                const normalizedCurrentTitle = currentArticle.title
-                    .replace(/\s+/g, ' ') // Replace multiple spaces with single space
-                    .trim(); // Remove leading/trailing spaces
-
-                const currentTitleId = currentArticle.acf?.hierachie?.[0];
-
-                const existingArticle = acc.find(article => {
-                    const normalizedExistingTitle = article.title
-                        .replace(/\s+/g, ' ')
-                        .trim();
-                    const existingTitleId = article.acf?.hierachie?.[0];
-                    return (
-                        normalizedCurrentTitle === normalizedExistingTitle &&
-                        currentTitleId === existingTitleId
-                    );
-                });
-
-                if (existingArticle) {
-                    const existingDate = parseInt(existingArticle.acf?.date_entree, 10);
-                    const newDate = parseInt(currentArticle.acf?.date_entree, 10);
-
-                    if (!isNaN(newDate) && !isNaN(existingDate) && newDate > existingDate) {
-                        return [
-                            ...acc.filter(
-                                article =>
-                                    !(
-                                        article.title
-                                            .replace(/\s+/g, ' ')
-                                            .trim() === normalizedCurrentTitle &&
-                                        article.acf?.hierachie?.[0] === currentTitleId
-                                    )
-                            ),
-                            currentArticle,
-                        ];
-                    }
-
-                    return acc;
-                }
-
-                return [...acc, currentArticle];
-            }, []);
-
-        setUniqueArticles(filteredArticles);
-    }, [related]);
-
     const scrollToSection = (sectionId) => {
         const section = document.getElementById(sectionId);
         if (section) {
@@ -92,11 +41,12 @@ const LegislationPage = ({ legislationId }) => {
 
     if (loading) {
         return (
-            <div className="flex justify-center items-center h-screen">
-                <img src={anime} alt="Loading animation" />
-            </div>
+          <div className="flex justify-center items-center h-screen">
+            <img src={anime} alt="Loading animation" />
+          </div>
         );
     }
+
 
     if (error) {
         return <div>{error}</div>;
@@ -113,6 +63,7 @@ const LegislationPage = ({ legislationId }) => {
                 <aside className="lg:col-span-1 dark:bg-gray-700 p-4 rounded-xl shadow lg:sticky lg:top-0 lg:max-h-screen lg:overflow-y-auto">
                     <h2 className="text-xl font-bold mb-6">Sommaire</h2>
                     <ul className="space-y-4">
+                        {/* Législation principale */}
                         <li>
                             <a
                                 onClick={() => scrollToSection('legislation')}
@@ -121,11 +72,12 @@ const LegislationPage = ({ legislationId }) => {
                                 Législation principale
                             </a>
                         </li>
-                        {uniqueArticles.length > 0 && (
+                        {/* Sections liées */}
+                        {related.length > 0 && (
                             <li>
                                 <h3 className="font-semibold">Sections Liées</h3>
                                 <ul>
-                                    {uniqueArticles.map((item) => (
+                                    {related.map((item) => (
                                         <li key={item.id}>
                                             <a
                                                 onClick={() => scrollToSection(`related-${item.id}`)}
@@ -138,6 +90,7 @@ const LegislationPage = ({ legislationId }) => {
                                 </ul>
                             </li>
                         )}
+                        {/* Décisions */}
                         {decisions.length > 0 && (
                             <li>
                                 <h3 className="font-semibold">Décisions</h3>
@@ -155,6 +108,7 @@ const LegislationPage = ({ legislationId }) => {
                                 </ul>
                             </li>
                         )}
+                        {/* Commentaires */}
                         {comments.length > 0 && (
                             <li>
                                 <h3 className="font-semibold">Commentaires</h3>
@@ -178,25 +132,34 @@ const LegislationPage = ({ legislationId }) => {
                 {/* Main Content */}
                 <main className="lg:col-span-3 dark:bg-gray-800 p-6 rounded shadow overflow-y-auto">
                     <div className="text-lg leading-relaxed">
+                        {/* Legislation Title */}
                         <h1 className="text-3xl font-bold mb-4" id="legislation">{legislationData.title}</h1>
+
+                        {/* Dates */}
                         <div className="mb-6">
                             <p><strong>Code: </strong>{legislationData.code}</p>
                             <p><strong>Date d'entrée en vigueur: </strong>{legislationData.date_entree}</p>
                             <p><strong>Date de modification: </strong>{legislationData.date_modif}</p>
                         </div>
+
+                        {/* Législation Content */}
                         <div>{legislationData.content}</div>
-                        {uniqueArticles.length > 0 && (
+
+                        {/* Sections Liées */}
+                        {related.length > 0 && (
                             <div className="my-8">
                                 <h2 className="text-2xl font-bold" id="related">Sections Liées</h2>
-                                {uniqueArticles.map((item) => (
+                                {related.map((item) => (
                                     <div key={item.id} id={`related-${item.id}`} className="mb-6">
                                         {item.post_type === "article" ? (
+                                            // Si le post_type est 'article', rendre le titre comme un lien
                                             <h3 className="text-xl font-semibold">
                                                 <a href={`/dashboard/article/${item.id}`} className="text-blue-500 hover:underline">
                                                     {item.title}
                                                 </a>
                                             </h3>
                                         ) : (
+                                            // Sinon, afficher simplement le titre
                                             <h3 className="text-xl font-semibold">{item.title}</h3>
                                         )}
                                         <p>{item.content}</p>
@@ -204,6 +167,9 @@ const LegislationPage = ({ legislationId }) => {
                                 ))}
                             </div>
                         )}
+
+
+                        {/* Décisions */}
                         {decisions.length > 0 && (
                             <div className="my-8">
                                 <h2 className="text-2xl font-bold" id="decisions">Décisions</h2>
@@ -215,6 +181,8 @@ const LegislationPage = ({ legislationId }) => {
                                 ))}
                             </div>
                         )}
+
+                        {/* Commentaires */}
                         {comments.length > 0 && (
                             <div className="my-8">
                                 <h2 className="text-2xl font-bold" id="comments">Commentaires</h2>

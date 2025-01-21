@@ -193,7 +193,8 @@ const ImportComplet = () => {
     let currentTitle = '';
     let currentChapter = '';
     let currentSection = '';
-
+    let currentArticle = '';
+  
     data.forEach((row) => {
       if (!currentStructure || row.Titre_legislation !== currentStructure.Titre_legislation) {
         if (currentStructure) {
@@ -210,8 +211,9 @@ const ImportComplet = () => {
         currentTitle = '';
         currentChapter = '';
         currentSection = '';
+        currentArticle = '';
       }
-
+  
       if (row.Titre && row.Titre !== currentTitle) {
         currentTitle = row.Titre;
         currentStructure.structure.push({
@@ -220,7 +222,7 @@ const ImportComplet = () => {
           content: row.Titre,
         });
       }
-
+  
       if (row.Chapitre && row.Chapitre !== currentChapter) {
         currentChapter = row.Chapitre;
         currentStructure.structure.push({
@@ -229,7 +231,7 @@ const ImportComplet = () => {
           content: row.Chapitre,
         });
       }
-
+  
       if (row.Section && row.Section !== currentSection) {
         currentSection = row.Section;
         currentStructure.structure.push({
@@ -238,34 +240,23 @@ const ImportComplet = () => {
           content: row.Section,
         });
       }
-
-      if (row.Article) {
+  
+      if (row.Article && row.Article !== currentArticle) {
+        currentArticle = row.Article;
         currentStructure.structure.push({
           id: Math.random().toString(36).substr(2, 9),
           type: 'Article',
           content: row.Article,
-        });
-      }
-      if (row.Contenu_article) {
-        currentStructure.structure.push({
-          id: Math.random().toString(36).substr(2, 9),
-          type: 'Contenu_article',
-          content: row.Contenu_article,
-        });
-      }
-      if (row.Contenu_article2) {
-        currentStructure.structure.push({
-          id: Math.random().toString(36).substr(2, 9),
-          type: 'Contenu_article2',
-          content: row.Contenu_article2,
+          contenu_article: row.Contenu_article || '', // Ajout du contenu_article
+          contenu_article2: row.Contenu_article2 || '', // Ajout du contenu_article2
         });
       }
     });
-
+  
     if (currentStructure) {
       structures.push(currentStructure);
     }
-
+  
     return structures;
   }, []);
 
@@ -701,8 +692,112 @@ useEffect(() => {
   };
 
  
-
   const exportModifiedCSV = useCallback(() => {
+    if (selectedLegislationIndex !== null) {
+      const selectedLegislation = legislationStructures[selectedLegislationIndex];
+      const userId = localStorage.getItem('iduser'); // Get the user ID from localStorage
+      let currentTitle = '';
+      let currentChapter = '';
+      let currentSection = '';
+  
+      // Escape value and remove line breaks
+      const escapeValue = (value, forceNoQuotes = false) => {
+        if (typeof value !== 'string') return value; // Handle non-string values
+        // Remove line breaks
+        value = value.replace(/[\r\n]+/g, ' ');
+        if (forceNoQuotes) return value;
+        if (value.includes(',') || value.includes('"')) {
+          return `"${value.replace(/"/g, '""')}"`;
+        }
+        return value;
+      };
+  
+      // Get the current date in 'YYYY-MM-DD' format
+      const modificationDate = new Date().toISOString().split('T')[0];
+  
+      // Update the CSV header row to include User ID, Decisions, Comments, and Contenu_article columns
+      const headerRow = 'Titre_legislation,Date_entree,Code_visee,Titre,Chapitre,Section,Article,Contenu_article,Contenu_article2,Categorie,Decision_IDs,Commentaire_IDs,UserId,Modification_date';
+  
+      // Gather all linked decision and comment IDs from bulkLinkedTexts
+      const decisionIds = bulkLinkedTexts.decisions?.map(decision => decision.value).join(',') || '';
+      const commentaireIds = bulkLinkedTexts.commentaires?.map(comment => comment.value).join(',') || '';
+  
+      // Format the legislationInfoRow to ensure consistent alignment
+      const legislationInfoRow = [
+        selectedLegislation.Titre_legislation,
+        selectedLegislation["Date d'entrée en vigueur"],
+        selectedLegislation["Code visé"],
+        '', '', '', '', '', '', // Placeholders for Titre, Chapitre, Section, Article, Contenu_article, Contenu_article2
+        selectedCategoryName || '', // Nom de la catégorie
+        decisionIds,                 // Decision IDs
+        commentaireIds,               // Commentaire IDs
+        userId,
+        modificationDate              // Add modification date
+      ].map(value => escapeValue(value)).join(',');
+  
+      const exportData = selectedLegislation.structure.map((item) => {
+        const baseInfo = [
+          selectedLegislation.Titre_legislation,
+          selectedLegislation["Date d'entrée en vigueur"],
+          selectedLegislation["Code visé"],
+          '', // Titre
+          '', // Chapitre
+          '', // Section
+          '', // Article
+          '', // Contenu_article
+          '', // Contenu_article2
+          selectedCategoryName || '',  // Nom de la catégorie
+          decisionIds,                 // Decision IDs
+          commentaireIds,               // Commentaire IDs
+          userId,
+          modificationDate              // Add modification date
+        ];
+  
+        switch (item.type) {
+          case 'Titre':
+            currentTitle = item.content;
+            currentChapter = '';
+            currentSection = '';
+            baseInfo[3] = item.content; // Titre
+            break;
+          case 'Chapitre':
+            currentChapter = item.content;
+            currentSection = '';
+            baseInfo[4] = item.content; // Chapitre
+            break;
+          case 'Section':
+            currentSection = item.content;
+            baseInfo[5] = item.content; // Section
+            break;
+          case 'Article':
+            baseInfo[6] = item.linkedTextId ? item.linkedTextId : item.content; // Article
+            baseInfo[7] = item.contenu_article || ''; // Contenu_article
+            baseInfo[8] = item.contenu_article2 || ''; // Contenu_article2
+            break;
+        }
+  
+        // Update title, chapter, and section in the baseInfo array
+        baseInfo[3] = currentTitle;
+        baseInfo[4] = currentChapter;
+        baseInfo[5] = currentSection;
+  
+        return baseInfo.map((value, index) => escapeValue(value, index < 4)).join(',');
+      });
+  
+      // Ensure the first row aligns with the header if legislationInfoRow is included as the first row
+      const allRows = [
+        headerRow,
+        legislationInfoRow,
+        ...exportData
+      ].join('\r\n');
+  
+      const blob = new Blob(["\uFEFF" + allRows], { type: 'text/csv;charset=utf-8;' });
+      return { csv: allRows, blob };
+    }
+    return null;
+  }, [legislationStructures, selectedLegislationIndex, selectedCategoryName, bulkLinkedTexts]);
+
+  const exportModifiedCSV2 = useCallback(() => {
     if (selectedLegislationIndex !== null) {
         const selectedLegislation = legislationStructures[selectedLegislationIndex];
         const userId = localStorage.getItem('iduser'); // Get the user ID from localStorage
