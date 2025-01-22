@@ -43,6 +43,7 @@ import Historique from "./Components/Historique";
 import LegalTextManager2 from "./Pages/LegalTextmanager2";
 import CompteDesactiver from "./Pages/CompteDesactiver";
 import HistoriqueImport from "./Pages/HistoriqueImport";
+import LegislationPage from "./Pages/LegislationPage";
 
 
 
@@ -58,6 +59,7 @@ const router = createBrowserRouter(
                 <Route path="test" element={<Test2/>}/>
                 <Route path="forgot-password" element={<ForgotPassword/>}/>
                 <Route path="comptedesactiver" element={<CompteDesactiver/>}/>
+                
 
                 {/* PLATEFORME */}
                 <Route path="fonctionnalites" element={<Fonctionnalites/>}/>
@@ -120,6 +122,11 @@ const router = createBrowserRouter(
                 <Route path="legislation" element={<Detailslayout/>}>
                     <Route index element={<RenderLegislation />} />
                         <Route path=":id" element={<LegislationDetail1 />} />
+                </Route>
+
+                <Route path="LegislationPage" element={<Detailslayout/>}>
+                    <Route index element={<RenderLegislation />} />
+                        <Route path=":id" element={<LegislationPage />} />
                 </Route>
 
 

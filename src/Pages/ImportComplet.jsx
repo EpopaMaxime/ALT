@@ -183,7 +183,7 @@ const ImportComplet = () => {
   }, []);
 
   const validateCSVStructure = (data) => {
-    const requiredColumns = ['Titre_legislation', 'Date_entree', 'Code_visee', 'Titre', 'Chapitre', 'Section', 'Article', 'Contenu_article'];
+    const requiredColumns = ['Titre_legislation', 'Date_entree', 'Code_visee', 'Titre', 'Chapitre', 'Section', 'Article', 'Contenu_article','Contenu_article2'];
     return requiredColumns.every(column => data[0].hasOwnProperty(column));
   };
 
@@ -193,7 +193,8 @@ const ImportComplet = () => {
     let currentTitle = '';
     let currentChapter = '';
     let currentSection = '';
-
+    let currentArticle = '';
+  
     data.forEach((row) => {
       if (!currentStructure || row.Titre_legislation !== currentStructure.Titre_legislation) {
         if (currentStructure) {
@@ -210,8 +211,9 @@ const ImportComplet = () => {
         currentTitle = '';
         currentChapter = '';
         currentSection = '';
+        currentArticle = '';
       }
-
+  
       if (row.Titre && row.Titre !== currentTitle) {
         currentTitle = row.Titre;
         currentStructure.structure.push({
@@ -220,7 +222,7 @@ const ImportComplet = () => {
           content: row.Titre,
         });
       }
-
+  
       if (row.Chapitre && row.Chapitre !== currentChapter) {
         currentChapter = row.Chapitre;
         currentStructure.structure.push({
@@ -229,7 +231,7 @@ const ImportComplet = () => {
           content: row.Chapitre,
         });
       }
-
+  
       if (row.Section && row.Section !== currentSection) {
         currentSection = row.Section;
         currentStructure.structure.push({
@@ -238,27 +240,23 @@ const ImportComplet = () => {
           content: row.Section,
         });
       }
-
-      if (row.Article) {
+  
+      if (row.Article && row.Article !== currentArticle) {
+        currentArticle = row.Article;
         currentStructure.structure.push({
           id: Math.random().toString(36).substr(2, 9),
           type: 'Article',
           content: row.Article,
-        });
-      }
-      if (row.Contenu_article) {
-        currentStructure.structure.push({
-          id: Math.random().toString(36).substr(2, 9),
-          type: 'Contenu_article',
-          content: row.Contenu_article,
+          contenu_article: row.Contenu_article || '', // Ajout du contenu_article
+          contenu_article2: row.Contenu_article2 || '', // Ajout du contenu_article2
         });
       }
     });
-
+  
     if (currentStructure) {
       structures.push(currentStructure);
     }
-
+  
     return structures;
   }, []);
 
@@ -694,8 +692,113 @@ useEffect(() => {
   };
 
  
-
   const exportModifiedCSV = useCallback(() => {
+    if (selectedLegislationIndex !== null) {
+      const selectedLegislation = legislationStructures[selectedLegislationIndex];
+      const userId = localStorage.getItem('iduser'); // Get the user ID from localStorage
+      let currentTitle = '';
+      let currentChapter = '';
+      let currentSection = '';
+  
+      // Escape value and remove line breaks
+      const escapeValue = (value, forceNoQuotes = false) => {
+        if (typeof value !== 'string') return value; // Handle non-string values
+        // Remove line breaks
+        value = value.replace(/[\r\n]+/g, ' ');
+        if (forceNoQuotes) return value;
+        // If the value contains commas or double quotes, encapsulate it in double quotes
+        if (value.includes(',') || value.includes('"')) {
+          return `"${value.replace(/"/g, '""')}"`;
+        }
+        return value;
+      };
+  
+      // Get the current date in 'YYYY-MM-DD' format
+      const modificationDate = new Date().toISOString().split('T')[0];
+  
+      // Update the CSV header row to include User ID, Decisions, Comments, and Contenu_article columns
+      const headerRow = 'Titre_legislation,Date_entree,Code_visee,Titre,Chapitre,Section,Article,Contenu_article,Contenu_article2,Categorie,Decision_IDs,Commentaire_IDs,UserId,Modification_date';
+  
+      // Gather all linked decision and comment IDs from bulkLinkedTexts
+      const decisionIds = bulkLinkedTexts.decisions?.map(decision => decision.value).join(',') || '';
+      const commentaireIds = bulkLinkedTexts.commentaires?.map(comment => comment.value).join(',') || '';
+  
+      // Format the legislationInfoRow to ensure consistent alignment
+      const legislationInfoRow = [
+        selectedLegislation.Titre_legislation,
+        selectedLegislation["Date d'entrée en vigueur"],
+        selectedLegislation["Code visé"],
+        '', '', '', '', '', '', // Placeholders for Titre, Chapitre, Section, Article, Contenu_article, Contenu_article2
+        selectedCategoryName || '', // Nom de la catégorie
+        decisionIds,                 // Decision IDs
+        commentaireIds,               // Commentaire IDs
+        userId,
+        modificationDate              // Add modification date
+      ].map(value => escapeValue(value)).join(',');
+  
+      const exportData = selectedLegislation.structure.map((item) => {
+        const baseInfo = [
+          escapeValue(selectedLegislation.Titre_legislation), // Échapper Titre_legislation
+          selectedLegislation["Date d'entrée en vigueur"],
+          escapeValue(selectedLegislation["Code visé"]),
+          '', // Titre
+          '', // Chapitre
+          '', // Section
+          '', // Article
+          '', // Contenu_article
+          '', // Contenu_article2
+          selectedCategoryName || '',  // Nom de la catégorie
+          decisionIds,                 // Decision IDs
+          commentaireIds,               // Commentaire IDs
+          userId,
+          modificationDate              // Add modification date
+        ];
+  
+        switch (item.type) {
+          case 'Titre':
+            currentTitle = item.content;
+            currentChapter = '';
+            currentSection = '';
+            baseInfo[3] = escapeValue(item.content); // Titre
+            break;
+          case 'Chapitre':
+            currentChapter = item.content;
+            currentSection = '';
+            baseInfo[4] = escapeValue(item.content); // Chapitre
+            break;
+          case 'Section':
+            currentSection = item.content;
+            baseInfo[5] = escapeValue(item.content); // Section
+            break;
+          case 'Article':
+            baseInfo[6] = escapeValue(item.linkedTextId ? item.linkedTextId : item.content); // Article
+            baseInfo[7] = (item.contenu_article || ''); // Contenu_article
+            baseInfo[8] = (item.contenu_article2 || ''); // Contenu_article2
+            break;
+        }
+      
+        // Update title, chapter, and section in the baseInfo array
+        baseInfo[3] = escapeValue(currentTitle);
+        baseInfo[4] = escapeValue(currentChapter);
+        baseInfo[5] = escapeValue(currentSection);
+      
+        return baseInfo.map((value, index) => escapeValue(value, index < 4)).join(',');
+      });
+  
+      // Ensure the first row aligns with the header if legislationInfoRow is included as the first row
+      const allRows = [
+        headerRow,
+        legislationInfoRow,
+        ...exportData
+      ].join('\r\n');
+  
+      const blob = new Blob(["\uFEFF" + allRows], { type: 'text/csv;charset=utf-8;' });
+      return { csv: allRows, blob };
+    }
+    return null;
+  }, [legislationStructures, selectedLegislationIndex, selectedCategoryName, bulkLinkedTexts]);
+
+  const exportModifiedCSV2 = useCallback(() => {
     if (selectedLegislationIndex !== null) {
         const selectedLegislation = legislationStructures[selectedLegislationIndex];
         const userId = localStorage.getItem('iduser'); // Get the user ID from localStorage
@@ -704,42 +807,61 @@ useEffect(() => {
         let currentSection = '';
 
         // Escape value and remove line breaks
-        const escapeValue = (value, forceNoQuotes = false) => {
+        const escapeValue = (value) => {
             if (typeof value !== 'string') return value; // Handle non-string values
-            // Remove line breaks
-            value = value.replace(/[\r\n]+/g, ' '); 
-            if (forceNoQuotes) return value;
+            value = value?.toString().replace(/[\r\n]+/g, ' '); // Remove line breaks
             if (value.includes(',') || value.includes('"')) {
-                return `"${value.replace(/"/g, '""')}"`;
+                return `"${value.replace(/"/g, '""')}"`; // Escape quotes and wrap
             }
-            return value;
+            return value || ''; // Return value or empty string
         };
 
         // Get the current date in 'YYYY-MM-DD' format
         const modificationDate = new Date().toISOString().split('T')[0];
 
-        // Update the CSV header row to include User ID, Decisions and Comments columns
-        const headerRow = 'Titre_legislation,Date_entree,Code_visee,Titre,Chapitre,Section,Article,Contenu_article,Categorie,Decision_IDs,Commentaire_IDs,UserId,Modification_date';
+        // Header row
+        const headerRow = [
+            'Titre_legislation',
+            'Date_entree',
+            'Code_visee',
+            'Titre',
+            'Chapitre',
+            'Section',
+            'Article',
+            'Contenu_article',
+            'Contenu_article2',
+            'Categorie',
+            'Decision_IDs',
+            'Commentaire_IDs',
+            'UserId',
+            'Modification_date'
+        ].map(escapeValue).join(',');
 
-        // Gather all linked decision and comment IDs from bulkLinkedTexts
+        // Collect decision and comment IDs
         const decisionIds = bulkLinkedTexts.decisions?.map(decision => decision.value).join(',') || '';
         const commentaireIds = bulkLinkedTexts.commentaires?.map(comment => comment.value).join(',') || '';
 
-        // Format the legislationInfoRow to ensure consistent alignment
+        // Information row
         const legislationInfoRow = [
             selectedLegislation.Titre_legislation,
             selectedLegislation["Date d'entrée en vigueur"],
             selectedLegislation["Code visé"],
-            '', '', '', '', '',
-            selectedCategoryName || '', // Nom de la catégorie
-            decisionIds,                 // Decision IDs
-            commentaireIds,               // Commentaire IDs
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            selectedCategoryName || '',
+            decisionIds,
+            commentaireIds,
             userId,
-            modificationDate              // Add modification date
-        ].map(value => escapeValue(value)).join(',');
+            modificationDate
+        ].map(escapeValue).join(',');
 
+        // Data rows
         const exportData = selectedLegislation.structure.map((item, index) => {
-            const baseInfo = [
+            let baseInfo = [
                 selectedLegislation.Titre_legislation,
                 selectedLegislation["Date d'entrée en vigueur"],
                 selectedLegislation["Code visé"],
@@ -748,11 +870,12 @@ useEffect(() => {
                 '',
                 '',
                 '',
-                selectedCategoryName || '',  // Nom de la catégorie
-                decisionIds,                 // Decision IDs
-                commentaireIds,               // Commentaire IDs
+                '',
+                selectedCategoryName || '',
+                decisionIds,
+                commentaireIds,
                 userId,
-                modificationDate              // Add modification date
+                modificationDate
             ];
 
             switch (item.type) {
@@ -772,22 +895,25 @@ useEffect(() => {
                     baseInfo[5] = item.content;
                     break;
                 case 'Article':
-                    baseInfo[6] = item.linkedTextId ? item.linkedTextId : item.content;
+                    baseInfo[6] = item.linkedTextId || item.content;
                     if (selectedLegislation.structure[index + 1]?.type === 'Contenu_article') {
                         baseInfo[7] = selectedLegislation.structure[index + 1].content;
+                        if (selectedLegislation.structure[index + 2]?.type === 'Contenu_article2') {
+                            baseInfo[8] = selectedLegislation.structure[index + 2].content;
+                        }
                     }
                     break;
             }
 
-            // Update title, chapter, and section in the baseInfo array
+            // Update title, chapter, and section
             baseInfo[3] = currentTitle;
             baseInfo[4] = currentChapter;
             baseInfo[5] = currentSection;
 
-            return baseInfo.map((value, index) => escapeValue(value, index < 4)).join(',');
+            return baseInfo.map(escapeValue).join(',');
         });
 
-        // Ensure the first row aligns with the header if legislationInfoRow is included as the first row
+        // Combine rows
         const allRows = [
             headerRow,
             legislationInfoRow,
@@ -902,40 +1028,40 @@ useEffect(() => {
 };
 
 
-useEffect(() => {
-  if (currentStep === 3 && selectedLegislation) {
-    setLoading(true);
-    const fetchLegislationStructure = async () => {
-      try {
-        const endpoints = ['titres', 'chapitres', 'sections', 'articles'];
-        const res = await axios.get(`${API_BASE_URL}/legislations/${selectedLegislation}`);
-        const identifiers = res.data.acf.titre_ou_chapitre_ou_section_ou_articles || [];
+// useEffect(() => {
+//   if (currentStep === 3 && selectedLegislation) {
+//     setLoading(true);
+//     const fetchLegislationStructure = async () => {
+//       try {
+//         const endpoints = ['titres', 'chapitres', 'sections', 'articles'];
+//         const res = await axios.get(`${API_BASE_URL}/legislations/${selectedLegislation}`);
+//         const identifiers = res.data.acf.titre_ou_chapitre_ou_section_ou_articles || [];
 
-        const fetchData = async (id) => {
-          for (let endpoint of endpoints) {
-            try {
-              const res = await axios.get(`${API_BASE_URL}/${endpoint}/${id}`);
-              if (res.data) return { ...res.data, endpoint, id };
-            } catch (err) {
-              // Continue to the next endpoint if not found
-            }
-          }
-          return null;
-        };
+//         const fetchData = async (id) => {
+//           for (let endpoint of endpoints) {
+//             try {
+//               const res = await axios.get(`${API_BASE_URL}/${endpoint}/${id}`);
+//               if (res.data) return { ...res.data, endpoint, id };
+//             } catch (err) {
+//               // Continue to the next endpoint if not found
+//             }
+//           }
+//           return null;
+//         };
 
-        const detailsData = await Promise.all(identifiers.map(fetchData));
-        const successfulItems = detailsData.filter(item => item !== null);
-        setLegislationStructure(successfulItems.map((item, index) => ({ ...item, position: index + 1 })));
-      } catch (err) {
-        setError('Échec de la récupération de la structure de la législation');
-      } finally {
-        setLoading(false);
-      }
-    };
+//         const detailsData = await Promise.all(identifiers.map(fetchData));
+//         const successfulItems = detailsData.filter(item => item !== null);
+//         setLegislationStructure(successfulItems.map((item, index) => ({ ...item, position: index + 1 })));
+//       } catch (err) {
+//         setError('Échec de la récupération de la structure de la législation');
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
 
-    fetchLegislationStructure();
-  }
-}, [currentStep, selectedLegislation]);
+//     fetchLegislationStructure();
+//   }
+// }, [currentStep, selectedLegislation]);
 
 const onDragEnd = ({ source, destination }) => {
   if (destination && source.index !== destination.index) {
