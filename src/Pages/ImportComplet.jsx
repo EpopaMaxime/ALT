@@ -706,6 +706,7 @@ useEffect(() => {
         // Remove line breaks
         value = value.replace(/[\r\n]+/g, ' ');
         if (forceNoQuotes) return value;
+        // If the value contains commas or double quotes, encapsulate it in double quotes
         if (value.includes(',') || value.includes('"')) {
           return `"${value.replace(/"/g, '""')}"`;
         }
@@ -758,29 +759,29 @@ useEffect(() => {
             currentTitle = item.content;
             currentChapter = '';
             currentSection = '';
-            baseInfo[3] = item.content; // Titre
+            baseInfo[3] = escapeValue(item.content); // Titre
             break;
           case 'Chapitre':
             currentChapter = item.content;
             currentSection = '';
-            baseInfo[4] = item.content; // Chapitre
+            baseInfo[4] = escapeValue(item.content); // Chapitre
             break;
           case 'Section':
             currentSection = item.content;
-            baseInfo[5] = item.content; // Section
+            baseInfo[5] = escapeValue(item.content); // Section
             break;
           case 'Article':
-            baseInfo[6] = item.linkedTextId ? item.linkedTextId : item.content; // Article
-            baseInfo[7] = item.contenu_article || ''; // Contenu_article
-            baseInfo[8] = item.contenu_article2 || ''; // Contenu_article2
+            baseInfo[6] = escapeValue(item.linkedTextId ? item.linkedTextId : item.content); // Article
+            baseInfo[7] = (item.contenu_article || ''); // Contenu_article
+            baseInfo[8] = (item.contenu_article2 || ''); // Contenu_article2
             break;
         }
-  
+      
         // Update title, chapter, and section in the baseInfo array
-        baseInfo[3] = currentTitle;
-        baseInfo[4] = currentChapter;
-        baseInfo[5] = currentSection;
-  
+        baseInfo[3] = escapeValue(currentTitle);
+        baseInfo[4] = escapeValue(currentChapter);
+        baseInfo[5] = escapeValue(currentSection);
+      
         return baseInfo.map((value, index) => escapeValue(value, index < 4)).join(',');
       });
   
