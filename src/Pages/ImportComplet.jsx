@@ -738,9 +738,9 @@ useEffect(() => {
   
       const exportData = selectedLegislation.structure.map((item) => {
         const baseInfo = [
-          selectedLegislation.Titre_legislation,
+          escapeValue(selectedLegislation.Titre_legislation), // Échapper Titre_legislation
           selectedLegislation["Date d'entrée en vigueur"],
-          selectedLegislation["Code visé"],
+          escapeValue(selectedLegislation["Code visé"]),
           '', // Titre
           '', // Chapitre
           '', // Section
