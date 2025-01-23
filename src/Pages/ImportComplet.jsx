@@ -113,7 +113,7 @@ const ImportComplet = () => {
     const now = new Date();
     const date = `${now.getDate()}_${now.getMonth() + 1}_${now.getFullYear()}`;
     const time = `${now.getHours()}h${now.getMinutes()}min`;
-    return `Legislation_${date}_${time}.csv`;
+    return `LegislationComplet_${date}_${time}.csv`;
   };
 
   const checkExistingLegislations = async (legislations) => {
@@ -144,7 +144,8 @@ const ImportComplet = () => {
   const handleFileChange = useCallback(async (event) => {
     const uploadedFile = event.target.files?.[0];
     // Stocker le nom du fichier avec le suffixe "- état: début"
-    const fileNameWithState = `${uploadedFile.name}`;
+    const exportFileName = generateFileName();
+    const fileNameWithState = `${uploadedFile.name}_${exportFileName}`;
     setImportHistory(fileNameWithState);
 
     if (uploadedFile) {
@@ -376,7 +377,8 @@ const ImportComplet = () => {
   
       // Générer le fichier CSV exporté
       const { blob } = exportModifiedCSV(); // Utilise la fonction exportModifiedCSV
-      const exportFileName = generateFileName();
+      // const exportFileName = generateFileName();
+      const fileNameWithState = `${importhistory}`;
   
       // Fonction pour uploader le fichier
       const uploadFile = async (fileBlob, fileName) => {
@@ -403,7 +405,7 @@ const ImportComplet = () => {
   
       // Construire le JSON à envoyer pour la mise à jour
       const payload = {
-        title: exportFileName, // Nom du fichier avec état et date
+        title: fileNameWithState, // Nom du fichier avec état et date
         acf: {
           type_import: "Import_Complet", // Type d'import
           date: currentDate.toISOString().slice(0, 19).replace("T", " "), // AAAA-MM-JJ HH:mm:ss
@@ -460,7 +462,8 @@ const ImportComplet = () => {
   
       // Générer le fichier CSV exporté
       const { blob } = exportModifiedCSV(); // Utilise la fonction exportModifiedCSV
-      const exportFileName = generateFileName();
+      // const exportFileName = generateFileName();
+      const fileNameWithState = `${importhistory}`;
   
       // Fonction pour uploader le fichier
       const uploadFile = async (fileBlob, fileName) => {
@@ -487,7 +490,7 @@ const ImportComplet = () => {
 
       // Construire le JSON à envoyer pour la mise à jour
       const payloadDemande = {
-        title: exportFileName, // Nom du fichier avec état et date
+        title: fileNameWithState, // Nom du fichier avec état et date
         acf: {
           type_import: "Import_Complet", // Type d'import
           date: currentDate.toISOString().slice(0, 19).replace("T", " "), // AAAA-MM-JJ HH:mm:ss
@@ -499,7 +502,7 @@ const ImportComplet = () => {
   
       // Construire le JSON à envoyer pour la mise à jour
       const payload = {
-        title: exportFileName, // Nom du fichier avec état et date
+        title: fileNameWithState, // Nom du fichier avec état et date
         acf: {
           type_import: "Import_Complet", // Type d'import
           date: currentDate.toISOString().slice(0, 19).replace("T", " "), // AAAA-MM-JJ HH:mm:ss

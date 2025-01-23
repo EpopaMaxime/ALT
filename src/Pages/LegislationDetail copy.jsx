@@ -205,11 +205,6 @@ const LegislationDetail = () => {
     }
   };
 
-  const extractLastPart = (text) => {
-    const parts = decodeHTMLEntities(text).split(' – ');
-    return parts[parts.length - 1];
-  };
-
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">

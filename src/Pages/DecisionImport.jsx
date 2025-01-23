@@ -89,9 +89,9 @@ const DecisionImport = () => {
   const handleFileChange = useCallback((event) => {
     const uploadedFile = event.target.files?.[0];
 
-    // Stocker le nom du fichier avec le suffixe "- état: début"
-    const fileNameWithState = `${uploadedFile.name}`;
-    setImportHistory(fileNameWithState);
+    // Stocker le nom du fichier avec le suffixe "date et heure"
+    const exportFileName = generateFileName();
+    const fileNameWithState = `${uploadedFile.name}_${exportFileName}`;
 
     if (uploadedFile) {
       setFile(uploadedFile);
@@ -384,7 +384,7 @@ const DecisionImport = () => {
   
       // Générer le fichier CSV exporté
       const { blob } = exportModifiedCSV(); // Utilise la fonction exportModifiedCSV
-      const exportFileName = generateFileName();
+      const fileNameWithState = `${importhistory}`;
   
       // Fonction pour uploader le fichier
       const uploadFile = async (fileBlob, fileName) => {
@@ -411,7 +411,7 @@ const DecisionImport = () => {
   
       // Construire le JSON à envoyer pour la mise à jour
       const payload = {
-        title: exportFileName, // Nom du fichier avec état et date
+        title: fileNameWithState, // Nom du fichier avec état et date
         acf: {
           type_import: "Decision", // Type d'import
           date: currentDate.toISOString().slice(0, 19).replace("T", " "), // AAAA-MM-JJ HH:mm:ss
@@ -468,7 +468,7 @@ const DecisionImport = () => {
   
       // Générer le fichier CSV exporté
       const { blob } = exportModifiedCSV(); // Utilise la fonction exportModifiedCSV
-      const exportFileName = generateFileName();
+      const fileNameWithState = `${importhistory}`;
   
       // Fonction pour uploader le fichier
       const uploadFile = async (fileBlob, fileName) => {
@@ -495,7 +495,7 @@ const DecisionImport = () => {
 
       // Construire le JSON à envoyer pour la mise à jour
       const payloadDemande = {
-        title: exportFileName, // Nom du fichier avec état et date
+        title: fileNameWithState, // Nom du fichier avec état et date
         acf: {
           type_import: "Decision", // Type d'import
           date: currentDate.toISOString().slice(0, 19).replace("T", " "), // AAAA-MM-JJ HH:mm:ss
@@ -507,7 +507,7 @@ const DecisionImport = () => {
   
       // Construire le JSON à envoyer pour la mise à jour
       const payload = {
-        title: exportFileName, // Nom du fichier avec état et date
+        title: fileNameWithState, // Nom du fichier avec état et date
         acf: {
           type_import: "Decision", // Type d'import
           date: currentDate.toISOString().slice(0, 19).replace("T", " "), // AAAA-MM-JJ HH:mm:ss

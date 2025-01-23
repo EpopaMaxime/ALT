@@ -54,8 +54,9 @@ const ArticleImport = () => {
   const [historiquePostId, setHistoriquePostId] = useState(null);
   const [loadingLegislation, setLoadingLegislation] = useState(false); // Track loading state
   const [hasFetchedLegislation, setHasFetchedLegislation] = useState(false); // Track if legislations are fetched
-  const API_BASE_URL = "https://alt.back.qilinsa.com/wp-json/wp/v2"; // Replace with your actual API base URL
-  // Fetch legislations on component mount
+  const API_BASE_URL = "https://alt.back.qilinsa.com/wp-json/wp/v2";
+
+  // Fetch legislations on component mount (unchanged)
   useEffect(() => {
     const fetchLegislations = async () => {
       setLoadingLegislation(true);
@@ -69,7 +70,7 @@ const ArticleImport = () => {
       }
     };
     fetchLegislations();
-  }, []); // Empty dependency array ensures this runs only on mount
+  }, []);
 
 
 
@@ -135,43 +136,52 @@ const ArticleImport = () => {
       setLoading(true);
       const fetchLegislationStructure = async () => {
         try {
-          const endpoints = ['titres', 'chapitres', 'sections', 'articles'];
-          const res = await axios.get(`${API_BASE_URL}/legislations/${selectedLegislation.value}`);
-          const identifiers = res.data.acf.titre_ou_chapitre_ou_section_ou_articles || [];
-
-          const fetchData = async (id) => {
-            for (let endpoint of endpoints) {
-              try {
-                const res = await axios.get(`${API_BASE_URL}/${endpoint}/${id}`);
-                if (res.data) return { ...res.data, endpoint, id };
-              } catch (err) {
-                // Continue to the next endpoint if not found
-              }
-            }
-            return null;
-          };
-
-          const detailsData = await Promise.all(identifiers.map(fetchData));
-          const successfulItems = detailsData.filter(item => item !== null);
-          setLegislationStructure(successfulItems.map((item, index) => ({ ...item, position: index + 1 })));
-          setUnstructuredArticles(selectedArticles.map(index => ({ id: index.toString(), title: parsedArticles[index].Title })));
+          // Use the new legislation endpoint
+          const res = await axios.get(
+            `${API_BASE_URL}/get-legislation/${selectedLegislation.value}`
+          );
+          
+          // Extract main data and related structure elements
+          const mainData = res.data.data[0];
+          const relatedElements = res.data.data[1]?.related || [];
+  
+          // Map related elements to include endpoint from type
+          const structureWithTypes = relatedElements.map(item => ({
+            ...item,
+            endpoint: `${item.type}s`, // Convert type to endpoint (e.g., 'titre' -> 'titres')
+          }));
+  
+          // Add positions and set structure
+          setLegislationStructure(
+            structureWithTypes.map((item, index) => ({ 
+              ...item, 
+              position: index + 1 
+            }))
+          );
+  
+          // Keep existing unstructured articles logic
+          setUnstructuredArticles(
+            selectedArticles.map(index => ({
+              id: index.toString(),
+              title: parsedArticles[index].Title
+            }))
+          );
         } catch (err) {
           setError('Échec de la récupération de la structure de la législation');
         } finally {
           setLoading(false);
         }
       };
-
+  
       fetchLegislationStructure();
     }
   }, [currentStep, selectedLegislation, selectedArticles, parsedArticles]);
-
   const handleFileChange = useCallback((event) => {
     const uploadedFile = event.target.files?.[0];
 
-    // Stocker le nom du fichier avec le suffixe "- état: début"
-    const fileNameWithState = `${uploadedFile.name}`;
-    setImportHistory(fileNameWithState);
+    // Stocker le nom du fichier avec le suffixe "date et heure"
+    const exportFileName = generateFileName();
+    const fileNameWithState = `${uploadedFile.name}_${exportFileName}`;
 
     if (!uploadedFile || !selectedLegislation?.value) {
       setError("Veuillez sélectionner la législation avant d'importer le fichier");
@@ -320,7 +330,7 @@ const ArticleImport = () => {
   
       // Générer le fichier CSV exporté
       const { blob } = exportModifiedCSV(); // Utilise la fonction exportModifiedCSV
-      const exportFileName = generateFileName();
+      const fileNameWithState = `${importhistory}`;
   
       // Fonction pour uploader le fichier
       const uploadFile = async (fileBlob, fileName) => {
@@ -347,7 +357,7 @@ const ArticleImport = () => {
   
       // Construire le JSON à envoyer pour la mise à jour
       const payload = {
-        title: exportFileName, // Nom du fichier avec état et date
+        title: fileNameWithState, // Nom du fichier avec état et date
         acf: {
           type_import: "Article", // Type d'import
           date: currentDate.toISOString().slice(0, 19).replace("T", " "), // AAAA-MM-JJ HH:mm:ss
@@ -404,7 +414,7 @@ const ArticleImport = () => {
   
       // Générer le fichier CSV exporté
       const { blob } = exportModifiedCSV(); // Utilise la fonction exportModifiedCSV
-      const exportFileName = generateFileName();
+      const fileNameWithState = `${importhistory}`;
   
       // Fonction pour uploader le fichier
       const uploadFile = async (fileBlob, fileName) => {
@@ -431,7 +441,7 @@ const ArticleImport = () => {
 
       // Construire le JSON à envoyer pour la mise à jour
       const payloadDemande = {
-        title: exportFileName, // Nom du fichier avec état et date
+        title: fileNameWithState, // Nom du fichier avec état et date
         acf: {
           type_import: "Article", // Type d'import
           date: currentDate.toISOString().slice(0, 19).replace("T", " "), // AAAA-MM-JJ HH:mm:ss
@@ -443,7 +453,7 @@ const ArticleImport = () => {
   
       // Construire le JSON à envoyer pour la mise à jour
       const payload = {
-        title: exportFileName, // Nom du fichier avec état et date
+        title: fileNameWithState, // Nom du fichier avec état et date
         acf: {
           type_import: "Article", // Type d'import
           date: currentDate.toISOString().slice(0, 19).replace("T", " "), // AAAA-MM-JJ HH:mm:ss
