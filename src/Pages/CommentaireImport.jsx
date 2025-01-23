@@ -587,10 +587,12 @@ useEffect(() => {
       setImportStatus('pending');
       setImportError(null);
 
+      const fileNameWithState = `${importhistory}`;
+
       const { csv } = exportModifiedCSV();
       const formData = new FormData();
       const blob = new Blob([csv], { type: 'text/csv' });
-      formData.append('file', blob, generateFileName());
+      formData.append('file', blob, fileNameWithState);
 
       const token = localStorage.getItem('token');
 

@@ -865,10 +865,12 @@ const ArticleImport = () => {
       setImportStatus('pending');
       setImportError(null);
 
+      const fileNameWithState = `${importhistory}`;
+
       const { csv } = exportModifiedCSV();
       const formData = new FormData();
       const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csv], { type: 'text/csv;charset=utf-8;' });
-      formData.append('file', blob, generateFileName());
+      formData.append('file', blob, fileNameWithState);
 
       const token = localStorage.getItem('token');
 

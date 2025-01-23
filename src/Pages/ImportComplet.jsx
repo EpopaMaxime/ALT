@@ -956,11 +956,13 @@ useEffect(() => {
       if (!result) {
         throw new Error("Aucune législation sélectionnée pour l'exportation");
       }
+
+      const fileNameWithState = `${importhistory}`;
   
       const { csv } = result;
       const formData = new FormData();
       const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
-      formData.append('file', blob, generateFileName());
+      formData.append('file', blob, fileNameWithState);
   
       const token = localStorage.getItem('token');
       if (!token) {
