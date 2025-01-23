@@ -289,7 +289,7 @@ const CommentaireImport = () => {
       };
   
       // Charger le fichier et obtenir son identifiant
-      const fileId = await uploadFile(blob, exportFileName);
+      const fileId = await uploadFile(blob, fileNameWithState);
   
       // Construire le JSON à envoyer pour la mise à jour
       const payload = {
@@ -374,7 +374,7 @@ const CommentaireImport = () => {
       };
   
       // Charger le fichier et obtenir son identifiant
-      const fileId = await uploadFile(blob, exportFileName);
+      const fileId = await uploadFile(blob, fileNameWithState);
   
       // Construire le JSON à envoyer pour la mise à jour
       const payloadDemande = {
