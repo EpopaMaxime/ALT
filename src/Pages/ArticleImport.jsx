@@ -54,8 +54,9 @@ const ArticleImport = () => {
   const [historiquePostId, setHistoriquePostId] = useState(null);
   const [loadingLegislation, setLoadingLegislation] = useState(false); // Track loading state
   const [hasFetchedLegislation, setHasFetchedLegislation] = useState(false); // Track if legislations are fetched
-  const API_BASE_URL = "https://alt.back.qilinsa.com/wp-json/wp/v2"; // Replace with your actual API base URL
-  // Fetch legislations on component mount
+  const API_BASE_URL = "https://alt.back.qilinsa.com/wp-json/wp/v2";
+
+  // Fetch legislations on component mount (unchanged)
   useEffect(() => {
     const fetchLegislations = async () => {
       setLoadingLegislation(true);
@@ -69,7 +70,7 @@ const ArticleImport = () => {
       }
     };
     fetchLegislations();
-  }, []); // Empty dependency array ensures this runs only on mount
+  }, []);
 
 
 
@@ -135,42 +136,52 @@ const ArticleImport = () => {
       setLoading(true);
       const fetchLegislationStructure = async () => {
         try {
-          const endpoints = ['titres', 'chapitres', 'sections', 'articles'];
-          const res = await axios.get(`${API_BASE_URL}/legislations/${selectedLegislation.value}`);
-          const identifiers = res.data.acf.titre_ou_chapitre_ou_section_ou_articles || [];
-
-          const fetchData = async (id) => {
-            for (let endpoint of endpoints) {
-              try {
-                const res = await axios.get(`${API_BASE_URL}/${endpoint}/${id}`);
-                if (res.data) return { ...res.data, endpoint, id };
-              } catch (err) {
-                // Continue to the next endpoint if not found
-              }
-            }
-            return null;
-          };
-
-          const detailsData = await Promise.all(identifiers.map(fetchData));
-          const successfulItems = detailsData.filter(item => item !== null);
-          setLegislationStructure(successfulItems.map((item, index) => ({ ...item, position: index + 1 })));
-          setUnstructuredArticles(selectedArticles.map(index => ({ id: index.toString(), title: parsedArticles[index].Title })));
+          // Use the new legislation endpoint
+          const res = await axios.get(
+            `${API_BASE_URL}/get-legislation/${selectedLegislation.value}`
+          );
+          
+          // Extract main data and related structure elements
+          const mainData = res.data.data[0];
+          const relatedElements = res.data.data[1]?.related || [];
+  
+          // Map related elements to include endpoint from type
+          const structureWithTypes = relatedElements.map(item => ({
+            ...item,
+            endpoint: `${item.type}s`, // Convert type to endpoint (e.g., 'titre' -> 'titres')
+          }));
+  
+          // Add positions and set structure
+          setLegislationStructure(
+            structureWithTypes.map((item, index) => ({ 
+              ...item, 
+              position: index + 1 
+            }))
+          );
+  
+          // Keep existing unstructured articles logic
+          setUnstructuredArticles(
+            selectedArticles.map(index => ({
+              id: index.toString(),
+              title: parsedArticles[index].Title
+            }))
+          );
         } catch (err) {
           setError('Échec de la récupération de la structure de la législation');
         } finally {
           setLoading(false);
         }
       };
-
+  
       fetchLegislationStructure();
     }
   }, [currentStep, selectedLegislation, selectedArticles, parsedArticles]);
-
   const handleFileChange = useCallback((event) => {
     const uploadedFile = event.target.files?.[0];
 
-    // Stocker le nom du fichier avec le suffixe "- état: début"
-    const fileNameWithState = `${uploadedFile.name}`;
+    // Stocker le nom du fichier avec le suffixe "date et heure"
+    const exportFileName = generateFileName();
+    const fileNameWithState = `${uploadedFile.name}_${exportFileName}`;
     setImportHistory(fileNameWithState);
 
     if (!uploadedFile || !selectedLegislation?.value) {
@@ -320,7 +331,7 @@ const ArticleImport = () => {
   
       // Générer le fichier CSV exporté
       const { blob } = exportModifiedCSV(); // Utilise la fonction exportModifiedCSV
-      const exportFileName = generateFileName();
+      const fileNameWithState = `${importhistory}`;
   
       // Fonction pour uploader le fichier
       const uploadFile = async (fileBlob, fileName) => {
@@ -343,11 +354,11 @@ const ArticleImport = () => {
       };
   
       // Charger le fichier et obtenir son identifiant
-      const fileId = await uploadFile(blob, exportFileName);
+      const fileId = await uploadFile(blob, fileNameWithState);
   
       // Construire le JSON à envoyer pour la mise à jour
       const payload = {
-        title: exportFileName, // Nom du fichier avec état et date
+        title: fileNameWithState, // Nom du fichier avec état et date
         acf: {
           type_import: "Article", // Type d'import
           date: currentDate.toISOString().slice(0, 19).replace("T", " "), // AAAA-MM-JJ HH:mm:ss
@@ -404,7 +415,7 @@ const ArticleImport = () => {
   
       // Générer le fichier CSV exporté
       const { blob } = exportModifiedCSV(); // Utilise la fonction exportModifiedCSV
-      const exportFileName = generateFileName();
+      const fileNameWithState = `${importhistory}`;
   
       // Fonction pour uploader le fichier
       const uploadFile = async (fileBlob, fileName) => {
@@ -427,11 +438,11 @@ const ArticleImport = () => {
       };
   
       // Charger le fichier et obtenir son identifiant
-      const fileId = await uploadFile(blob, exportFileName);
+      const fileId = await uploadFile(blob, fileNameWithState);
 
       // Construire le JSON à envoyer pour la mise à jour
       const payloadDemande = {
-        title: exportFileName, // Nom du fichier avec état et date
+        title: fileNameWithState, // Nom du fichier avec état et date
         acf: {
           type_import: "Article", // Type d'import
           date: currentDate.toISOString().slice(0, 19).replace("T", " "), // AAAA-MM-JJ HH:mm:ss
@@ -443,7 +454,7 @@ const ArticleImport = () => {
   
       // Construire le JSON à envoyer pour la mise à jour
       const payload = {
-        title: exportFileName, // Nom du fichier avec état et date
+        title: fileNameWithState, // Nom du fichier avec état et date
         acf: {
           type_import: "Article", // Type d'import
           date: currentDate.toISOString().slice(0, 19).replace("T", " "), // AAAA-MM-JJ HH:mm:ss
@@ -521,96 +532,76 @@ const ArticleImport = () => {
       const articleChecks = await Promise.all(
         articles.map(async (article) => {
           try {
-            // Implement a more precise title matching function
+            // Improved normalization with better regex and case insensitivity
             const normalizeTitleForSearch = (title) => {
-              // Remove extra whitespaces and convert to lowercase
               const normalizedTitle = title.trim().toLowerCase();
               
-              // Extract the article number using a regex
-              // This will match "article" followed by a number, ensuring precise matching
-              const articleNumberMatch = normalizedTitle.match(/article\s+(\d+)/);
-              
-              if (articleNumberMatch) {
-                return {
-                  fullTitle: normalizedTitle,
-                  articleNumber: articleNumberMatch[1]
-                };
-              }
+              // Enhanced regex to capture article numbers with spaces/hyphens
+              const articleNumberMatch = normalizedTitle.match(/article[\s-]*(\d+)/i);
               
               return {
                 fullTitle: normalizedTitle,
-                articleNumber: null
+                articleNumber: articleNumberMatch?.[1] || null
               };
             };
+  
+            const currentArticle = normalizeTitleForSearch(article.Title);
             
-            // Normalize the current article's title
-            const currentArticleNormalized = normalizeTitleForSearch(article.Title);
-
-            // Search for articles with similar titles
+            // Use article number for search if available
+            const searchTerm = currentArticle.articleNumber 
+              ? `Article ${currentArticle.articleNumber}`
+              : currentArticle.fullTitle;
+  
             const searchResponse = await axios.get(
-              `https://alt.back.qilinsa.com/wp-json/wp/v2/articles?search=${encodeURIComponent(article.Title)}`
+              `https://alt.back.qilinsa.com/wp-json/wp/v2/articles?search=${encodeURIComponent(searchTerm)}`
             );
   
-            const matchingArticles = searchResponse.data;
-  
-            // Helper to convert date from "DD/MM/YYYY" to "YYYYMMDD"
             const formatDateToServerFormat = (date) => {
               const [day, month, year] = date.split("/");
-              return `${year}${month}${day}`; // Convert to "YYYYMMDD"
+              return `${year}${month.padStart(2, '0')}${day.padStart(2, '0')}`;
             };
   
-            // Convert CSV date to server format
             const formattedCsvDate = formatDateToServerFormat(article.Date_entree);
+            let result = { ...article };
+            const matchingArticles = searchResponse.data;
   
-            let isExisting = false;
-            let isNewVersion = false;
-            let matchedArticleId = null;
+            // Convert legislation IDs to numbers for accurate comparison
+            const targetLegislationId = Number(selectedLegislationId);
   
-            // Check each matching article
             for (const existingArticle of matchingArticles) {
-              // Normalize the existing article's title
-              const existingArticleNormalized = normalizeTitleForSearch(existingArticle.title.rendered);
+              const existingLegislationIds = existingArticle.acf.Legislation_ou_titre_ou_chapitre_ou_section
+                .map(id => Number(id));
+  
+              if (!existingLegislationIds.includes(targetLegislationId)) continue;
+  
+              const existingTitle = normalizeTitleForSearch(existingArticle.title.rendered);
               
-              const belongsToLegislation = existingArticle.acf.Legislation_ou_titre_ou_chapitre_ou_section
-                .includes(Number(selectedLegislationId));
-              
-              // Check if article numbers match exactly (if available)
-              const articleNumberMatches = 
-                currentArticleNormalized.articleNumber && 
-                existingArticleNormalized.articleNumber 
-                  ? currentArticleNormalized.articleNumber === existingArticleNormalized.articleNumber
-                  : currentArticleNormalized.fullTitle === existingArticleNormalized.fullTitle;
-
-              if (belongsToLegislation && articleNumberMatches) {
-                if (existingArticle.acf.date_entree === formattedCsvDate) {
-                  // Found exact match in legislation with the same date
-                  isExisting = true;
-                  matchedArticleId = existingArticle.id;
-                  break; // No need to check further
+              // Compare article numbers if available, otherwise full titles
+              const titleMatches = currentArticle.articleNumber
+                ? currentArticle.articleNumber === existingTitle.articleNumber
+                : currentArticle.fullTitle === existingTitle.fullTitle;
+  
+              if (titleMatches) {
+                const existingDate = existingArticle.acf.date_entree;
+                
+                if (existingDate === formattedCsvDate) {
+                  return {
+                    ...article,
+                    exists: true,
+                    id: existingArticle.id
+                  };
                 } else {
-                  // Found a match in legislation but different date
-                  isNewVersion = true;
-                  matchedArticleId = existingArticle.id;
+                  // Track potential new version but keep checking for exact matches
+                  result = {
+                    ...article,
+                    newVersion: true,
+                    originalId: existingArticle.id
+                  };
                 }
               }
             }
   
-            // Return the appropriate result
-            if (isExisting) {
-              return {
-                ...article,
-                exists: true,
-                id: matchedArticleId,
-              };
-            } else if (isNewVersion) {
-              return {
-                ...article,
-                newVersion: true,
-                originalId: matchedArticleId,
-              };
-            } else {
-              return article; // No match found
-            }
+            return result;
           } catch (error) {
             console.error(`Error checking article "${article.Title}":`, error);
             return article;
@@ -625,7 +616,6 @@ const ArticleImport = () => {
       setError("Impossible de vérifier les articles existants");
     }
   };
-  
 
   const handleArticleSelection = useCallback((index) => {
     const article = parsedArticles[index];
@@ -800,41 +790,41 @@ const ArticleImport = () => {
     }
   }, [currentStep, selectedArticles, parsedArticles, availableTexts]);
 
-  useEffect(() => {
-    if (currentStep === 3 && selectedLegislation) {
-      setLoading(true);
-      const fetchLegislationStructure = async () => {
-        try {
-          const endpoints = ['titres', 'chapitres', 'sections', 'articles'];
-          const res = await axios.get(`${API_BASE_URL}/legislations/${selectedLegislation.value}`);
-          const identifiers = res.data.acf.titre_ou_chapitre_ou_section_ou_articles || [];
+  // useEffect(() => {
+  //   if (currentStep === 3 && selectedLegislation) {
+  //     setLoading(true);
+  //     const fetchLegislationStructure = async () => {
+  //       try {
+  //         const endpoints = ['titres', 'chapitres', 'sections', 'articles'];
+  //         const res = await axios.get(`${API_BASE_URL}/legislations/${selectedLegislation.value}`);
+  //         const identifiers = res.data.acf.titre_ou_chapitre_ou_section_ou_articles || [];
 
-          const fetchData = async (id) => {
-            for (let endpoint of endpoints) {
-              try {
-                const res = await axios.get(`${API_BASE_URL}/${endpoint}/${id}`);
-                if (res.data) return { ...res.data, endpoint, id };
-              } catch (err) {
-                // Continue to the next endpoint if not found
-              }
-            }
-            return null;
-          };
+  //         const fetchData = async (id) => {
+  //           for (let endpoint of endpoints) {
+  //             try {
+  //               const res = await axios.get(`${API_BASE_URL}/${endpoint}/${id}`);
+  //               if (res.data) return { ...res.data, endpoint, id };
+  //             } catch (err) {
+  //               // Continue to the next endpoint if not found
+  //             }
+  //           }
+  //           return null;
+  //         };
 
-          const detailsData = await Promise.all(identifiers.map(fetchData));
-          const successfulItems = detailsData.filter(item => item !== null);
-          setLegislationStructure(successfulItems.map((item, index) => ({ ...item, position: index + 1 })));
-          setUnstructuredArticles(selectedArticles.map(index => ({ id: index.toString(), title: parsedArticles[index].Title })));
-        } catch (err) {
-          setError('Échec de la récupération de la structure de la législation');
-        } finally {
-          setLoading(false);
-        }
-      };
+  //         const detailsData = await Promise.all(identifiers.map(fetchData));
+  //         const successfulItems = detailsData.filter(item => item !== null);
+  //         setLegislationStructure(successfulItems.map((item, index) => ({ ...item, position: index + 1 })));
+  //         setUnstructuredArticles(selectedArticles.map(index => ({ id: index.toString(), title: parsedArticles[index].Title })));
+  //       } catch (err) {
+  //         setError('Échec de la récupération de la structure de la législation');
+  //       } finally {
+  //         setLoading(false);
+  //       }
+  //     };
 
-      fetchLegislationStructure();
-    }
-  }, [currentStep, selectedLegislation, selectedArticles, parsedArticles]);
+  //     fetchLegislationStructure();
+  //   }
+  // }, [currentStep, selectedLegislation, selectedArticles, parsedArticles]);
 
   const handleExportClick = () => {
     const { blob } = exportModifiedCSV();
@@ -855,10 +845,12 @@ const ArticleImport = () => {
       setImportStatus('pending');
       setImportError(null);
 
+      const fileNameWithState = `${importhistory}`;
+
       const { csv } = exportModifiedCSV();
       const formData = new FormData();
       const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csv], { type: 'text/csv;charset=utf-8;' });
-      formData.append('file', blob, generateFileName());
+      formData.append('file', blob, fileNameWithState);
 
       const token = localStorage.getItem('token');
 
