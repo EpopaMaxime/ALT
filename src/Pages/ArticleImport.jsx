@@ -696,27 +696,30 @@ const ArticleImport = () => {
 
   const findHierarchyId = (position) => {
     const hierarchyIds = [];
-
+  
     for (let pos = position - 1; pos >= 0; pos--) {
-      const section = legislationStructure.find(item => item.position === pos && item.endpoint === 'sections');
-      const chapter = legislationStructure.find(item => item.position === pos && item.endpoint === 'chapitres');
-      const title = legislationStructure.find(item => item.position === pos && item.endpoint === 'titres');
-
+      const section = legislationStructure.find(
+        item => item.position === pos && item.post_type === 'section'
+      );
+      const chapter = legislationStructure.find(
+        item => item.position === pos && item.post_type === 'chapitre'
+      );
+      const title = legislationStructure.find(
+        item => item.position === pos && item.post_type === 'titre'
+      );
+  
       if (section) {
-        // Ajouter l'ID de la section et continuer pour trouver le chapitre et titre
         hierarchyIds.unshift(section.id);
         continue;
       } else if (chapter) {
-        // Ajouter l'ID du chapitre et continuer pour trouver le titre
         hierarchyIds.unshift(chapter.id);
         continue;
       } else if (title) {
-        // Ajouter l'ID du titre et retourner le tableau
         hierarchyIds.unshift(title.id);
         break;
       }
     }
-
+  
     return hierarchyIds.length > 0 ? hierarchyIds : null;
   };
 
