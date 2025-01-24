@@ -182,6 +182,7 @@ const ArticleImport = () => {
     // Stocker le nom du fichier avec le suffixe "date et heure"
     const exportFileName = generateFileName();
     const fileNameWithState = `${uploadedFile.name}_${exportFileName}`;
+    setImportHistory(fileNameWithState);
 
     if (!uploadedFile || !selectedLegislation?.value) {
       setError("Veuillez sélectionner la législation avant d'importer le fichier");
@@ -810,41 +811,41 @@ const ArticleImport = () => {
     }
   }, [currentStep, selectedArticles, parsedArticles, availableTexts]);
 
-  useEffect(() => {
-    if (currentStep === 3 && selectedLegislation) {
-      setLoading(true);
-      const fetchLegislationStructure = async () => {
-        try {
-          const endpoints = ['titres', 'chapitres', 'sections', 'articles'];
-          const res = await axios.get(`${API_BASE_URL}/legislations/${selectedLegislation.value}`);
-          const identifiers = res.data.acf.titre_ou_chapitre_ou_section_ou_articles || [];
+  // useEffect(() => {
+  //   if (currentStep === 3 && selectedLegislation) {
+  //     setLoading(true);
+  //     const fetchLegislationStructure = async () => {
+  //       try {
+  //         const endpoints = ['titres', 'chapitres', 'sections', 'articles'];
+  //         const res = await axios.get(`${API_BASE_URL}/legislations/${selectedLegislation.value}`);
+  //         const identifiers = res.data.acf.titre_ou_chapitre_ou_section_ou_articles || [];
 
-          const fetchData = async (id) => {
-            for (let endpoint of endpoints) {
-              try {
-                const res = await axios.get(`${API_BASE_URL}/${endpoint}/${id}`);
-                if (res.data) return { ...res.data, endpoint, id };
-              } catch (err) {
-                // Continue to the next endpoint if not found
-              }
-            }
-            return null;
-          };
+  //         const fetchData = async (id) => {
+  //           for (let endpoint of endpoints) {
+  //             try {
+  //               const res = await axios.get(`${API_BASE_URL}/${endpoint}/${id}`);
+  //               if (res.data) return { ...res.data, endpoint, id };
+  //             } catch (err) {
+  //               // Continue to the next endpoint if not found
+  //             }
+  //           }
+  //           return null;
+  //         };
 
-          const detailsData = await Promise.all(identifiers.map(fetchData));
-          const successfulItems = detailsData.filter(item => item !== null);
-          setLegislationStructure(successfulItems.map((item, index) => ({ ...item, position: index + 1 })));
-          setUnstructuredArticles(selectedArticles.map(index => ({ id: index.toString(), title: parsedArticles[index].Title })));
-        } catch (err) {
-          setError('Échec de la récupération de la structure de la législation');
-        } finally {
-          setLoading(false);
-        }
-      };
+  //         const detailsData = await Promise.all(identifiers.map(fetchData));
+  //         const successfulItems = detailsData.filter(item => item !== null);
+  //         setLegislationStructure(successfulItems.map((item, index) => ({ ...item, position: index + 1 })));
+  //         setUnstructuredArticles(selectedArticles.map(index => ({ id: index.toString(), title: parsedArticles[index].Title })));
+  //       } catch (err) {
+  //         setError('Échec de la récupération de la structure de la législation');
+  //       } finally {
+  //         setLoading(false);
+  //       }
+  //     };
 
-      fetchLegislationStructure();
-    }
-  }, [currentStep, selectedLegislation, selectedArticles, parsedArticles]);
+  //     fetchLegislationStructure();
+  //   }
+  // }, [currentStep, selectedLegislation, selectedArticles, parsedArticles]);
 
   const handleExportClick = () => {
     const { blob } = exportModifiedCSV();
