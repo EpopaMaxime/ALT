@@ -532,96 +532,76 @@ const ArticleImport = () => {
       const articleChecks = await Promise.all(
         articles.map(async (article) => {
           try {
-            // Implement a more precise title matching function
+            // Improved normalization with better regex and case insensitivity
             const normalizeTitleForSearch = (title) => {
-              // Remove extra whitespaces and convert to lowercase
               const normalizedTitle = title.trim().toLowerCase();
               
-              // Extract the article number using a regex
-              // This will match "article" followed by a number, ensuring precise matching
-              const articleNumberMatch = normalizedTitle.match(/article\s+(\d+)/);
-              
-              if (articleNumberMatch) {
-                return {
-                  fullTitle: normalizedTitle,
-                  articleNumber: articleNumberMatch[1]
-                };
-              }
+              // Enhanced regex to capture article numbers with spaces/hyphens
+              const articleNumberMatch = normalizedTitle.match(/article[\s-]*(\d+)/i);
               
               return {
                 fullTitle: normalizedTitle,
-                articleNumber: null
+                articleNumber: articleNumberMatch?.[1] || null
               };
             };
+  
+            const currentArticle = normalizeTitleForSearch(article.Title);
             
-            // Normalize the current article's title
-            const currentArticleNormalized = normalizeTitleForSearch(article.Title);
-
-            // Search for articles with similar titles
+            // Use article number for search if available
+            const searchTerm = currentArticle.articleNumber 
+              ? `Article ${currentArticle.articleNumber}`
+              : currentArticle.fullTitle;
+  
             const searchResponse = await axios.get(
-              `https://alt.back.qilinsa.com/wp-json/wp/v2/articles?search=${encodeURIComponent(article.Title)}`
+              `https://alt.back.qilinsa.com/wp-json/wp/v2/articles?search=${encodeURIComponent(searchTerm)}`
             );
   
-            const matchingArticles = searchResponse.data;
-  
-            // Helper to convert date from "DD/MM/YYYY" to "YYYYMMDD"
             const formatDateToServerFormat = (date) => {
               const [day, month, year] = date.split("/");
-              return `${year}${month}${day}`; // Convert to "YYYYMMDD"
+              return `${year}${month.padStart(2, '0')}${day.padStart(2, '0')}`;
             };
   
-            // Convert CSV date to server format
             const formattedCsvDate = formatDateToServerFormat(article.Date_entree);
+            let result = { ...article };
+            const matchingArticles = searchResponse.data;
   
-            let isExisting = false;
-            let isNewVersion = false;
-            let matchedArticleId = null;
+            // Convert legislation IDs to numbers for accurate comparison
+            const targetLegislationId = Number(selectedLegislationId);
   
-            // Check each matching article
             for (const existingArticle of matchingArticles) {
-              // Normalize the existing article's title
-              const existingArticleNormalized = normalizeTitleForSearch(existingArticle.title.rendered);
+              const existingLegislationIds = existingArticle.acf.Legislation_ou_titre_ou_chapitre_ou_section
+                .map(id => Number(id));
+  
+              if (!existingLegislationIds.includes(targetLegislationId)) continue;
+  
+              const existingTitle = normalizeTitleForSearch(existingArticle.title.rendered);
               
-              const belongsToLegislation = existingArticle.acf.Legislation_ou_titre_ou_chapitre_ou_section
-                .includes(Number(selectedLegislationId));
-              
-              // Check if article numbers match exactly (if available)
-              const articleNumberMatches = 
-                currentArticleNormalized.articleNumber && 
-                existingArticleNormalized.articleNumber 
-                  ? currentArticleNormalized.articleNumber === existingArticleNormalized.articleNumber
-                  : currentArticleNormalized.fullTitle === existingArticleNormalized.fullTitle;
-
-              if (belongsToLegislation && articleNumberMatches) {
-                if (existingArticle.acf.date_entree === formattedCsvDate) {
-                  // Found exact match in legislation with the same date
-                  isExisting = true;
-                  matchedArticleId = existingArticle.id;
-                  break; // No need to check further
+              // Compare article numbers if available, otherwise full titles
+              const titleMatches = currentArticle.articleNumber
+                ? currentArticle.articleNumber === existingTitle.articleNumber
+                : currentArticle.fullTitle === existingTitle.fullTitle;
+  
+              if (titleMatches) {
+                const existingDate = existingArticle.acf.date_entree;
+                
+                if (existingDate === formattedCsvDate) {
+                  return {
+                    ...article,
+                    exists: true,
+                    id: existingArticle.id
+                  };
                 } else {
-                  // Found a match in legislation but different date
-                  isNewVersion = true;
-                  matchedArticleId = existingArticle.id;
+                  // Track potential new version but keep checking for exact matches
+                  result = {
+                    ...article,
+                    newVersion: true,
+                    originalId: existingArticle.id
+                  };
                 }
               }
             }
   
-            // Return the appropriate result
-            if (isExisting) {
-              return {
-                ...article,
-                exists: true,
-                id: matchedArticleId,
-              };
-            } else if (isNewVersion) {
-              return {
-                ...article,
-                newVersion: true,
-                originalId: matchedArticleId,
-              };
-            } else {
-              return article; // No match found
-            }
+            return result;
           } catch (error) {
             console.error(`Error checking article "${article.Title}":`, error);
             return article;
@@ -636,7 +616,6 @@ const ArticleImport = () => {
       setError("Impossible de vérifier les articles existants");
     }
   };
-  
 
   const handleArticleSelection = useCallback((index) => {
     const article = parsedArticles[index];
@@ -717,27 +696,30 @@ const ArticleImport = () => {
 
   const findHierarchyId = (position) => {
     const hierarchyIds = [];
-
+  
     for (let pos = position - 1; pos >= 0; pos--) {
-      const section = legislationStructure.find(item => item.position === pos && item.endpoint === 'sections');
-      const chapter = legislationStructure.find(item => item.position === pos && item.endpoint === 'chapitres');
-      const title = legislationStructure.find(item => item.position === pos && item.endpoint === 'titres');
-
+      const section = legislationStructure.find(
+        item => item.position === pos && item.post_type === 'section'
+      );
+      const chapter = legislationStructure.find(
+        item => item.position === pos && item.post_type === 'chapitre'
+      );
+      const title = legislationStructure.find(
+        item => item.position === pos && item.post_type === 'titre'
+      );
+  
       if (section) {
-        // Ajouter l'ID de la section et continuer pour trouver le chapitre et titre
         hierarchyIds.unshift(section.id);
         continue;
       } else if (chapter) {
-        // Ajouter l'ID du chapitre et continuer pour trouver le titre
         hierarchyIds.unshift(chapter.id);
         continue;
       } else if (title) {
-        // Ajouter l'ID du titre et retourner le tableau
         hierarchyIds.unshift(title.id);
         break;
       }
     }
-
+  
     return hierarchyIds.length > 0 ? hierarchyIds : null;
   };
 
