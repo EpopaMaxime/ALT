@@ -90,6 +90,9 @@ const LegislationPage = ({ legislationId }) => {
         }
     };
 
+    // Trier les décisions et commentaires par date et prendre les 3 plus récents
+    const sortedDecisions = decisions.slice(-3); // Récupère les 3 derniers éléments
+const sortedComments = comments.slice(-3);   // Récupère les 3 derniers éléments
     if (loading) {
         return (
             <div className="flex justify-center items-center h-screen">
@@ -113,36 +116,30 @@ const LegislationPage = ({ legislationId }) => {
                 <aside className="lg:col-span-1 dark:bg-gray-700 p-4 rounded-xl shadow lg:sticky lg:top-0 lg:max-h-screen lg:overflow-y-auto">
                     <h2 className="text-xl font-bold mb-6">Sommaire</h2>
                     <ul className="space-y-4">
-                        <li>
+                    <li>
                             <a
                                 onClick={() => scrollToSection('legislation')}
                                 className="cursor-pointer text-blue-500 text-sm dark:text-blue-200 hover:underline"
                             >
-                                Législation principale
+                                Informations legislation
                             </a>
                         </li>
-                        {uniqueArticles.length > 0 && (
-                            <li>
-                                <h3 className="font-semibold">Sections Liées</h3>
-                                <ul>
-                                    {uniqueArticles.map((item) => (
-                                        <li key={item.id}>
-                                            <a
-                                                onClick={() => scrollToSection(`related-${item.id}`)}
-                                                className="cursor-pointer text-blue-500 text-sm dark:text-blue-200 hover:underline"
-                                            >
-                                                {item.title}
-                                            </a>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </li>
-                        )}
                         {decisions.length > 0 && (
                             <li>
-                                <h3 className="font-semibold">Décisions</h3>
+                                <h3 className="font-semibold">
+                                    <a
+                                        onClick={() => scrollToSection('decisions')}
+                                        className="cursor-pointer text-blue-500 text-sm dark:text-blue-200 hover:underline"
+                                    >
+                                        Décisions
+                                    </a>
+                                    <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 my-2 mx-2 rounded">
+                                      {decisions.length}
+                                    </span>
+                                </h3>
+                                
                                 <ul>
-                                    {decisions.map((item) => (
+                                    {sortedDecisions.map((item) => (
                                         <li key={item.id}>
                                             <a
                                                 onClick={() => scrollToSection(`decision-${item.id}`)}
@@ -157,12 +154,40 @@ const LegislationPage = ({ legislationId }) => {
                         )}
                         {comments.length > 0 && (
                             <li>
-                                <h3 className="font-semibold">Commentaires</h3>
+                                <h3 className="font-semibold">
+                                    <a
+                                        onClick={() => scrollToSection('comments')}
+                                        className="cursor-pointer text-blue-500 text-sm dark:text-blue-200 hover:underline"
+                                    >
+                                        Commentaires
+                                    </a>
+                                    <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 my-2 mx-2 rounded">
+                                      {comments.length}
+                                    </span>
+                                </h3>
                                 <ul>
-                                    {comments.map((item) => (
+                                    {sortedComments.map((item) => (
                                         <li key={item.id}>
                                             <a
                                                 onClick={() => scrollToSection(`comment-${item.id}`)}
+                                                className="cursor-pointer text-blue-500 text-sm dark:text-blue-200 hover:underline"
+                                            >
+                                                {item.title}
+                                            </a>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </li>
+                        )}
+                        
+                        {uniqueArticles.length > 0 && (
+                            <li>
+                                <h3 className="font-semibold">Sections Liées</h3>
+                                <ul>
+                                    {uniqueArticles.map((item) => (
+                                        <li key={item.id}>
+                                            <a
+                                                onClick={() => scrollToSection(`related-${item.id}`)}
                                                 className="cursor-pointer text-blue-500 text-sm dark:text-blue-200 hover:underline"
                                             >
                                                 {item.title}

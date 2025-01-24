@@ -143,8 +143,9 @@ const LegislationImport = () => {
 
   const handleFileChange = useCallback(async (event) => {
     const uploadedFile = event.target.files?.[0];
-    // Stocker le nom du fichier avec le suffixe "- état: début"
-    const fileNameWithState = `${uploadedFile.name}`;
+    // Stocker le nom du fichier avec le suffixe "date et heure"
+    const exportFileName = generateFileName();
+    const fileNameWithState = `${uploadedFile.name}_${exportFileName}`;
     setImportHistory(fileNameWithState);
 
     if (uploadedFile) {
@@ -371,7 +372,7 @@ const LegislationImport = () => {
   
       // Générer le fichier CSV exporté
       const { blob } = exportModifiedCSV(); // Utilise la fonction exportModifiedCSV
-      const exportFileName = generateFileName();
+      const fileNameWithState = `${importhistory}`;
   
       // Fonction pour uploader le fichier
       const uploadFile = async (fileBlob, fileName) => {
@@ -394,11 +395,11 @@ const LegislationImport = () => {
       };
   
       // Charger le fichier et obtenir son identifiant
-      const fileId = await uploadFile(blob, exportFileName);
+      const fileId = await uploadFile(blob, fileNameWithState);
   
       // Construire le JSON à envoyer pour la mise à jour
       const payload = {
-        title: exportFileName, // Nom du fichier avec état et date
+        title: fileNameWithState, // Nom du fichier avec état et date
         acf: {
           type_import: "Legislation", // Type d'import
           date: currentDate.toISOString().slice(0, 19).replace("T", " "), // AAAA-MM-JJ HH:mm:ss
@@ -455,7 +456,8 @@ const LegislationImport = () => {
   
       // Générer le fichier CSV exporté
       const { blob } = exportModifiedCSV(); // Utilise la fonction exportModifiedCSV
-      const exportFileName = generateFileName();
+      // const exportFileName = generateFileName();
+      const fileNameWithState = `${importhistory}`;
   
       // Fonction pour uploader le fichier
       const uploadFile = async (fileBlob, fileName) => {
@@ -478,11 +480,11 @@ const LegislationImport = () => {
       };
   
       // Charger le fichier et obtenir son identifiant
-      const fileId = await uploadFile(blob, exportFileName);
+      const fileId = await uploadFile(blob, fileNameWithState);
 
       // Construire le JSON à envoyer pour la mise à jour
       const payloadDemande = {
-        title: exportFileName, // Nom du fichier avec état et date
+        title: fileNameWithState, // Nom du fichier avec état et date
         acf: {
           type_import: "Legislation", // Type d'import
           date: currentDate.toISOString().slice(0, 19).replace("T", " "), // AAAA-MM-JJ HH:mm:ss
@@ -494,7 +496,7 @@ const LegislationImport = () => {
   
       // Construire le JSON à envoyer pour la mise à jour
       const payload = {
-        title: exportFileName, // Nom du fichier avec état et date
+        title: fileNameWithState, // Nom du fichier avec état et date
         acf: {
           type_import: "Legislation", // Type d'import
           date: currentDate.toISOString().slice(0, 19).replace("T", " "), // AAAA-MM-JJ HH:mm:ss
@@ -816,11 +818,13 @@ useEffect(() => {
       if (!result) {
         throw new Error("Aucune législation sélectionnée pour l'exportation");
       }
+
+      const fileNameWithState = `${importhistory}`;
   
       const { csv } = result;
       const formData = new FormData();
       const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
-      formData.append('file', blob, generateFileName());
+      formData.append('file', blob, fileNameWithState);
   
       const token = localStorage.getItem('token');
       if (!token) {

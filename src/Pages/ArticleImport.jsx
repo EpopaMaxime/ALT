@@ -179,8 +179,9 @@ const ArticleImport = () => {
   const handleFileChange = useCallback((event) => {
     const uploadedFile = event.target.files?.[0];
 
-    // Stocker le nom du fichier avec le suffixe "- état: début"
-    const fileNameWithState = `${uploadedFile.name}`;
+    // Stocker le nom du fichier avec le suffixe "date et heure"
+    const exportFileName = generateFileName();
+    const fileNameWithState = `${uploadedFile.name}_${exportFileName}`;
     setImportHistory(fileNameWithState);
 
     if (!uploadedFile || !selectedLegislation?.value) {
@@ -330,7 +331,7 @@ const ArticleImport = () => {
   
       // Générer le fichier CSV exporté
       const { blob } = exportModifiedCSV(); // Utilise la fonction exportModifiedCSV
-      const exportFileName = generateFileName();
+      const fileNameWithState = `${importhistory}`;
   
       // Fonction pour uploader le fichier
       const uploadFile = async (fileBlob, fileName) => {
@@ -353,11 +354,11 @@ const ArticleImport = () => {
       };
   
       // Charger le fichier et obtenir son identifiant
-      const fileId = await uploadFile(blob, exportFileName);
+      const fileId = await uploadFile(blob, fileNameWithState);
   
       // Construire le JSON à envoyer pour la mise à jour
       const payload = {
-        title: exportFileName, // Nom du fichier avec état et date
+        title: fileNameWithState, // Nom du fichier avec état et date
         acf: {
           type_import: "Article", // Type d'import
           date: currentDate.toISOString().slice(0, 19).replace("T", " "), // AAAA-MM-JJ HH:mm:ss
@@ -414,7 +415,7 @@ const ArticleImport = () => {
   
       // Générer le fichier CSV exporté
       const { blob } = exportModifiedCSV(); // Utilise la fonction exportModifiedCSV
-      const exportFileName = generateFileName();
+      const fileNameWithState = `${importhistory}`;
   
       // Fonction pour uploader le fichier
       const uploadFile = async (fileBlob, fileName) => {
@@ -437,11 +438,11 @@ const ArticleImport = () => {
       };
   
       // Charger le fichier et obtenir son identifiant
-      const fileId = await uploadFile(blob, exportFileName);
+      const fileId = await uploadFile(blob, fileNameWithState);
 
       // Construire le JSON à envoyer pour la mise à jour
       const payloadDemande = {
-        title: exportFileName, // Nom du fichier avec état et date
+        title: fileNameWithState, // Nom du fichier avec état et date
         acf: {
           type_import: "Article", // Type d'import
           date: currentDate.toISOString().slice(0, 19).replace("T", " "), // AAAA-MM-JJ HH:mm:ss
@@ -453,7 +454,7 @@ const ArticleImport = () => {
   
       // Construire le JSON à envoyer pour la mise à jour
       const payload = {
-        title: exportFileName, // Nom du fichier avec état et date
+        title: fileNameWithState, // Nom du fichier avec état et date
         acf: {
           type_import: "Article", // Type d'import
           date: currentDate.toISOString().slice(0, 19).replace("T", " "), // AAAA-MM-JJ HH:mm:ss
@@ -789,41 +790,41 @@ const ArticleImport = () => {
     }
   }, [currentStep, selectedArticles, parsedArticles, availableTexts]);
 
-  useEffect(() => {
-    if (currentStep === 3 && selectedLegislation) {
-      setLoading(true);
-      const fetchLegislationStructure = async () => {
-        try {
-          const endpoints = ['titres', 'chapitres', 'sections', 'articles'];
-          const res = await axios.get(`${API_BASE_URL}/legislations/${selectedLegislation.value}`);
-          const identifiers = res.data.acf.titre_ou_chapitre_ou_section_ou_articles || [];
+  // useEffect(() => {
+  //   if (currentStep === 3 && selectedLegislation) {
+  //     setLoading(true);
+  //     const fetchLegislationStructure = async () => {
+  //       try {
+  //         const endpoints = ['titres', 'chapitres', 'sections', 'articles'];
+  //         const res = await axios.get(`${API_BASE_URL}/legislations/${selectedLegislation.value}`);
+  //         const identifiers = res.data.acf.titre_ou_chapitre_ou_section_ou_articles || [];
 
-          const fetchData = async (id) => {
-            for (let endpoint of endpoints) {
-              try {
-                const res = await axios.get(`${API_BASE_URL}/${endpoint}/${id}`);
-                if (res.data) return { ...res.data, endpoint, id };
-              } catch (err) {
-                // Continue to the next endpoint if not found
-              }
-            }
-            return null;
-          };
+  //         const fetchData = async (id) => {
+  //           for (let endpoint of endpoints) {
+  //             try {
+  //               const res = await axios.get(`${API_BASE_URL}/${endpoint}/${id}`);
+  //               if (res.data) return { ...res.data, endpoint, id };
+  //             } catch (err) {
+  //               // Continue to the next endpoint if not found
+  //             }
+  //           }
+  //           return null;
+  //         };
 
-          const detailsData = await Promise.all(identifiers.map(fetchData));
-          const successfulItems = detailsData.filter(item => item !== null);
-          setLegislationStructure(successfulItems.map((item, index) => ({ ...item, position: index + 1 })));
-          setUnstructuredArticles(selectedArticles.map(index => ({ id: index.toString(), title: parsedArticles[index].Title })));
-        } catch (err) {
-          setError('Échec de la récupération de la structure de la législation');
-        } finally {
-          setLoading(false);
-        }
-      };
+  //         const detailsData = await Promise.all(identifiers.map(fetchData));
+  //         const successfulItems = detailsData.filter(item => item !== null);
+  //         setLegislationStructure(successfulItems.map((item, index) => ({ ...item, position: index + 1 })));
+  //         setUnstructuredArticles(selectedArticles.map(index => ({ id: index.toString(), title: parsedArticles[index].Title })));
+  //       } catch (err) {
+  //         setError('Échec de la récupération de la structure de la législation');
+  //       } finally {
+  //         setLoading(false);
+  //       }
+  //     };
 
-      fetchLegislationStructure();
-    }
-  }, [currentStep, selectedLegislation, selectedArticles, parsedArticles]);
+  //     fetchLegislationStructure();
+  //   }
+  // }, [currentStep, selectedLegislation, selectedArticles, parsedArticles]);
 
   const handleExportClick = () => {
     const { blob } = exportModifiedCSV();
@@ -844,10 +845,12 @@ const ArticleImport = () => {
       setImportStatus('pending');
       setImportError(null);
 
+      const fileNameWithState = `${importhistory}`;
+
       const { csv } = exportModifiedCSV();
       const formData = new FormData();
       const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csv], { type: 'text/csv;charset=utf-8;' });
-      formData.append('file', blob, generateFileName());
+      formData.append('file', blob, fileNameWithState);
 
       const token = localStorage.getItem('token');
 
