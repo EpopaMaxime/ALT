@@ -94,6 +94,7 @@ const CommentaireImport = () => {
     // Stocker le nom du fichier avec le suffixe "date et heure"
     const exportFileName = generateFileName();
     const fileNameWithState = `${uploadedFile.name}_${exportFileName}`;
+    setImportHistory(fileNameWithState);
 
     if (uploadedFile) {
       setFile(uploadedFile);

@@ -120,7 +120,7 @@ const SearchResults = () => {
       const articleData = await fetchData(`/wp-json/wp/v2/articles/${articleId}`);
       setArticleExcerpts(prev => ({
         ...prev,
-        [articleId]: articleData?.content?.rendered || 'Pas de contenu'
+        [articleId]: articleData?.content?.rendered || ' '
       }));
 
       const legislationId = articleData.acf.Legislation_ou_titre_ou_chapitre_ou_section;
@@ -408,7 +408,7 @@ const ResultCard = React.memo(({ result, handleResultClick, highlightText, creat
       {result.type === 'article' && articleExcerpts[result.id] ? (
         <span dangerouslySetInnerHTML={{ __html: highlightText(createExcerpt(articleExcerpts[result.id])) }} />
       ) : (
-        <span dangerouslySetInnerHTML={{ __html: highlightText(createExcerpt(result.excerpt?.rendered || result.content?.rendered || 'Pas de contenu')) }} />
+        <span dangerouslySetInnerHTML={{ __html: highlightText(createExcerpt(result.excerpt?.rendered || result.content?.rendered || ' ')) }} />
       )}
     </div>
   </div>
