@@ -3,6 +3,7 @@ import axios from 'axios';
 import anime from '../assets/anime.svg';
 import { useParams } from 'react-router-dom';
 import { Link } from 'react-router-dom';
+import parse from 'html-react-parser';
 
 const LegislationDetail = ({ legislationId }) => {
     const { id } = useParams();
@@ -227,7 +228,7 @@ const LegislationDetail = ({ legislationId }) => {
                                         ) : (
                                             <h3 className="text-xl font-semibold">{item.title}</h3>
                                         )}
-                                        <p>{item.content}</p>
+                                        <p>parse{parse(item.content)}</p>
                                     </div>
                                 ))}
                             </div>
