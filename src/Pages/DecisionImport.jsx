@@ -128,7 +128,8 @@ const DecisionImport = () => {
   }, []);
 
   const validateCSVStructure = (data) => {
-    const requiredColumns = ['Title', 'Content', 'Resume', 'Information'];
+    // const requiredColumns = ['Title', 'Content', 'Resume', 'Information'];
+    const requiredColumns = ['Title', 'Content'];
     return requiredColumns.every(column => data[0].hasOwnProperty(column) && data[0][column] !== '');
   };
 
@@ -195,8 +196,13 @@ const DecisionImport = () => {
         exportRow.ID_legislation = selectedLegislation.value;
       }
   
-      // Add the user ID to the exportRow
+      // Ajouter l'ID utilisateur
       exportRow.UserId = localStorage.getItem('iduser');
+      
+      // Ajouter la colonne Content2 si elle existe dans les décisions
+      if (decision.Content2 !== undefined) {
+        exportRow.Content2 = decision.Content2;
+      }
   
       return exportRow;
     });
@@ -207,6 +213,7 @@ const DecisionImport = () => {
     const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csv], { type: 'text/csv;charset=utf-8;' });
     return { csv, blob };
   }, [selectedDecisions, parsedDecisions, selectedLinkedTexts, selectedLegislation]);
+  
 
   const fetchAvailableTexts = useCallback(async () => {
     const textTypes = ["Législation", "Article", "Commentaire"];
@@ -692,8 +699,8 @@ useEffect(() => {
                       )}
                     </div>
                     <p className="mt-2 text-sm text-gray-500">{decision.Content.substring(0, 100)}...</p>
-                    <p className="mt-1 text-xs text-blue-500">Résumé: {decision.Resume}</p>
-                    <p className="mt-1 text-xs text-green-500">Information: {decision.Information}</p>
+                    {/* <p className="mt-1 text-xs text-blue-500">Résumé: {decision.Resume}</p>
+                    <p className="mt-1 text-xs text-green-500">Information: {decision.Information}</p> */}
                   </div>
                 ))}
               </div>
@@ -820,8 +827,8 @@ useEffect(() => {
                   return (
                     <div key={index} className="mb-4 bg-green-100 p-3 rounded-md">
                       <h5 className="font-medium">{decision.Title}</h5>
-                      <p className="text-sm text-gray-500">Résumé : {decision.Resume}</p>
-                      <p className="text-sm text-gray-500">Information : {decision.Information}</p>
+                      {/* <p className="text-sm text-gray-500">Résumé : {decision.Resume}</p>
+                      <p className="text-sm text-gray-500">Information : {decision.Information}</p> */}
                       {["Article", "Commentaire"].map(type => (
                         <div key={type}>
                           <h6 className="font-medium text-sm mt-2">{type}s liés :</h6>

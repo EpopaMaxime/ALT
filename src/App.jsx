@@ -124,10 +124,6 @@ const router = createBrowserRouter(
                         <Route path=":id" element={<LegislationDetail1 />} />
                 </Route>
 
-                <Route path="LegislationPage" element={<Detailslayout/>}>
-                    <Route index element={<RenderLegislation />} />
-                        <Route path=":id" element={<LegislationPage />} />
-                </Route>
 
 
                 <Route path="post" element={<Detailslayout/>}>

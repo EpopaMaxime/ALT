@@ -92,7 +92,8 @@ const LegislationPage = ({ legislationId }) => {
 
     // Trier les décisions et commentaires par date et prendre les 3 plus récents
     const sortedDecisions = decisions.slice(-3); // Récupère les 3 derniers éléments
-const sortedComments = comments.slice(-3);   // Récupère les 3 derniers éléments
+    const sortedComments = comments.slice(-3);   // Récupère les 3 derniers éléments
+    
     if (loading) {
         return (
             <div className="flex justify-center items-center h-screen">
